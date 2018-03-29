@@ -6,6 +6,7 @@ import org.json.JSONObject
 class Processor(configJson: JSONObject) {
 
     val mWorldConfig = WorldConfig(configJson)
+    var mCurrentTick = 0
 
     var mCache: ParseResult? = null
 
@@ -14,6 +15,7 @@ class Processor(configJson: JSONObject) {
         val parsed = parseIncoming(tickData)
         val out = analyzeData(parsed)
         mCache = parsed
+        mCurrentTick++
         return out
     }
 
