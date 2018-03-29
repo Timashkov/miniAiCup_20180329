@@ -1,6 +1,8 @@
+package incominginfos
+
 import org.json.JSONObject
 
-class MineFragmentState(fragmentJson: JSONObject) {
+class MineFragmentInfo(fragmentJson: JSONObject) {
     val mId: String = fragmentJson.getString("Id")
     val mMass: Float = fragmentJson.getFloat("M")
     val mRadius : Float = fragmentJson.getFloat("R")
