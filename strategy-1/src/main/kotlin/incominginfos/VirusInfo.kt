@@ -1,6 +1,8 @@
+package incominginfos
+
 import org.json.JSONObject
 
-class VirusState(virusJson: JSONObject) {
+class VirusInfo(virusJson: JSONObject) {
     val mId: String = virusJson.getString("Id")
     val mX: Float = virusJson.getFloat("X")
     val mY: Float = virusJson.getFloat("Y")
