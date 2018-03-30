@@ -2,10 +2,12 @@ import incominginfos.FoodInfo
 import incominginfos.MineInfo
 import incominginfos.WorldObjectsInfo
 import org.json.JSONObject
+import strategy.FindFoodStrategy
 
 class Processor(configJson: JSONObject) {
 
-    val mWorldConfig = WorldConfig(configJson)
+    private val mWorldConfig = WorldConfig(configJson)
+    private val mFoodStrategy = FindFoodStrategy()
     var mCurrentTick = 0
 
     var mCache: ParseResult? = null
@@ -19,24 +21,14 @@ class Processor(configJson: JSONObject) {
         return out
     }
 
-    fun findFood(worldObjects: WorldObjectsInfo): FoodInfo? {
-        if (worldObjects.mFood.isEmpty())
-            return null
-        return worldObjects.mFood[0]
-    }
-
     data class ParseResult(val mineInfo: MineInfo, val worldObjectsInfo: WorldObjectsInfo)
 
-    fun parseIncoming(tickData: JSONObject): ParseResult = ParseResult(MineInfo(tickData.getJSONArray("Mine")), WorldObjectsInfo(tickData.getJSONArray("Objects")))
+    private fun parseIncoming(tickData: JSONObject): ParseResult = ParseResult(MineInfo(tickData.getJSONArray("Mine")), WorldObjectsInfo(tickData.getJSONArray("Objects")))
 
-    fun analyzeData(parseResult: ParseResult): JSONObject {
+    private fun analyzeData(parseResult: ParseResult): JSONObject {
         if (parseResult.mineInfo.isNotEmpty()) {
-
-            val first = parseResult.mineInfo.getFragmentConfig(0)
-            val food = findFood(parseResult.worldObjectsInfo)
-                    ?: return JSONObject(mapOf("X" to 0, "Y" to 0, "Debug" to "No Food"))
-            return JSONObject(mapOf<String, Any>("X" to food.mX, "Y" to food.mY))
-
+            val strategyResult = mFoodStrategy.apply(mWorldConfig, parseResult.worldObjectsInfo, parseResult.mineInfo)
+            return JSONObject(mapOf("X" to strategyResult.targetPoint.X, "Y" to strategyResult.targetPoint.Y, "Debug" to strategyResult.debugMessage))
         }
         return JSONObject(mapOf("X" to 0, "Y" to 0, "Debug" to "Died"))
     }
