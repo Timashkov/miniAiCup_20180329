@@ -1,4 +1,3 @@
-import incominginfos.FoodInfo
 import incominginfos.MineInfo
 import incominginfos.WorldObjectsInfo
 import org.json.JSONObject
@@ -30,7 +29,7 @@ class Processor(configJson: JSONObject) {
             val strategyResult = mFoodStrategy.apply(mWorldConfig, parseResult.worldObjectsInfo, parseResult.mineInfo)
             return JSONObject(mapOf("X" to strategyResult.targetPoint.X, "Y" to strategyResult.targetPoint.Y, "Debug" to strategyResult.debugMessage))
         }
-        return JSONObject(mapOf("X" to 0, "Y" to 0, "Debug" to "Died"))
+        return JSONObject(mapOf("X" to 0, "Y" to 100, "Debug" to "Died"))
     }
 }
 
@@ -60,3 +59,5 @@ points: food - 1, enemy_fragment - 10, enemy_total - 100, burst on virus - 2
         "Id": "1.1",
         "S": "Mass 50" // максимум 40 символов
     }*/
+
+//{"FOOD_MASS":1,"GAME_HEIGHT":660,"GAME_TICKS":75000,"GAME_WIDTH":660,"INERTION_FACTOR":10,"MAX_FRAGS_CNT":10,"SPEED_FACTOR":25,"TICKS_TIL_FUSION":250,"VIRUS_RADIUS":22,"VIRUS_SPLIT_MASS":80,"VISCOSITY":0.25}

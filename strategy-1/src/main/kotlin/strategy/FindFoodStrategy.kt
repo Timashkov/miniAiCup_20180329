@@ -7,41 +7,40 @@ import utils.Point
 
 class FindFoodStrategy : IStrategy {
 
-    var mDefaultTarget: Point? = null
+    var mDefaultTarget: Point = Point(0.0f, 0.0f)
     var mDeltas = Point(0.0f, 0.0f)
 
     override fun apply(globalConfig: WorldConfig, worldInfo: WorldObjectsInfo, mineInfo: MineInfo): StrategyResult {
-        if (mDefaultTarget == null) {
+        if (mDefaultTarget == Point(0.0f, 0.0f)) {
             mDeltas = globalConfig.getCenter().delta(mineInfo.getCoordinates())
-            mDefaultTarget = getDefaultTarget(globalConfig.GameWidth.toFloat(), mineInfo.mFragmentsState[0].mY, mDeltas)
+            mDefaultTarget = getDefaultTarget(globalConfig.getCenter(), mDeltas)
         }
 
         if (worldInfo.mFood.isNotEmpty()) {
             return moveToFood(globalConfig, worldInfo)
         }
 
-        mDefaultTarget?.let {
-            if (mineInfo.mFragmentsState[0].mX == it.X && mineInfo.mFragmentsState[0].mY == it.Y) {
-                var deltaX = mDeltas.X
-                var deltaY = mDeltas.Y
-                if (mDeltas.isOneSign())
-                    deltaX *= -1.0f
-                else
-                    deltaY *= -1.0f
-                mDeltas = Point(deltaX, deltaY)
-                mDefaultTarget = getDefaultTarget(globalConfig.GameWidth.toFloat(), mineInfo.mFragmentsState[0].mY, mDeltas)
-            }
-            return StrategyResult(0.0f, it)
+        if (mineInfo.getCoordinates() == mDefaultTarget) {
+            var deltaX = mDeltas.X
+            var deltaY = mDeltas.Y
+            if (mDeltas.isOneSign())
+                deltaX *= -1.0f
+            else
+                deltaY *= -1.0f
+            mDeltas = Point(deltaX, deltaY)
+
+            mDefaultTarget = getDefaultTarget(globalConfig.getCenter(), mDeltas)
         }
-        return StrategyResult(0.0f, Point(0.0f, 0.0f), "FAIL")
+        return StrategyResult(0.0f, mDefaultTarget, "Go TO Default")
+
     }
 
     private fun moveToFood(globalConfig: WorldConfig, worldInfo: WorldObjectsInfo): StrategyResult {
-        return StrategyResult(globalConfig.FoodMass, Point(worldInfo.mFood[0].mX, worldInfo.mFood[0].mY))
+        return StrategyResult(globalConfig.FoodMass, Point(worldInfo.mFood[0].mX, worldInfo.mFood[0].mY), "Move to food")
     }
 
-    private fun getDefaultTarget(maxX: Float, myY: Float, deltas: Point): Point {
-        return Point(maxX / 2.0f + deltas.X, myY + deltas.Y) // all correct : center X and my Y
+    private fun getDefaultTarget(center: Point, deltas: Point): Point {
+        return Point(center.X + deltas.X, center.Y - deltas.Y)
     }
 }
 
