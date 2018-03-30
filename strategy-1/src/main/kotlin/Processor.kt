@@ -1,12 +1,14 @@
 import incominginfos.MineInfo
 import incominginfos.WorldObjectsInfo
 import org.json.JSONObject
+import strategy.DefaultTurnStrategy
 import strategy.FindFoodStrategy
 
 class Processor(configJson: JSONObject) {
 
     private val mWorldConfig = WorldConfig(configJson)
     private val mFoodStrategy = FindFoodStrategy()
+    private val mDefaultStrategy = DefaultTurnStrategy()
     var mCurrentTick = 0
 
     var mCache: ParseResult? = null
@@ -26,7 +28,10 @@ class Processor(configJson: JSONObject) {
 
     private fun analyzeData(parseResult: ParseResult): JSONObject {
         if (parseResult.mineInfo.isNotEmpty()) {
-            val strategyResult = mFoodStrategy.apply(mWorldConfig, parseResult.worldObjectsInfo, parseResult.mineInfo)
+            var strategyResult = mFoodStrategy.apply(mWorldConfig, parseResult.worldObjectsInfo, parseResult.mineInfo)
+            if (strategyResult.achievementScore < 0) {
+                strategyResult = mDefaultStrategy.apply(mWorldConfig, parseResult.worldObjectsInfo, parseResult.mineInfo)
+            }
             return JSONObject(mapOf("X" to strategyResult.targetPoint.X, "Y" to strategyResult.targetPoint.Y, "Debug" to strategyResult.debugMessage))
         }
         return JSONObject(mapOf("X" to 0, "Y" to 100, "Debug" to "Died"))
