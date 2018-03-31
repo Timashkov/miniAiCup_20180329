@@ -7,23 +7,22 @@ import utils.Point
 import utils.Square
 import kotlin.math.abs
 
-class DefaultTurnStrategy : IStrategy {
+class DefaultTurnStrategy(globalConfig: WorldConfig) : IStrategy {
 
-    var squares: ArrayList<Square> = ArrayList()
+    val squares: ArrayList<Square> = ArrayList()
+
+    init {
+        initSquares(globalConfig)
+    }
+
+    val mCenter: Point = globalConfig.getCenter()
     var currentCornerIndex: Int = 0
     var currentSquareIndex: Int = -1
-    var isInChanin = false
 
-    override fun apply(globalConfig: WorldConfig, worldInfo: WorldObjectsInfo, mineInfo: MineInfo): StrategyResult {
-        if (squares.isEmpty()) {
-            initSquares(globalConfig)
-        }
-
+    override fun apply(worldInfo: WorldObjectsInfo, mineInfo: MineInfo): StrategyResult {
         if (currentSquareIndex == -1) {
-            currentSquareIndex = getSquareByDirection(mineInfo, globalConfig)
+            currentSquareIndex = getSquareByDirection(mineInfo)
         }
-//        if (!isInChanin)
-//            currentSquareIndex = getNextSquareIndex(currentSquareIndex)
         val corner = squares[currentSquareIndex].corners[currentCornerIndex]
         if (abs(corner.X - mineInfo.getCoordinates().X) < mineInfo.getFragmentConfig(0).mRadius &&
                 abs(corner.Y - mineInfo.getCoordinates().Y) < mineInfo.getFragmentConfig(0).mRadius)
@@ -32,11 +31,10 @@ class DefaultTurnStrategy : IStrategy {
             currentCornerIndex = 0
             currentSquareIndex = getNextSquareIndex(currentSquareIndex)
         }
-        isInChanin = true
         return StrategyResult(0.0f, squares[currentSquareIndex].corners[currentCornerIndex], "DEFAULT: Go TO $currentCornerIndex $currentSquareIndex")
     }
 
-    private fun getSquareByDirection(mineInfo: MineInfo, globalConfig: WorldConfig): Int {
+    private fun getSquareByDirection(mineInfo: MineInfo): Int {
         when (mineInfo.getDirection()) {
             MineInfo.Direction.TOP_LEFT -> return 0
             MineInfo.Direction.TOP_RIGHT -> return 1
@@ -49,12 +47,11 @@ class DefaultTurnStrategy : IStrategy {
                     return squares.indexOf(square)
                 } else {
                     // не в квадрате
-                    return getQuart(mineInfo.getCoordinates(), globalConfig.getCenter()) - 1
+                    return getQuart(mineInfo.getCoordinates(), mCenter) - 1
                 }
             }
         }
     }
-
 
     private fun getNextSquareIndex(current: Int): Int {
         var next = current + 1
