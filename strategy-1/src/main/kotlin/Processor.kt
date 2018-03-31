@@ -31,6 +31,8 @@ class Processor(configJson: JSONObject) {
             var strategyResult = mFoodStrategy.apply(mWorldConfig, parseResult.worldObjectsInfo, parseResult.mineInfo)
             if (strategyResult.achievementScore < 0) {
                 strategyResult = mDefaultStrategy.apply(mWorldConfig, parseResult.worldObjectsInfo, parseResult.mineInfo)
+            } else {
+                mDefaultStrategy.breakPath()
             }
             return JSONObject(mapOf("X" to strategyResult.targetPoint.X, "Y" to strategyResult.targetPoint.Y, "Debug" to strategyResult.debugMessage))
         }
