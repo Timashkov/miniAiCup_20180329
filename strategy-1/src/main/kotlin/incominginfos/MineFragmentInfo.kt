@@ -1,13 +1,13 @@
 package incominginfos
 
 import org.json.JSONObject
+import utils.Vertex
 
 class MineFragmentInfo(fragmentJson: JSONObject) {
+    val mVertex = Vertex(fragmentJson.getFloat("X"), fragmentJson.getFloat("Y"))
     val mId: String = fragmentJson.getString("Id")
     val mMass: Float = fragmentJson.getFloat("M")
     val mRadius : Float = fragmentJson.getFloat("R")
-    val mX: Float = fragmentJson.getFloat("X")
-    val mY: Float = fragmentJson.getFloat("Y")
     val mSX: Float = fragmentJson.getFloat("SX")
     val mSY: Float = fragmentJson.getFloat("SY")
     val mTTF: Int = if (fragmentJson.has("TTF")) fragmentJson.getInt("TTF") else 0
