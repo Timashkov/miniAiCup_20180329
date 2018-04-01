@@ -20,8 +20,8 @@ class EvasionFilter(val mGlobalConfig: WorldConfig, val mLogger: Logger) {
                     return@forEach
 
                 mLogger.writeLog("Processed enemy: $enemy")
-                val xBorder = (2f * enemy.mX - myMinor.mX) / 2f
-                if (xBorder > 0) {
+                if (enemy.mVertex.X > myMinor.mVertex.X){
+                    val xBorder = enemy.mVertex.X - enemy.mRadius
                     if (xDirection == -2)
                         xDirection = -1
                     if (xDirection == 1)
@@ -29,6 +29,7 @@ class EvasionFilter(val mGlobalConfig: WorldConfig, val mLogger: Logger) {
 
                     parseResult.worldObjectsInfo.mFood = ArrayList(parseResult.worldObjectsInfo.mFood.filter { it.mVertex.X <= xBorder })
                 } else {
+                    val xBorder = enemy.mVertex.X + enemy.mRadius
                     if (xDirection == -2)
                         xDirection = 1
                     if (xDirection == -1)
@@ -37,15 +38,16 @@ class EvasionFilter(val mGlobalConfig: WorldConfig, val mLogger: Logger) {
                     parseResult.worldObjectsInfo.mFood = ArrayList(parseResult.worldObjectsInfo.mFood.filter { it.mVertex.X >= xBorder })
                 }
 
-                val yBorder = (2f * enemy.mY - myMinor.mY) / 2f
-                if (yBorder > 0) {
+                if (enemy.mVertex.Y > myMinor.mVertex.Y){
+                    val yBorder = enemy.mVertex.Y - enemy.mRadius
                     if (yDirection == -2)
                         yDirection = -1
                     if (yDirection == 1)
                         yDirection = 0
 
                     parseResult.worldObjectsInfo.mFood = ArrayList(parseResult.worldObjectsInfo.mFood.filter { it.mVertex.Y <= yBorder })
-                } else {
+                }else{
+                    val yBorder = enemy.mVertex.Y + enemy.mRadius
                     if (yDirection == -2)
                         yDirection = 1
                     if (yDirection == -1)
