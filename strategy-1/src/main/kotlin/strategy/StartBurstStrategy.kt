@@ -8,6 +8,9 @@ import utils.Vertex
 
 class StartBurstStrategy(val mGlobalConfig: WorldConfig, val mLogger: Logger) : IStrategy {
     override fun apply(worldInfo: WorldObjectsInfo, mineInfo: MineInfo): StrategyResult {
+        if (worldInfo.mEnemies.isNotEmpty())
+            return StrategyResult(-1.0f, Vertex(0.0f, 0.0f), debugMessage = "Star burst: Not applied")
+
         if (mineInfo.mFragmentsState.size == 1 && mineInfo.getMainFragment().mMass > 120) {
             var nearestViruses = worldInfo.mViruses.filter {
                 it.mVertex.distance(mineInfo.getCoordinates()) <= mGlobalConfig.GameHeight / 2f

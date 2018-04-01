@@ -9,6 +9,6 @@ class Logger {
 
 
     fun writeLog(message: String){
-        mWriter.append(message + "\n")
+//        mWriter.append(message + "\n")
     }
 }

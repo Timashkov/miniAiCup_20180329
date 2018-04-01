@@ -23,14 +23,18 @@ class EatEnemyStrategy(val mGlobalConfig: WorldConfig, val mLogger: Logger) : IS
 
     private fun searchForEnemies(enemies: ArrayList<EnemyInfo>, mineInfo: MineInfo): StrategyResult {
 
+        // Stage 0
+        if (mineInfo.mFragmentsState.size>2)
+            return StrategyResult(-1.0f, Vertex(0.0f, 0.0f), debugMessage = "Eat Enemy: Not applied")
+
         // Stage 1 - search for 1.25
         val nearEnemies = enemies.filter {
             it.mMass < mineInfo.getMainFragment().mMass / 1.25f &&
                     it.mMass > mineInfo.getMainFragment().mMass / 2.7f
-                    && Vertex(it.mX, it.mY).distance(mineInfo.getCoordinates()) < mineInfo.getMainFragment().mRadius * 1.5f
-        }.sortedBy { mineInfo.getCoordinates().distance(Vertex(it.mX, it.mY)) }
+                    && it.mVertex.distance(mineInfo.getCoordinates()) < mineInfo.getMainFragment().mRadius * 1.5f
+        }.sortedBy { mineInfo.getCoordinates().distance(it.mVertex) }
         if (nearEnemies.isNotEmpty()) {
-            val res = StrategyResult(nearEnemies[0].mMass, Vertex(nearEnemies[0].mX, nearEnemies[0].mY), debugMessage = "Try to eat ${nearEnemies[0].mId}")
+            val res = StrategyResult(nearEnemies[0].mMass, nearEnemies[0].mVertex, debugMessage = "Try to eat ${nearEnemies[0].mId}")
             mLogger.writeLog("Enemy strat: ${res}")
             return res
         }
@@ -40,9 +44,9 @@ class EatEnemyStrategy(val mGlobalConfig: WorldConfig, val mLogger: Logger) : IS
         if (mineInfo.getMainFragment().mMass > 120) {
             val nearLowerEnemies = enemies.filter {
                 it.mMass < mineInfo.getMainFragment().mMass / 2.7f
-            }.sortedBy { mineInfo.getCoordinates().distance(Vertex(it.mX, it.mY)) }
+            }.sortedBy { mineInfo.getCoordinates().distance(it.mVertex) }
             if (nearLowerEnemies.isNotEmpty()) {
-                val res =  StrategyResult(nearLowerEnemies[0].mMass, Vertex(nearLowerEnemies[0].mX, nearLowerEnemies[0].mY), split = true, debugMessage = "Try to eat ${nearLowerEnemies[0].mId}")
+                val res =  StrategyResult(nearLowerEnemies[0].mMass, nearLowerEnemies[0].mVertex, split = true, debugMessage = "Try to eat ${nearLowerEnemies[0].mId}")
                 mLogger.writeLog("Enemy 2 strat: ${res}")
                 return res
             }

@@ -38,6 +38,8 @@ class DefaultTurnStrategy(val mGlobalConfig: WorldConfig, val mLogger: Logger) :
     private fun getSquareByDirectionAndPosition(mineInfo: MineInfo): Int {
         val isInCenterSquare = Square(mCenter, mGlobalConfig.GameWidth / 8.0f).isInSquare(mineInfo.getCoordinates())
 
+        val quart = getQuart(mineInfo.getCoordinates(), mCenter) - 1
+
         when (mineInfo.getDirection()) {
             MineInfo.Direction.TOP_LEFT -> {
                 return if (isInCenterSquare)
