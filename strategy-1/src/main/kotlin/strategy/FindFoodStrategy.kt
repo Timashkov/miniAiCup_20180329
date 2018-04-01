@@ -3,6 +3,7 @@ package strategy
 import incominginfos.MineInfo
 import incominginfos.WorldObjectsInfo
 import WorldConfig
+import com.sun.org.apache.xpath.internal.operations.Bool
 import utils.Logger
 import utils.Vertex
 import kotlin.math.abs
@@ -12,6 +13,7 @@ class FindFoodStrategy(globalConfig: WorldConfig, val mLogger: Logger) : IStrate
 
     private val mFoodMass = globalConfig.FoodMass
     private var mTargetWay: BestWayResult? = null
+    private var mGamerStateCache: MineInfo? = null
 
 //analyze change state
 
@@ -19,6 +21,7 @@ class FindFoodStrategy(globalConfig: WorldConfig, val mLogger: Logger) : IStrate
 
         if (worldInfo.mFood.isNotEmpty()) {
             analyzePlate(worldInfo, mineInfo)
+            mGamerStateCache = mineInfo
             return StrategyResult(mTargetWay!!.foodPoints.size * mFoodMass, mTargetWay!!.target, "")
         }
 
@@ -28,13 +31,23 @@ class FindFoodStrategy(globalConfig: WorldConfig, val mLogger: Logger) : IStrate
 
     private fun analyzePlate(worldInfo: WorldObjectsInfo, mineInfo: MineInfo) {
 
-        if (mTargetWay != null && isDestinationAchieved(worldInfo)) {
+        if (mTargetWay != null && (isDestinationAchieved(worldInfo) || isGamerStateChanged(mineInfo))) {
             mTargetWay = null
         }
 
         if (mTargetWay == null) {
-            mTargetWay = findBestWay(worldInfo.mFood.map { it.mVertex }, mineInfo.getCoordinates(), mineInfo.getFragmentConfig(mineInfo.getMainfragmentIndex()).mRadius)
+            mTargetWay = findBestWay(worldInfo.mFood.map { it.mVertex }, mineInfo.getCoordinates(), mineInfo.getMainFragment().mRadius)
         }
+    }
+
+    private fun isGamerStateChanged(gamerInfo: MineInfo): Boolean {
+        mGamerStateCache?.let { cached ->
+            if (cached.mFragmentsState.size != gamerInfo.mFragmentsState.size)
+                return true
+            if (cached.getMainFragment().mRadius > gamerInfo.getMainFragment().mRadius)
+                return true
+            }
+        return false
     }
 
     private fun isDestinationAchieved(worldInfo: WorldObjectsInfo): Boolean {
@@ -43,7 +56,7 @@ class FindFoodStrategy(globalConfig: WorldConfig, val mLogger: Logger) : IStrate
         mTargetWay?.let { targetWay ->
             var c = 0
             targetWay.foodPoints.forEach { fp ->
-                if (worldInfo.mFood.map { it.mVertex }.any { it.equals(fp) }){
+                if (worldInfo.mFood.map { it.mVertex }.any { it.equals(fp) }) {
                     mLogger.writeLog("FP: $fp")
                     c++
                 }
@@ -62,7 +75,7 @@ class FindFoodStrategy(globalConfig: WorldConfig, val mLogger: Logger) : IStrate
         val weights: HashMap<Vertex, ArrayList<Vertex>> = HashMap()
 
         sortedByR.forEach { it ->
-            val verts : ArrayList<Vertex> = ArrayList()
+            val verts: ArrayList<Vertex> = ArrayList()
             verts.add(it)
             val xIndex = sortedByX.indexOf(it)
 
@@ -103,7 +116,7 @@ class FindFoodStrategy(globalConfig: WorldConfig, val mLogger: Logger) : IStrate
             return BestWayResult(vertex[0], weights[vertex[0]]!!)
 
         var nearest = sortedByR.last()
-        vertex.forEach { vert->
+        vertex.forEach { vert ->
             if (sortedByR.indexOf(vert) < sortedByR.indexOf(nearest))
                 nearest = vert
         }

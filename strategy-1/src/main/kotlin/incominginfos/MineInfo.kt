@@ -8,12 +8,15 @@ import utils.Vertex
 class MineInfo(stateJson: JSONArray) {
     val mFragmentsState: ArrayList<MineFragmentInfo> = ArrayList()
 
+    val mMainFragmentIndex: Int
+
     enum class Direction {
         TOP_LEFT, TOP_RIGHT, BOTTOM_RIGHT, BOTTOM_LEFT, STAYS
     }
 
     init {
         stateJson.map { it as JSONObject }.forEach { mFragmentsState.add(MineFragmentInfo(it)) }
+        mMainFragmentIndex = getMainfragmentIndex()
     }
 
     fun isNotEmpty(): Boolean {
@@ -23,8 +26,7 @@ class MineInfo(stateJson: JSONArray) {
     fun getFragmentConfig(index: Int): MineFragmentInfo = mFragmentsState[index]
 
     fun getCoordinates(): Vertex {
-        val mainIndex = getMainfragmentIndex()
-        return Vertex(mFragmentsState[mainIndex].mX, mFragmentsState[mainIndex].mY)
+        return Vertex(getMainFragment().mX, getMainFragment().mY)
     }
 
     fun getDirection(): Direction {
@@ -46,7 +48,9 @@ class MineInfo(stateJson: JSONArray) {
         return Direction.TOP_LEFT
     }
 
-    fun getMainfragmentIndex(): Int {
+    fun getMainFragment(): MineFragmentInfo = mFragmentsState[mMainFragmentIndex]
+
+    private fun getMainfragmentIndex(): Int {
         if (mFragmentsState.size == 1)
             return 0
         var maxWeight = 0f
