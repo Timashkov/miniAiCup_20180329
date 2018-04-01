@@ -27,7 +27,7 @@ class MineInfo(stateJson: JSONArray) {
     fun getFragmentConfig(index: Int): MineFragmentInfo = mFragmentsState[index]
 
     fun getCoordinates(): Vertex {
-        return Vertex(getMainFragment().mX, getMainFragment().mY)
+        return getMainFragment().mVertex
     }
 
     fun getDirection(): Direction {
