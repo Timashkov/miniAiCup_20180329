@@ -3,11 +3,12 @@ package strategy
 import incominginfos.MineInfo
 import incominginfos.WorldObjectsInfo
 import WorldConfig
-import utils.Point
+import utils.Logger
+import utils.Vertex
 import utils.Square
 import kotlin.math.abs
 
-class DefaultTurnStrategy(globalConfig: WorldConfig) : IStrategy {
+class DefaultTurnStrategy(globalConfig: WorldConfig, val mLogger: Logger) : IStrategy {
 
     val squares: ArrayList<Square> = ArrayList()
 
@@ -15,7 +16,7 @@ class DefaultTurnStrategy(globalConfig: WorldConfig) : IStrategy {
         initSquares(globalConfig)
     }
 
-    val mCenter: Point = globalConfig.getCenter()
+    val mCenter: Vertex = globalConfig.getCenter()
     var currentCornerIndex: Int = 0
     var currentSquareIndex: Int = -1
 
@@ -60,13 +61,13 @@ class DefaultTurnStrategy(globalConfig: WorldConfig) : IStrategy {
         return next
     }
 
-    fun getQuart(point: Point, center: Point): Int {
-        if (point.X <= center.X) {
-            if (point.Y <= center.Y)
+    fun getQuart(vertex: Vertex, center: Vertex): Int {
+        if (vertex.X <= center.X) {
+            if (vertex.Y <= center.Y)
                 return 1
             return 4
         }
-        if (point.Y <= center.Y) {
+        if (vertex.Y <= center.Y) {
             return 2
         }
         return 3
@@ -78,9 +79,9 @@ class DefaultTurnStrategy(globalConfig: WorldConfig) : IStrategy {
     }
 
     private fun initSquares(globalConfig: WorldConfig) {
-        squares.add(Square(Point(globalConfig.GameWidth / 4f, globalConfig.GameHeight / 4f), globalConfig.GameWidth / 8.0f))
-        squares.add(Square(Point(globalConfig.GameWidth / 4f * 3f, globalConfig.GameHeight / 4f), globalConfig.GameWidth / 8.0f))
-        squares.add(Square(Point(globalConfig.GameWidth / 4f * 3f, globalConfig.GameHeight / 4f * 3f), globalConfig.GameWidth / 8.0f))
-        squares.add(Square(Point(globalConfig.GameWidth / 4f, globalConfig.GameHeight / 4f * 3f), globalConfig.GameWidth / 8.0f))
+        squares.add(Square(Vertex(globalConfig.GameWidth / 4f, globalConfig.GameHeight / 4f), globalConfig.GameWidth / 8.0f))
+        squares.add(Square(Vertex(globalConfig.GameWidth / 4f * 3f, globalConfig.GameHeight / 4f), globalConfig.GameWidth / 8.0f))
+        squares.add(Square(Vertex(globalConfig.GameWidth / 4f * 3f, globalConfig.GameHeight / 4f * 3f), globalConfig.GameWidth / 8.0f))
+        squares.add(Square(Vertex(globalConfig.GameWidth / 4f, globalConfig.GameHeight / 4f * 3f), globalConfig.GameWidth / 8.0f))
     }
 }

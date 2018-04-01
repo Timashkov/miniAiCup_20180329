@@ -2,7 +2,7 @@ package incominginfos
 
 import org.json.JSONArray
 import org.json.JSONObject
-import utils.Point
+import utils.Vertex
 
 
 class MineInfo(stateJson: JSONArray) {
@@ -22,9 +22,9 @@ class MineInfo(stateJson: JSONArray) {
 
     fun getFragmentConfig(index: Int): MineFragmentInfo = mFragmentsState[index]
 
-    fun getCoordinates(): Point {
+    fun getCoordinates(): Vertex {
         val mainIndex = getMainfragmentIndex()
-        return Point(mFragmentsState[mainIndex].mX, mFragmentsState[mainIndex].mY)
+        return Vertex(mFragmentsState[mainIndex].mX, mFragmentsState[mainIndex].mY)
     }
 
     fun getDirection(): Direction {

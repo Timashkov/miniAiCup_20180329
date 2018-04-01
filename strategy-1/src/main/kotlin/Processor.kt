@@ -3,18 +3,21 @@ import incominginfos.WorldObjectsInfo
 import org.json.JSONObject
 import strategy.DefaultTurnStrategy
 import strategy.FindFoodStrategy
+import utils.Logger
 
 class Processor(configJson: JSONObject) {
 
     private val mWorldConfig = WorldConfig(configJson)
-    private val mFoodStrategy = FindFoodStrategy()
-    private val mDefaultStrategy = DefaultTurnStrategy()
+    val mLogger = Logger()
+    private val mFoodStrategy = FindFoodStrategy(mWorldConfig, mLogger)
+    private val mDefaultStrategy = DefaultTurnStrategy(mWorldConfig, mLogger)
     var mCurrentTick = 0
 
     var mCache: ParseResult? = null
 
     // Tick Process
     fun onTick(tickData: JSONObject): JSONObject {
+        mLogger.writeLog(tickData.toString())
         val parsed = parseIncoming(tickData)
         val out = analyzeData(parsed)
         mCache = parsed
@@ -28,15 +31,18 @@ class Processor(configJson: JSONObject) {
 
     private fun analyzeData(parseResult: ParseResult): JSONObject {
         if (parseResult.mineInfo.isNotEmpty()) {
-            var strategyResult = mFoodStrategy.apply(mWorldConfig, parseResult.worldObjectsInfo, parseResult.mineInfo)
+            var strategyResult = mFoodStrategy.apply(parseResult.worldObjectsInfo, parseResult.mineInfo)
+            mLogger.writeLog("FoodStrategy: " + strategyResult.toString())
             if (strategyResult.achievementScore < 0) {
-                strategyResult = mDefaultStrategy.apply(mWorldConfig, parseResult.worldObjectsInfo, parseResult.mineInfo)
+                strategyResult = mDefaultStrategy.apply(parseResult.worldObjectsInfo, parseResult.mineInfo)
+                mLogger.writeLog("Default Stratgy: " + strategyResult.toString())
             } else {
                 mDefaultStrategy.breakPath()
             }
-            return JSONObject(mapOf("X" to strategyResult.targetPoint.X, "Y" to strategyResult.targetPoint.Y, "Debug" to strategyResult.debugMessage))
+
+            return JSONObject(mapOf("X" to strategyResult.targetVertex.X, "Y" to strategyResult.targetVertex.Y, "Debug" to strategyResult.debugMessage))
         }
-        return JSONObject(mapOf("X" to 0, "Y" to 100, "Debug" to "Died"))
+        return JSONObject(mapOf("X" to 0, "Y" to 0, "Debug" to "Died"))
     }
 }
 

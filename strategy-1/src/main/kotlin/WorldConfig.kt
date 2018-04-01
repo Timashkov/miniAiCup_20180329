@@ -1,5 +1,5 @@
 import org.json.JSONObject
-import utils.Point
+import utils.Vertex
 
 class WorldConfig(configJson: JSONObject) {
     val GameWidth: Int = configJson.getInt("GAME_WIDTH")    //
@@ -14,6 +14,6 @@ class WorldConfig(configJson: JSONObject) {
     val InertionFactor: Float = configJson.getFloat("INERTION_FACTOR")  // [1.0 : 20.0]
     val SpeedFactor: Float = configJson.getFloat("SPEED_FACTOR") // [25.0 : 100.0 ]
 
-    fun getDimensions(): Point = Point(GameWidth.toFloat(), GameHeight.toFloat())
-    fun getCenter(): Point = Point(GameWidth * 0.5f, GameHeight * 0.5f)
+    fun getDimensions(): Vertex = Vertex(GameWidth.toFloat(), GameHeight.toFloat())
+    fun getCenter(): Vertex = Vertex(GameWidth * 0.5f, GameHeight * 0.5f)
 }
