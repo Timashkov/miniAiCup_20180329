@@ -5,9 +5,9 @@ import org.json.JSONObject
 
 class WorldObjectsInfo(enemyJson: JSONArray) {
     val mViruses: ArrayList<VirusInfo> = ArrayList()
-    val mFood: ArrayList<FoodInfo> = ArrayList()
-    val mEjection: ArrayList<EjectionInfo> = ArrayList()
-    val mEnemies: ArrayList<EnemyInfo> = ArrayList()
+    var mFood: ArrayList<FoodInfo> = ArrayList()
+    var mEjection: ArrayList<EjectionInfo> = ArrayList()
+    var mEnemies: ArrayList<EnemyInfo> = ArrayList()
 
     init {
         enemyJson.map { it as JSONObject }.forEach {

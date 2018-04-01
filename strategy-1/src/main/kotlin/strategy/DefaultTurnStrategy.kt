@@ -8,21 +8,21 @@ import utils.Vertex
 import utils.Square
 import kotlin.math.abs
 
-class DefaultTurnStrategy(globalConfig: WorldConfig, val mLogger: Logger) : IStrategy {
+class DefaultTurnStrategy(val mGlobalConfig: WorldConfig, val mLogger: Logger) : IStrategy {
 
     val squares: ArrayList<Square> = ArrayList()
 
     init {
-        initSquares(globalConfig)
+        initSquares(mGlobalConfig)
     }
 
-    val mCenter: Vertex = globalConfig.getCenter()
+    val mCenter: Vertex = mGlobalConfig.getCenter()
     var currentCornerIndex: Int = 0
     var currentSquareIndex: Int = -1
 
     override fun apply(worldInfo: WorldObjectsInfo, mineInfo: MineInfo): StrategyResult {
         if (currentSquareIndex == -1) {
-            currentSquareIndex = getSquareByDirection(mineInfo)
+            currentSquareIndex = getSquareByDirectionAndPosition(mineInfo)
         }
         val corner = squares[currentSquareIndex].corners[currentCornerIndex]
         if (abs(corner.X - mineInfo.getCoordinates().X) < mineInfo.getFragmentConfig(0).mRadius &&
@@ -32,15 +32,22 @@ class DefaultTurnStrategy(globalConfig: WorldConfig, val mLogger: Logger) : IStr
             currentCornerIndex = 0
             currentSquareIndex = getNextSquareIndex(currentSquareIndex)
         }
-        return StrategyResult(0.0f, squares[currentSquareIndex].corners[currentCornerIndex], "DEFAULT: Go TO $currentCornerIndex $currentSquareIndex")
+        return StrategyResult(0.0f, squares[currentSquareIndex].corners[currentCornerIndex], debugMessage = "DEFAULT: Go TO $currentCornerIndex $currentSquareIndex")
     }
 
-    private fun getSquareByDirection(mineInfo: MineInfo): Int {
+    private fun getSquareByDirectionAndPosition(mineInfo: MineInfo): Int {
+        val isInCenterSquare = Square(mCenter, mGlobalConfig.GameWidth / 8.0f).isInSquare(mineInfo.getCoordinates())
+
         when (mineInfo.getDirection()) {
-            MineInfo.Direction.TOP_LEFT -> return 0
-            MineInfo.Direction.TOP_RIGHT -> return 1
-            MineInfo.Direction.BOTTOM_RIGHT -> return 2
-            MineInfo.Direction.BOTTOM_LEFT -> return 3
+            MineInfo.Direction.TOP_LEFT -> {
+                return if (isInCenterSquare)
+                    0
+                else
+                    3
+            }
+            MineInfo.Direction.TOP_RIGHT -> return if (isInCenterSquare) 1 else 2
+            MineInfo.Direction.BOTTOM_RIGHT -> return if (isInCenterSquare) 2 else 1
+            MineInfo.Direction.BOTTOM_LEFT -> return if (isInCenterSquare) 3 else 0
             else -> {
                 //в квадрате ?
                 val square = squares.firstOrNull { it.isInSquare(mineInfo.getCoordinates()) }
@@ -73,7 +80,7 @@ class DefaultTurnStrategy(globalConfig: WorldConfig, val mLogger: Logger) : IStr
         return 3
     }
 
-    fun breakPath() {
+    override fun stopStrategy() {
         currentCornerIndex = 0
         currentSquareIndex = -1
     }

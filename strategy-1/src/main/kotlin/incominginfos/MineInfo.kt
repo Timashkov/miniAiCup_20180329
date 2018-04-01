@@ -4,11 +4,11 @@ import org.json.JSONArray
 import org.json.JSONObject
 import utils.Vertex
 
-
 class MineInfo(stateJson: JSONArray) {
     val mFragmentsState: ArrayList<MineFragmentInfo> = ArrayList()
 
     val mMainFragmentIndex: Int
+    val mSmallestFragmentIndex : Int
 
     enum class Direction {
         TOP_LEFT, TOP_RIGHT, BOTTOM_RIGHT, BOTTOM_LEFT, STAYS
@@ -16,7 +16,8 @@ class MineInfo(stateJson: JSONArray) {
 
     init {
         stateJson.map { it as JSONObject }.forEach { mFragmentsState.add(MineFragmentInfo(it)) }
-        mMainFragmentIndex = getMainfragmentIndex()
+        mMainFragmentIndex = getMainFragmentIndex()
+        mSmallestFragmentIndex = getSmallestFragmentIndex()
     }
 
     fun isNotEmpty(): Boolean {
@@ -49,8 +50,9 @@ class MineInfo(stateJson: JSONArray) {
     }
 
     fun getMainFragment(): MineFragmentInfo = mFragmentsState[mMainFragmentIndex]
+    fun getMinorFragment(): MineFragmentInfo = mFragmentsState[mSmallestFragmentIndex]
 
-    private fun getMainfragmentIndex(): Int {
+    private fun getMainFragmentIndex(): Int {
         if (mFragmentsState.size == 1)
             return 0
         var maxWeight = 0f
@@ -67,6 +69,26 @@ class MineInfo(stateJson: JSONArray) {
             return fattestIndex
 
         val fats = mFragmentsState.filter { it.mMass == maxWeight }
+        return fats.size / 2
+    }
+
+    private fun getSmallestFragmentIndex(): Int {
+        if (mFragmentsState.size == 1)
+            return 0
+        var minWeight = 20000f
+        var thinCount = 0
+        var thinnestIndex = 0
+        mFragmentsState.forEach {
+            if (it.mMass < minWeight) {
+                thinnestIndex = mFragmentsState.indexOf(it)
+                thinCount = 1
+            } else if (it.mMass == minWeight)
+                thinCount++
+        }
+        if (thinCount == 1)
+            return thinnestIndex
+
+        val fats = mFragmentsState.filter { it.mMass == minWeight }
         return fats.size / 2
     }
 

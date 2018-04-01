@@ -3,30 +3,38 @@ package strategy
 import incominginfos.MineInfo
 import incominginfos.WorldObjectsInfo
 import WorldConfig
-import com.sun.org.apache.xpath.internal.operations.Bool
 import utils.Logger
 import utils.Vertex
 import kotlin.math.abs
 
-class FindFoodStrategy(globalConfig: WorldConfig, val mLogger: Logger) : IStrategy {
+class FindFoodStrategy(val mGlobalConfig: WorldConfig, val mLogger: Logger) : IStrategy {
     data class BestWayResult(val target: Vertex, val foodPoints: List<Vertex>)
 
-    private val mFoodMass = globalConfig.FoodMass
+    private val mFoodMass = mGlobalConfig.FoodMass
     private var mTargetWay: BestWayResult? = null
     private var mGamerStateCache: MineInfo? = null
 
-//analyze change state
+    //TODO: split for food hunt improvement
 
     override fun apply(worldInfo: WorldObjectsInfo, mineInfo: MineInfo): StrategyResult {
 
         if (worldInfo.mFood.isNotEmpty()) {
             analyzePlate(worldInfo, mineInfo)
             mGamerStateCache = mineInfo
-            return StrategyResult(mTargetWay!!.foodPoints.size * mFoodMass, mTargetWay!!.target, "")
+            var split = false
+            if (mineInfo.mFragmentsState.size == 1 && mineInfo.getMainFragment().mMass > 4 * 120) {
+                split = true
+            }
+            return StrategyResult(mTargetWay!!.foodPoints.size * mFoodMass, mTargetWay!!.target, split)
         }
 
         mTargetWay = null
-        return StrategyResult(-1.0f, Vertex(0.0f, 0.0f), "FindFood: Not applied")
+        return StrategyResult(-1.0f, Vertex(0.0f, 0.0f), debugMessage = "FindFood: Not applied")
+    }
+
+    override fun stopStrategy() {
+        mTargetWay = null
+        mGamerStateCache = null
     }
 
     private fun analyzePlate(worldInfo: WorldObjectsInfo, mineInfo: MineInfo) {
@@ -44,9 +52,9 @@ class FindFoodStrategy(globalConfig: WorldConfig, val mLogger: Logger) : IStrate
         mGamerStateCache?.let { cached ->
             if (cached.mFragmentsState.size != gamerInfo.mFragmentsState.size)
                 return true
-            if (cached.getMainFragment().mRadius > gamerInfo.getMainFragment().mRadius)
+            if (cached.getMainFragment().mRadius > gamerInfo.getMainFragment().mRadius * 0.95f)
                 return true
-            }
+        }
         return false
     }
 
