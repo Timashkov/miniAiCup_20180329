@@ -14,18 +14,23 @@ class FindFoodStrategy(val mGlobalConfig: WorldConfig, val mLogger: Logger) : IS
     private var mTargetWay: BestWayResult? = null
     private var mGamerStateCache: MineInfo? = null
 
-    //TODO: split for food hunt improvement
-
     override fun apply(worldInfo: WorldObjectsInfo, mineInfo: MineInfo): StrategyResult {
 
         if (worldInfo.mFood.isNotEmpty()) {
             analyzePlate(worldInfo, mineInfo)
             mGamerStateCache = mineInfo
-            var split = false
-            if (mineInfo.mFragmentsState.size == 1 && mineInfo.getMainFragment().mMass > 4 * 120) {
-                split = true
+
+            if (mineInfo.mFragmentsState.size == 1 && mineInfo.getMainFragment().mMass > 120) {
+                var nearestViruses = worldInfo.mViruses.filter {
+                    it.mVertex.distance(mineInfo.getCoordinates()) <= mineInfo.getMainFragment().mRadius * 2f
+                }.sortedBy { it.mVertex.distance(mineInfo.getMainFragment().mVertex) }
+                if (nearestViruses.isNotEmpty() && nearestViruses[0].mVertex.distance(mineInfo.getMainFragment().mVertex) < mTargetWay!!.target.distance(mineInfo.getMainFragment().mVertex)) {
+                    return StrategyResult(2f, nearestViruses[0].mVertex)
+                }
             }
-            return StrategyResult(mTargetWay!!.foodPoints.size * mFoodMass, mTargetWay!!.target, split)
+
+            var split = mineInfo.getMainFragment().mMass > 120 * 3
+            return StrategyResult(mTargetWay!!.foodPoints.size * mFoodMass, mTargetWay!!.target, split = split)
         }
 
         mTargetWay = null
