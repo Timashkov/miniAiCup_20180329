@@ -1,8 +1,8 @@
 package incominginfos
 
 import org.json.JSONObject
+import utils.Vertex
 
 class EjectionInfo(ejectionJson: JSONObject) {
-    val mX: Float = ejectionJson.getFloat("X")
-    val mY: Float = ejectionJson.getFloat("Y")
+    val mVertex = Vertex(ejectionJson.getFloat("X"), ejectionJson.getFloat("Y"))
 }
