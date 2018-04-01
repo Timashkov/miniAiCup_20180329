@@ -8,54 +8,69 @@ import utils.Vertex
 import kotlin.math.abs
 
 class FindFoodStrategy(globalConfig: WorldConfig, val mLogger: Logger) : IStrategy {
-    private val mFoodMass = globalConfig.FoodMass
+    data class BestWayResult(val target: Vertex, val foodPoints: List<Vertex>)
 
-    private var mTargetVertex: Vertex? = null
-    private var mTargetMass: Float = 0f
+    private val mFoodMass = globalConfig.FoodMass
+    private var mTargetWay: BestWayResult? = null
+
+//analyze change state
 
     override fun apply(worldInfo: WorldObjectsInfo, mineInfo: MineInfo): StrategyResult {
-//если съели целевую точку, а ее соседки остались - то надо доесть
+
         if (worldInfo.mFood.isNotEmpty()) {
-            return analyzePlate(worldInfo, mineInfo)
+            analyzePlate(worldInfo, mineInfo)
+            return StrategyResult(mTargetWay!!.foodPoints.size * mFoodMass, mTargetWay!!.target, "")
         }
 
-        mTargetVertex = null
-        mTargetMass = 0f
+        mTargetWay = null
         return StrategyResult(-1.0f, Vertex(0.0f, 0.0f), "FindFood: Not applied")
     }
 
-    private fun analyzePlate(worldInfo: WorldObjectsInfo, mineInfo: MineInfo): StrategyResult {
-        if (worldInfo.mFood.map { it.mVertex }.none { it.equals(mTargetVertex) }) {
-            mTargetVertex = null
-            mTargetMass = 0f
+    private fun analyzePlate(worldInfo: WorldObjectsInfo, mineInfo: MineInfo) {
+
+        if (mTargetWay != null && isDestinationAchieved(worldInfo)) {
+            mTargetWay = null
         }
-        if (mTargetVertex == null) {
-            val result = findBestWay(worldInfo.mFood.map { it.mVertex }, mineInfo.getCoordinates(), mineInfo.getFragmentConfig(mineInfo.getMainfragmentIndex()).mRadius)
-            mTargetVertex = result.target
-            mTargetMass = mFoodMass * result.points
+
+        if (mTargetWay == null) {
+            mTargetWay = findBestWay(worldInfo.mFood.map { it.mVertex }, mineInfo.getCoordinates(), mineInfo.getFragmentConfig(mineInfo.getMainfragmentIndex()).mRadius)
         }
-        return StrategyResult(mTargetMass, mTargetVertex!!, "")
     }
 
-    data class BestWayResult(val target: Vertex, val points: Int)
+    private fun isDestinationAchieved(worldInfo: WorldObjectsInfo): Boolean {
+        //если съели целевую точку, а ее соседки остались - то надо доесть
+
+        mTargetWay?.let { targetWay ->
+            var c = 0
+            targetWay.foodPoints.forEach { fp ->
+                if (worldInfo.mFood.map { it.mVertex }.any { it.equals(fp) }){
+                    mLogger.writeLog("FP: $fp")
+                    c++
+                }
+            }
+            if (c > 0)
+                return false
+        }
+        return true
+    }
 
     fun findBestWay(foodPoints: List<Vertex>, gamerPosition: Vertex, gamerRadius: Float): BestWayResult {
 
 
         val sortedByX = foodPoints.sortedBy { it.X }
         val sortedByR = foodPoints.sortedBy { it.distance(gamerPosition) }
-        val weights: HashMap<Vertex, Int> = HashMap()
-        var points = 0
+        val weights: HashMap<Vertex, ArrayList<Vertex>> = HashMap()
 
         sortedByR.forEach { it ->
-            points = 0
+            val verts : ArrayList<Vertex> = ArrayList()
+            verts.add(it)
             val xIndex = sortedByX.indexOf(it)
 
             if (xIndex > 0) {
                 for (i in xIndex - 1 downTo 0) {
                     if (abs(sortedByX[i].X - it.X) < gamerRadius) {
-                        if (abs(sortedByX[i].Y - it.Y) < gamerRadius)
-                            points++
+                        if (it.distance(sortedByX[i]) < gamerRadius * 0.9f)
+                            verts.add(sortedByX[i])
                     } else
                         break
                 }
@@ -63,31 +78,37 @@ class FindFoodStrategy(globalConfig: WorldConfig, val mLogger: Logger) : IStrate
             if (xIndex < foodPoints.size - 1) {
                 for (i in xIndex + 1 until foodPoints.size)
                     if (abs(sortedByX[i].X - it.X) < gamerRadius) {
-                        if (abs(sortedByX[i].Y - it.Y) < gamerRadius)
-                            points++
+                        if (it.distance(sortedByX[i]) < gamerRadius * 0.9f)
+                            verts.add(sortedByX[i])
                     } else
                         break
             }
 
-            weights[it] = points + 1
+            weights[it] = verts
         }
 
-        points = 0
+        var points = 0
         val vertex: ArrayList<Vertex> = ArrayList()
         weights.forEach { it ->
-            if (it.value > points) {
-                points = it.value
+            if (it.value.size > points) {
+                points = it.value.size
                 vertex.clear()
                 vertex.add(it.key)
             }
-            if (it.value == points)
+            if (it.value.size == points)
                 vertex.add(it.key)
         }
 
-        if (vertex.size == 0)
-            return BestWayResult(vertex[0], points)
+        if (vertex.size == 1)
+            return BestWayResult(vertex[0], weights[vertex[0]]!!)
 
-        return BestWayResult(vertex[vertex.size / 2], points)
+        var nearest = sortedByR.last()
+        vertex.forEach { vert->
+            if (sortedByR.indexOf(vert) < sortedByR.indexOf(nearest))
+                nearest = vert
+        }
+
+        return BestWayResult(nearest, weights[nearest]!!)
     }
 }
 /*
