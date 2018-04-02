@@ -1,15 +1,16 @@
 package utils
 
+import data.MovementVector
 import kotlin.math.pow
 import kotlin.math.sqrt
 
 data class Vertex(val X: Float, val Y: Float) {
 
     fun isOneSign(): Boolean = ((X > 0 && Y > 0) || (X < 0 && Y < 0))
-    fun delta(vertexTarget: Vertex, scaleFactor: Float = 1.0f): Vertex {
+    fun getMovementVector(vertexTarget: Vertex, scaleFactor: Float = 1.0f): MovementVector {
         val deltaX = (X - vertexTarget.X) * scaleFactor
         val deltaY = (X - vertexTarget.X) * scaleFactor
-        return Vertex(deltaX, deltaY)
+        return MovementVector(deltaX, deltaY)
     }
 
     fun distance(target: Vertex): Float {
