@@ -8,8 +8,8 @@ data class Vertex(val X: Float, val Y: Float) {
 
     fun isOneSign(): Boolean = ((X > 0 && Y > 0) || (X < 0 && Y < 0))
     fun getMovementVector(vertexTarget: Vertex, scaleFactor: Float = 1.0f): MovementVector {
-        val deltaX = (X - vertexTarget.X) * scaleFactor
-        val deltaY = (X - vertexTarget.X) * scaleFactor
+        val deltaX = (vertexTarget.X - X) * scaleFactor
+        val deltaY = (vertexTarget.Y - Y) * scaleFactor
         return MovementVector(deltaX, deltaY)
     }
 
@@ -26,4 +26,7 @@ data class Vertex(val X: Float, val Y: Float) {
             return false
         return other.X == this.X && other.Y == this.Y
     }
+
+    fun plus(v: Vertex): Vertex = Vertex(X + v.X, Y + v.Y)
+    fun minus(v: Vertex): Vertex = Vertex(X - v.X, Y - v.Y)
 }

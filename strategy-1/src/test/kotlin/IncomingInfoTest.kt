@@ -2,6 +2,7 @@ import incominginfos.MineInfo
 import org.json.JSONArray
 import org.json.JSONObject
 
+
 class IncomingInfoTest {
 
     lateinit var mMineState: MineInfo

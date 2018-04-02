@@ -3,6 +3,7 @@ import incominginfos.MineInfo
 import incominginfos.WorldObjectsInfo
 import org.json.JSONObject
 import strategy.*
+import utils.GameEngine
 import utils.Logger
 
 class Processor(configJson: JSONObject) {
@@ -19,7 +20,7 @@ class Processor(configJson: JSONObject) {
 
     // Tick Process
     fun onTick(tickData: JSONObject): JSONObject {
-        mLogger.writeLog(tickData.toString())
+        mLogger.writeLog("INCOMING ${tickData.toString()}\n")
         val parsed = parseIncoming(tickData)
         val out = analyzeData(parsed, mCurrentTick)
         mCurrentTick++
@@ -30,21 +31,22 @@ class Processor(configJson: JSONObject) {
 
     private fun analyzeData(parseResult: ParseResult, currentTickCount: Int): JSONObject {
         val data = mEvasionFilter.onFilter(parseResult)
-        if (data.mineInfo.isNotEmpty()) {
 
+        if (data.mineInfo.isNotEmpty()) {
+            val gameEngine = GameEngine(mWorldConfig, data, currentTickCount)
             mLogger.writeLog("Start check strategies")
 
             val strategyResults = listOf(
-                    mEscapeStrategy.apply(data.worldObjectsInfo, data.mineInfo, currentTickCount),
+                    mEscapeStrategy.apply(gameEngine),
                     // FussionStrategy
-                    mEatEnemyStrategy.apply(data.worldObjectsInfo, data.mineInfo, currentTickCount),
-                    mFoodStrategy.apply(data.worldObjectsInfo, data.mineInfo, currentTickCount),
-                    mStartBurstStrategy.apply(data.worldObjectsInfo, data.mineInfo, currentTickCount),
-                    mDefaultStrategy.apply(data.worldObjectsInfo, data.mineInfo, currentTickCount)
+                    mEatEnemyStrategy.apply(gameEngine),
+                    mFoodStrategy.apply(gameEngine),
+                    mStartBurstStrategy.apply(gameEngine),
+                    mDefaultStrategy.apply(gameEngine)
             )
 
             val chosen = strategyResults.sortedByDescending { it.achievementScore }[0]
-            mLogger.writeLog("Chosen strategy: $chosen")
+            mLogger.writeLog("Chosen strategy: $chosen\n")
             return chosen.toJSONCommand()
 
 //            var startegyResult = mEscapeStrategy.apply(data.worldObjectsInfo, data.mineInfo, currentTickCount)

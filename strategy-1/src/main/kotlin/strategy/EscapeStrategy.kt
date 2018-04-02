@@ -4,19 +4,22 @@ import utils.Logger
 import WorldConfig
 import incominginfos.MineInfo
 import incominginfos.WorldObjectsInfo
+import utils.GameEngine
 import utils.Vertex
 
 class EscapeStrategy(val mGlobalConfig: WorldConfig, val mLogger: Logger) : IStrategy {
-    override fun apply(worldInfo: WorldObjectsInfo, mineInfo: MineInfo, currentTickCount: Int): StrategyResult {
+    override fun apply(gameEngine: GameEngine): StrategyResult {
+
+        val me = gameEngine.worldParseResult.mineInfo
 
         //TODO:??
-        if (worldInfo.mEnemies.isNotEmpty() && mineInfo.mFragmentsState.size == 1) {
-            val enemies = worldInfo.mEnemies.filter { it.mMass > mineInfo.getMainFragment().mMass * 4f }
+        if (gameEngine.worldParseResult.worldObjectsInfo.mEnemies.isNotEmpty() && me.mFragmentsState.size == 1) {
+            val enemies = gameEngine.worldParseResult.worldObjectsInfo.mEnemies.filter { it.mMass > me.getMainFragment().mMass * 4f }
             if (enemies.isNotEmpty()) {
-                val deltaX = enemies[0].mVertex.X - mineInfo.getMainFragment().mVertex.X
-                val k = (enemies[0].mVertex.Y - mineInfo.getMainFragment().mVertex.Y) / deltaX
+                val deltaX = enemies[0].mVertex.X - me.getMainFragment().mVertex.X
+                val k = (enemies[0].mVertex.Y - me.getMainFragment().mVertex.Y) / deltaX
 
-                val targetX = if (deltaX > 0) mineInfo.getMainFragment().mVertex.X - deltaX else mineInfo.getMainFragment().mVertex.X + deltaX
+                val targetX = if (deltaX > 0) me.getMainFragment().mVertex.X - deltaX else me.getMainFragment().mVertex.X + deltaX
                 val targetY = targetX * (-k)
                 return StrategyResult(100, Vertex(targetX, targetY), debugMessage = "ESCAPE!!!!")
             }

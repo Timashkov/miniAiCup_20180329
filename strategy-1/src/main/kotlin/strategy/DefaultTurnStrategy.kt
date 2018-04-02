@@ -1,8 +1,8 @@
 package strategy
 
 import incominginfos.MineInfo
-import incominginfos.WorldObjectsInfo
 import WorldConfig
+import utils.GameEngine
 import utils.Logger
 import utils.Vertex
 import utils.Square
@@ -20,19 +20,22 @@ class DefaultTurnStrategy(val mGlobalConfig: WorldConfig, val mLogger: Logger) :
     var currentCornerIndex: Int = 0
     var currentSquareIndex: Int = -1
 
-    override fun apply(worldInfo: WorldObjectsInfo, mineInfo: MineInfo, currentTickCount: Int): StrategyResult {
+    override fun apply(gameEngine: GameEngine): StrategyResult {
+        val me = gameEngine.worldParseResult.mineInfo
         if (currentSquareIndex == -1) {
-            currentSquareIndex = getSquareByDirectionAndPosition(mineInfo)
+            currentSquareIndex = getSquareByDirectionAndPosition(me)
         }
         val corner = squares[currentSquareIndex].corners[currentCornerIndex]
-        if (abs(corner.X - mineInfo.getCoordinates().X) < mineInfo.getFragmentConfig(0).mRadius &&
-                abs(corner.Y - mineInfo.getCoordinates().Y) < mineInfo.getFragmentConfig(0).mRadius)
+        if (abs(corner.X - me.getCoordinates().X) < me.getFragmentConfig(0).mRadius &&
+                abs(corner.Y - me.getCoordinates().Y) < me.getFragmentConfig(0).mRadius)
             currentCornerIndex++
         if (currentCornerIndex == 4) {
             currentCornerIndex = 0
             currentSquareIndex = getNextSquareIndex(currentSquareIndex)
         }
-        return StrategyResult(0, squares[currentSquareIndex].corners[currentCornerIndex], debugMessage = "DEFAULT: Go TO $currentCornerIndex $currentSquareIndex")
+
+        val target = squares[currentSquareIndex].corners[currentCornerIndex]
+        return StrategyResult(0, gameEngine.getMovementPointForTarget(me.getCoordinates(), target), debugMessage = "DEFAULT: Go TO $target")
     }
 
     private fun getSquareByDirectionAndPosition(mineInfo: MineInfo): Int {

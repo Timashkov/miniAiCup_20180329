@@ -4,17 +4,18 @@ import utils.Logger
 import WorldConfig
 import incominginfos.MineInfo
 import incominginfos.WorldObjectsInfo
+import utils.GameEngine
 import utils.Vertex
 
 class StarBurstStrategy(val mGlobalConfig: WorldConfig, val mLogger: Logger) : IStrategy {
-    override fun apply(worldInfo: WorldObjectsInfo, mineInfo: MineInfo, currentTickCount: Int): StrategyResult {
-        if (worldInfo.mEnemies.isNotEmpty())
+    override fun apply(gameEngine: GameEngine): StrategyResult {
+        if (gameEngine.worldParseResult.worldObjectsInfo.mEnemies.isNotEmpty())
             return StrategyResult(-1, Vertex(0.0f, 0.0f), debugMessage = "Star burst: Not applied")
 
-        if (mineInfo.mFragmentsState.size == 1 && mineInfo.getMainFragment().mMass > 120) {
-            val nearestViruses = worldInfo.mViruses.filter {
-                it.mVertex.distance(mineInfo.getCoordinates()) <= mGlobalConfig.GameHeight / 2f
-            }.sortedBy { it.mVertex.distance(mineInfo.getMainFragment().mVertex) }
+        if (gameEngine.worldParseResult.mineInfo.mFragmentsState.size == 1 && gameEngine.worldParseResult.mineInfo.getMainFragment().mMass > 120) {
+            val nearestViruses = gameEngine.worldParseResult.worldObjectsInfo.mViruses.filter {
+                it.mVertex.distance(gameEngine.worldParseResult.mineInfo.getCoordinates()) <= mGlobalConfig.GameHeight / 2f && gameEngine.worldParseResult.mineInfo.getMainFragment().mRadius > mGlobalConfig.VirusRadius * 1.2
+            }.sortedBy { it.mVertex.distance(gameEngine.worldParseResult.mineInfo.getMainFragment().mVertex) }
             if (nearestViruses.isNotEmpty()) {
                 return StrategyResult(2, nearestViruses[0].mVertex)
             }

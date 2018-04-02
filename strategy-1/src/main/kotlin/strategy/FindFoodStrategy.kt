@@ -3,6 +3,7 @@ package strategy
 import incominginfos.MineInfo
 import incominginfos.WorldObjectsInfo
 import WorldConfig
+import utils.GameEngine
 import utils.Logger
 import utils.Vertex
 import kotlin.math.abs
@@ -13,23 +14,29 @@ class FindFoodStrategy(val mGlobalConfig: WorldConfig, val mLogger: Logger) : IS
     private var mTargetWay: BestWayResult? = null
     private var mGamerStateCache: MineInfo? = null
 
-    override fun apply(worldInfo: WorldObjectsInfo, mineInfo: MineInfo, currentTickCount: Int): StrategyResult {
+    override fun apply(gameEngine: GameEngine): StrategyResult {
 
-        if (worldInfo.mFood.isNotEmpty()) {
-            analyzePlate(worldInfo, mineInfo)
-            mGamerStateCache = mineInfo
+        val food = gameEngine.worldParseResult.worldObjectsInfo.mFood
 
-            if (mineInfo.mFragmentsState.size == 1 && mineInfo.getMainFragment().mMass > 120 && currentTickCount < 1000) {
-                val nearestViruses = worldInfo.mViruses.filter {
-                    it.mVertex.distance(mineInfo.getCoordinates()) <= mineInfo.getMainFragment().mRadius * 2f
-                }.sortedBy { it.mVertex.distance(mineInfo.getMainFragment().mVertex) }
-                if (nearestViruses.isNotEmpty() && nearestViruses[0].mVertex.distance(mineInfo.getMainFragment().mVertex) < mTargetWay!!.target.distance(mineInfo.getMainFragment().mVertex)) {
+        if (food.isNotEmpty()) {
+            analyzePlate(gameEngine)
+            val me = gameEngine.worldParseResult.mineInfo
+            mGamerStateCache = me
+            val viruses = gameEngine.worldParseResult.worldObjectsInfo.mViruses
+
+            if (me.mFragmentsState.size == 1 && me.getMainFragment().mMass > 120 && gameEngine.currentTick < 1000) {
+                val nearestViruses = viruses.filter {
+                    it.mVertex.distance(me.getCoordinates()) <= me.getMainFragment().mRadius * 2f
+                }.sortedBy { it.mVertex.distance(me.getMainFragment().mVertex) }
+                if (nearestViruses.isNotEmpty() && nearestViruses[0].mVertex.distance(me.getMainFragment().mVertex) < mTargetWay!!.target.distance(me.getMainFragment().mVertex)) {
                     return StrategyResult(2, nearestViruses[0].mVertex)
                 }
             }
 
-            val split = mineInfo.getMainFragment().mMass > 120 * 3
-            return StrategyResult(mTargetWay!!.foodPoints.size, mTargetWay!!.target, split = split)
+            if ( me.getMainFragment().mMass > 120 * 2 && me.mFragmentsState.size == 1)
+                return StrategyResult(mTargetWay!!.foodPoints.size, mTargetWay!!.target, split = true, debugMessage = "Debug : get food with split")
+            else
+                return StrategyResult(mTargetWay!!.foodPoints.size, gameEngine.getMovementPointForTarget(me.getCoordinates(), mTargetWay!!.target))
         }
 
         mTargetWay = null
@@ -41,14 +48,14 @@ class FindFoodStrategy(val mGlobalConfig: WorldConfig, val mLogger: Logger) : IS
         mGamerStateCache = null
     }
 
-    private fun analyzePlate(worldInfo: WorldObjectsInfo, mineInfo: MineInfo) {
+    private fun analyzePlate(gameEngine: GameEngine) {
 
-        if (mTargetWay != null && (isDestinationAchieved(worldInfo) || isGamerStateChanged(mineInfo))) {
+        if (mTargetWay != null && (isDestinationAchieved(gameEngine.worldParseResult.worldObjectsInfo) || isGamerStateChanged(gameEngine.worldParseResult.mineInfo))) {
             mTargetWay = null
         }
 
         if (mTargetWay == null) {
-            mTargetWay = findBestWay(worldInfo.mFood.map { it.mVertex }, mineInfo.getCoordinates(), mineInfo.getMainFragment().mRadius)
+            mTargetWay = findBestWay(gameEngine.worldParseResult.worldObjectsInfo.mFood.map { it.mVertex }, gameEngine.worldParseResult.mineInfo.getCoordinates(), gameEngine.worldParseResult.mineInfo.getMainFragment().mRadius)
         }
     }
 

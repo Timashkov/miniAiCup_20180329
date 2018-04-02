@@ -1,10 +1,9 @@
 package strategy
 
-import incominginfos.MineInfo
-import incominginfos.WorldObjectsInfo
+import utils.GameEngine
 
 
 interface IStrategy {
-    fun apply(worldInfo: WorldObjectsInfo, mineInfo: MineInfo, currentTickCount: Int): StrategyResult
+    fun apply(gameEngine: GameEngine): StrategyResult
     fun stopStrategy()
 }
