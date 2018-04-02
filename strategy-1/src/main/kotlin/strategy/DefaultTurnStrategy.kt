@@ -32,7 +32,7 @@ class DefaultTurnStrategy(val mGlobalConfig: WorldConfig, val mLogger: Logger) :
             currentCornerIndex = 0
             currentSquareIndex = getNextSquareIndex(currentSquareIndex)
         }
-        return StrategyResult(0.0f, squares[currentSquareIndex].corners[currentCornerIndex], debugMessage = "DEFAULT: Go TO $currentCornerIndex $currentSquareIndex")
+        return StrategyResult(0, squares[currentSquareIndex].corners[currentCornerIndex], debugMessage = "DEFAULT: Go TO $currentCornerIndex $currentSquareIndex")
     }
 
     private fun getSquareByDirectionAndPosition(mineInfo: MineInfo): Int {

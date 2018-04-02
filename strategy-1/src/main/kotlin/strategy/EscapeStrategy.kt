@@ -9,6 +9,7 @@ import utils.Vertex
 class EscapeStrategy(val mGlobalConfig: WorldConfig, val mLogger: Logger) : IStrategy {
     override fun apply(worldInfo: WorldObjectsInfo, mineInfo: MineInfo, currentTickCount: Int): StrategyResult {
 
+        //TODO:??
         if (worldInfo.mEnemies.isNotEmpty() && mineInfo.mFragmentsState.size == 1) {
             val enemies = worldInfo.mEnemies.filter { it.mMass > mineInfo.getMainFragment().mMass * 4f }
             if (enemies.isNotEmpty()) {
@@ -17,10 +18,10 @@ class EscapeStrategy(val mGlobalConfig: WorldConfig, val mLogger: Logger) : IStr
 
                 val targetX = if (deltaX > 0) mineInfo.getMainFragment().mVertex.X - deltaX else mineInfo.getMainFragment().mVertex.X + deltaX
                 val targetY = targetX * (-k)
-                return StrategyResult(1.0f, Vertex(targetX, targetY), debugMessage = "ESCAPE!!!!")
+                return StrategyResult(100, Vertex(targetX, targetY), debugMessage = "ESCAPE!!!!")
             }
         }
-        return StrategyResult(-1.0f, Vertex(0.0f, 0.0f), debugMessage = "FindFood: Not applied")
+        return StrategyResult(-1, Vertex(0.0f, 0.0f), debugMessage = "FindFood: Not applied")
     }
 
     override fun stopStrategy() {

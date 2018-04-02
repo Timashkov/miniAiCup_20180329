@@ -15,7 +15,7 @@ class EatEnemyStrategy(val mGlobalConfig: WorldConfig, val mLogger: Logger) : IS
             return searchForEnemies(worldInfo.mEnemies, mineInfo)
         }
 
-        return StrategyResult(-1.0f, Vertex(0.0f, 0.0f), debugMessage = "Eat Enemy: Not applied")
+        return StrategyResult(-1, Vertex(0.0f, 0.0f), debugMessage = "Eat Enemy: Not applied")
     }
 
     override fun stopStrategy() {
@@ -24,8 +24,8 @@ class EatEnemyStrategy(val mGlobalConfig: WorldConfig, val mLogger: Logger) : IS
     private fun searchForEnemies(enemies: ArrayList<EnemyInfo>, mineInfo: MineInfo): StrategyResult {
 
         // Stage 0
-        if (mineInfo.mFragmentsState.size>2)
-            return StrategyResult(-1.0f, Vertex(0.0f, 0.0f), debugMessage = "Eat Enemy: Not applied")
+        if (mineInfo.mFragmentsState.size > 2)
+            return StrategyResult(-1, Vertex(0.0f, 0.0f), debugMessage = "Eat Enemy: Not applied")
 
         // Stage 1 - search for 1.25
         val nearEnemies = enemies.filter {
@@ -34,7 +34,7 @@ class EatEnemyStrategy(val mGlobalConfig: WorldConfig, val mLogger: Logger) : IS
                     && it.mVertex.distance(mineInfo.getCoordinates()) < mineInfo.getMainFragment().mRadius * 1.5f
         }.sortedBy { mineInfo.getCoordinates().distance(it.mVertex) }
         if (nearEnemies.isNotEmpty()) {
-            val res = StrategyResult(nearEnemies[0].mMass, nearEnemies[0].mVertex, debugMessage = "Try to eat ${nearEnemies[0].mId}")
+            val res = StrategyResult(10, nearEnemies[0].mVertex, debugMessage = "Try to eat ${nearEnemies[0].mId}")
             mLogger.writeLog("Enemy strat: ${res}")
             return res
         }
@@ -46,7 +46,7 @@ class EatEnemyStrategy(val mGlobalConfig: WorldConfig, val mLogger: Logger) : IS
                 it.mMass < mineInfo.getMainFragment().mMass / 2.7f
             }.sortedBy { mineInfo.getCoordinates().distance(it.mVertex) }
             if (nearLowerEnemies.isNotEmpty()) {
-                val res =  StrategyResult(nearLowerEnemies[0].mMass, nearLowerEnemies[0].mVertex, split = true, debugMessage = "Try to eat ${nearLowerEnemies[0].mId}")
+                val res = StrategyResult(10, nearLowerEnemies[0].mVertex, split = true, debugMessage = "Try to eat ${nearLowerEnemies[0].mId}")
                 mLogger.writeLog("Enemy 2 strat: ${res}")
                 return res
             }
@@ -55,6 +55,6 @@ class EatEnemyStrategy(val mGlobalConfig: WorldConfig, val mLogger: Logger) : IS
         ////
 
 
-        return StrategyResult(-1.0f, Vertex(0.0f, 0.0f), debugMessage = "Eat Enemy: Not applied")
+        return StrategyResult(-1, Vertex(0.0f, 0.0f), debugMessage = "Eat Enemy: Not applied")
     }
 }

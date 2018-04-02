@@ -2,8 +2,9 @@ package incominginfos
 
 import org.json.JSONArray
 import org.json.JSONObject
+import WorldConfig
 
-class WorldObjectsInfo(enemyJson: JSONArray) {
+class WorldObjectsInfo(enemyJson: JSONArray, globalConfig: WorldConfig) {
     val mViruses: ArrayList<VirusInfo> = ArrayList()
     var mFood: ArrayList<FoodInfo> = ArrayList()
     var mEjection: ArrayList<EjectionInfo> = ArrayList()
@@ -12,7 +13,7 @@ class WorldObjectsInfo(enemyJson: JSONArray) {
     init {
         enemyJson.map { it as JSONObject }.forEach {
             when (it.getString("T")) {
-                "F" -> mFood.add(FoodInfo(it))
+                "F" -> mFood.add(FoodInfo(it, globalConfig.FoodMass))
                 "E" -> mEjection.add(EjectionInfo(it))
                 "V" -> mViruses.add(VirusInfo(it))
                 "P" -> mEnemies.add(EnemyInfo(it))

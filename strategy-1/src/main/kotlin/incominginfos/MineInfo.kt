@@ -3,8 +3,9 @@ package incominginfos
 import org.json.JSONArray
 import org.json.JSONObject
 import utils.Vertex
+import WorldConfig
 
-class MineInfo(stateJson: JSONArray) {
+class MineInfo(stateJson: JSONArray, globalConfig: WorldConfig) {
     val mFragmentsState: ArrayList<MineFragmentInfo> = ArrayList()
 
     val mMainFragmentIndex: Int

@@ -13,58 +13,72 @@ class Processor(configJson: JSONObject) {
     private val mDefaultStrategy = DefaultTurnStrategy(mWorldConfig, mLogger)
     private val mEatEnemyStrategy = EatEnemyStrategy(mWorldConfig, mLogger)
     private val mEvasionFilter = EvasionFilter(mWorldConfig, mLogger)
-    private val mStartBurstStrategy = StartBurstStrategy(mWorldConfig, mLogger)
+    private val mStartBurstStrategy = StarBurstStrategy(mWorldConfig, mLogger)
     private val mEscapeStrategy = EscapeStrategy(mWorldConfig, mLogger)
     private var mCurrentTick = 0
-
-    var mCache: ParseResult? = null
 
     // Tick Process
     fun onTick(tickData: JSONObject): JSONObject {
         mLogger.writeLog(tickData.toString())
         val parsed = parseIncoming(tickData)
         val out = analyzeData(parsed, mCurrentTick)
-        mCache = parsed
         mCurrentTick++
         return out
     }
 
-    private fun parseIncoming(tickData: JSONObject): ParseResult = ParseResult(MineInfo(tickData.getJSONArray("Mine")), WorldObjectsInfo(tickData.getJSONArray("Objects")))
+    private fun parseIncoming(tickData: JSONObject): ParseResult = ParseResult(MineInfo(tickData.getJSONArray("Mine"), mWorldConfig), WorldObjectsInfo(tickData.getJSONArray("Objects"), mWorldConfig))
 
     private fun analyzeData(parseResult: ParseResult, currentTickCount: Int): JSONObject {
         val data = mEvasionFilter.onFilter(parseResult)
         if (data.mineInfo.isNotEmpty()) {
 
-            val escapeResult = mEscapeStrategy.apply(data.worldObjectsInfo, data.mineInfo, currentTickCount)
-            if (escapeResult.achievementScore > -1) {
-                mDefaultStrategy.stopStrategy()
-                return escapeResult.toJSONCommand()
-            }
+            mLogger.writeLog("Start check strategies")
 
-            val strategyResults = listOf(mFoodStrategy.apply(data.worldObjectsInfo, data.mineInfo, currentTickCount), mEatEnemyStrategy.apply(data.worldObjectsInfo, data.mineInfo, currentTickCount))
+            val strategyResults = listOf(
+                    mEscapeStrategy.apply(data.worldObjectsInfo, data.mineInfo, currentTickCount),
+                    // FussionStrategy
+                    mEatEnemyStrategy.apply(data.worldObjectsInfo, data.mineInfo, currentTickCount),
+                    mFoodStrategy.apply(data.worldObjectsInfo, data.mineInfo, currentTickCount),
+                    mStartBurstStrategy.apply(data.worldObjectsInfo, data.mineInfo, currentTickCount),
+                    mDefaultStrategy.apply(data.worldObjectsInfo, data.mineInfo, currentTickCount)
+            )
 
-            val filtered = strategyResults.filter { it.achievementScore > 0 }
-            mLogger.writeLog("active strats count: " + filtered.size)
+            val chosen = strategyResults.sortedByDescending { it.achievementScore }[0]
+            mLogger.writeLog("Chosen strategy: $chosen")
+            return chosen.toJSONCommand()
 
-            if (filtered.isNotEmpty()) {
+//            var startegyResult = mEscapeStrategy.apply(data.worldObjectsInfo, data.mineInfo, currentTickCount)
+//            if (startegyResult.achievementScore > -1) {
+//                mDefaultStrategy.stopStrategy()
+//                return startegyResult.toJSONCommand()
+//            }
 
-                mLogger.writeLog("Debug strats:---")
-                filtered.forEach {
-                    mLogger.writeLog(it.toString())
-                }
-                mLogger.writeLog("---")
-                val chosen = filtered.sortedByDescending { it.achievementScore }[0]
-                mLogger.writeLog("Chosen turn : " + chosen.toString())
-                mDefaultStrategy.stopStrategy()
-                return chosen.toJSONCommand()
-            }
-            val starBurstResult = mStartBurstStrategy.apply(data.worldObjectsInfo, data.mineInfo, currentTickCount)
-            if (starBurstResult.achievementScore > 0)
-                return starBurstResult.toJSONCommand()
 
-            val defaultResult = mDefaultStrategy.apply(data.worldObjectsInfo, data.mineInfo, currentTickCount)
-            mLogger.writeLog("Default result: " + defaultResult.toString())
-            return defaultResult.toJSONCommand()
+
+//            val strategyResults = listOf(mFoodStrategy.apply(data.worldObjectsInfo, data.mineInfo, currentTickCount), mEatEnemyStrategy.apply(data.worldObjectsInfo, data.mineInfo, currentTickCount))
+//
+//            val filtered = strategyResults.filter { it.achievementScore > 0 }
+//            mLogger.writeLog("active strats count: " + filtered.size)
+//
+//            if (filtered.isNotEmpty()) {
+//
+//                mLogger.writeLog("Debug strats:---")
+//                filtered.forEach {
+//                    mLogger.writeLog(it.toString())
+//                }
+//                mLogger.writeLog("---")
+//                val chosen = filtered.sortedByDescending { it.achievementScore }[0]
+//                mLogger.writeLog("Chosen turn : " + chosen.toString())
+//                mDefaultStrategy.stopStrategy()
+//                return chosen.toJSONCommand()
+//            }
+//            val starBurstResult = mStartBurstStrategy.apply(data.worldObjectsInfo, data.mineInfo, currentTickCount)
+//            if (starBurstResult.achievementScore > 0)
+//                return starBurstResult.toJSONCommand()
+//
+//            val defaultResult = mDefaultStrategy.apply(data.worldObjectsInfo, data.mineInfo, currentTickCount)
+//            mLogger.writeLog("Default result: " + defaultResult.toString())
+//            return defaultResult.toJSONCommand()
         }
         return JSONObject(mapOf("X" to 0, "Y" to 0, "Debug" to "Died"))
     }

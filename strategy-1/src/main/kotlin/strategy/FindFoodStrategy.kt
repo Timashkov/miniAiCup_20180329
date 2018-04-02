@@ -10,7 +10,6 @@ import kotlin.math.abs
 class FindFoodStrategy(val mGlobalConfig: WorldConfig, val mLogger: Logger) : IStrategy {
     data class BestWayResult(val target: Vertex, val foodPoints: List<Vertex>)
 
-    private val mFoodMass = mGlobalConfig.FoodMass
     private var mTargetWay: BestWayResult? = null
     private var mGamerStateCache: MineInfo? = null
 
@@ -21,20 +20,20 @@ class FindFoodStrategy(val mGlobalConfig: WorldConfig, val mLogger: Logger) : IS
             mGamerStateCache = mineInfo
 
             if (mineInfo.mFragmentsState.size == 1 && mineInfo.getMainFragment().mMass > 120 && currentTickCount < 1000) {
-                var nearestViruses = worldInfo.mViruses.filter {
+                val nearestViruses = worldInfo.mViruses.filter {
                     it.mVertex.distance(mineInfo.getCoordinates()) <= mineInfo.getMainFragment().mRadius * 2f
                 }.sortedBy { it.mVertex.distance(mineInfo.getMainFragment().mVertex) }
                 if (nearestViruses.isNotEmpty() && nearestViruses[0].mVertex.distance(mineInfo.getMainFragment().mVertex) < mTargetWay!!.target.distance(mineInfo.getMainFragment().mVertex)) {
-                    return StrategyResult(2f, nearestViruses[0].mVertex)
+                    return StrategyResult(2, nearestViruses[0].mVertex)
                 }
             }
 
-            var split = mineInfo.getMainFragment().mMass > 120 * 3
-            return StrategyResult(mTargetWay!!.foodPoints.size * mFoodMass, mTargetWay!!.target, split = split)
+            val split = mineInfo.getMainFragment().mMass > 120 * 3
+            return StrategyResult(mTargetWay!!.foodPoints.size, mTargetWay!!.target, split = split)
         }
 
         mTargetWay = null
-        return StrategyResult(-1.0f, Vertex(0.0f, 0.0f), debugMessage = "FindFood: Not applied")
+        return StrategyResult(-1, Vertex(0.0f, 0.0f), debugMessage = "FindFood: Not applied")
     }
 
     override fun stopStrategy() {
@@ -82,6 +81,7 @@ class FindFoodStrategy(val mGlobalConfig: WorldConfig, val mLogger: Logger) : IS
 
     fun findBestWay(foodPoints: List<Vertex>, gamerPosition: Vertex, gamerRadius: Float): BestWayResult {
 
+        // add ejects
 
         val sortedByX = foodPoints.sortedBy { it.X }
         val sortedByR = foodPoints.sortedBy { it.distance(gamerPosition) }

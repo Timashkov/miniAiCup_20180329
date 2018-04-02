@@ -14,10 +14,7 @@ class EvasionFilter(val mGlobalConfig: WorldConfig, val mLogger: Logger) {
         var xDirection = -2
         var yDirection = -2
         if (enemies.isNotEmpty()) {
-            enemies.forEach { enemy ->
-                mLogger.writeLog("Found enemy: $enemy")
-                if (enemy.mMass <= myMinor.mMass * 1.2)
-                    return@forEach
+            enemies.filter { it.mMass > myMinor.mMass * 1.2 }.forEach { enemy ->
 
                 mLogger.writeLog("Processed enemy: $enemy")
                 if (enemy.mVertex.X > myMinor.mVertex.X){
