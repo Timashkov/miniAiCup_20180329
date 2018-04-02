@@ -21,7 +21,7 @@ class CompassTest {
 
     @Test
     fun testAngle(){
-        assert(4 == rs.getRumbIndexByVector(MovementVector(0.99f, 1f)))
+        assert(4 == rs.getRumbIndexByVectorNormalized(MovementVector(0.99f, 1f)))
     }
 
     @Test
