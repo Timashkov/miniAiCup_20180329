@@ -9,7 +9,7 @@ import utils.Vertex
 
 class EatEnemyStrategy(val mGlobalConfig: WorldConfig, val mLogger: Logger) : IStrategy {
 
-    override fun apply(worldInfo: WorldObjectsInfo, mineInfo: MineInfo): StrategyResult {
+    override fun apply(worldInfo: WorldObjectsInfo, mineInfo: MineInfo, currentTickCount: Int): StrategyResult {
 
         if (worldInfo.mEnemies.isNotEmpty()) {
             return searchForEnemies(worldInfo.mEnemies, mineInfo)

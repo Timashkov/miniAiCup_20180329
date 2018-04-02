@@ -5,6 +5,6 @@ import incominginfos.WorldObjectsInfo
 
 
 interface IStrategy {
-    fun apply(worldInfo: WorldObjectsInfo, mineInfo: MineInfo): StrategyResult
+    fun apply(worldInfo: WorldObjectsInfo, mineInfo: MineInfo, currentTickCount: Int): StrategyResult
     fun stopStrategy()
 }

@@ -14,13 +14,13 @@ class FindFoodStrategy(val mGlobalConfig: WorldConfig, val mLogger: Logger) : IS
     private var mTargetWay: BestWayResult? = null
     private var mGamerStateCache: MineInfo? = null
 
-    override fun apply(worldInfo: WorldObjectsInfo, mineInfo: MineInfo): StrategyResult {
+    override fun apply(worldInfo: WorldObjectsInfo, mineInfo: MineInfo, currentTickCount: Int): StrategyResult {
 
         if (worldInfo.mFood.isNotEmpty()) {
             analyzePlate(worldInfo, mineInfo)
             mGamerStateCache = mineInfo
 
-            if (mineInfo.mFragmentsState.size == 1 && mineInfo.getMainFragment().mMass > 120) {
+            if (mineInfo.mFragmentsState.size == 1 && mineInfo.getMainFragment().mMass > 120 && currentTickCount < 1000) {
                 var nearestViruses = worldInfo.mViruses.filter {
                     it.mVertex.distance(mineInfo.getCoordinates()) <= mineInfo.getMainFragment().mRadius * 2f
                 }.sortedBy { it.mVertex.distance(mineInfo.getMainFragment().mVertex) }

@@ -7,7 +7,7 @@ import incominginfos.WorldObjectsInfo
 import utils.Vertex
 
 class EscapeStrategy(val mGlobalConfig: WorldConfig, val mLogger: Logger) : IStrategy {
-    override fun apply(worldInfo: WorldObjectsInfo, mineInfo: MineInfo): StrategyResult {
+    override fun apply(worldInfo: WorldObjectsInfo, mineInfo: MineInfo, currentTickCount: Int): StrategyResult {
 
         if (worldInfo.mEnemies.isNotEmpty() && mineInfo.mFragmentsState.size == 1) {
             val enemies = worldInfo.mEnemies.filter { it.mMass > mineInfo.getMainFragment().mMass * 4f }

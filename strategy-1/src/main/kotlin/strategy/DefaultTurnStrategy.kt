@@ -20,7 +20,7 @@ class DefaultTurnStrategy(val mGlobalConfig: WorldConfig, val mLogger: Logger) :
     var currentCornerIndex: Int = 0
     var currentSquareIndex: Int = -1
 
-    override fun apply(worldInfo: WorldObjectsInfo, mineInfo: MineInfo): StrategyResult {
+    override fun apply(worldInfo: WorldObjectsInfo, mineInfo: MineInfo, currentTickCount: Int): StrategyResult {
         if (currentSquareIndex == -1) {
             currentSquareIndex = getSquareByDirectionAndPosition(mineInfo)
         }
