@@ -35,7 +35,6 @@ class EatEnemyStrategy(val mGlobalConfig: WorldConfig, val mLogger: Logger) : IS
         val nearEnemies = enemies.filter {
             it.mMass < me.getMainFragment().mMass / 1.25f &&
                     it.mMass > me.getMainFragment().mMass / 2.7f
-                    && it.mVertex.distance(me.getCoordinates()) < me.getMainFragment().mRadius * 1.5f
         }.sortedBy { me.getCoordinates().distance(it.mVertex) }
         if (nearEnemies.isNotEmpty()) {
             val res = StrategyResult(10, gameEngine.getMovementPointForTarget(me.getCoordinates(), nearEnemies[0].mVertex), debugMessage = "Try to eat ${nearEnemies[0].mId}")
