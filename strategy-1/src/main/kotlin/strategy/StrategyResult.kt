@@ -3,7 +3,7 @@ package strategy
 import org.json.JSONObject
 import utils.Vertex
 
-data class StrategyResult(val achievementScore: Float, val targetVertex: Vertex, val eject: Boolean = false, val split: Boolean = false, val debugMessage: String = "") {
+data class StrategyResult(val achievementScore: Int, val targetVertex: Vertex, val eject: Boolean = false, val split: Boolean = false, val debugMessage: String = "") {
     override fun toString(): String {
         return "Achiev: $achievementScore, Target: $targetVertex, Debug: $debugMessage"
     }
