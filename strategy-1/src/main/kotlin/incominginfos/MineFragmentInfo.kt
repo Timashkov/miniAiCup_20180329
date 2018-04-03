@@ -1,6 +1,7 @@
 package incominginfos
 
 import org.json.JSONObject
+import utils.Compass
 import utils.Vertex
 
 class MineFragmentInfo(fragmentJson: JSONObject) {
@@ -16,8 +17,12 @@ class MineFragmentInfo(fragmentJson: JSONObject) {
 
     fun canEatEnemyBySplit(enemyMass: Float): Boolean = enemyMass * WorldConfig.EAT_MASS_FACTOR * 2 < mMass
 
+    fun canBeEatenByEnemy(enemyMass: Float): Boolean = enemyMass > mMass * WorldConfig.EAT_MASS_FACTOR
+
     val canSplit: Boolean
         get() = mMass > WorldConfig.MIN_SPLITABLE_MASS
+
+    val mCompass: Compass = Compass()
 }
 
 /*    {

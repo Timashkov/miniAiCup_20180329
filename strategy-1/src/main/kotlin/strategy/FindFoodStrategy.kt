@@ -3,6 +3,7 @@ package strategy
 import incominginfos.MineInfo
 import incominginfos.WorldObjectsInfo
 import WorldConfig
+import incominginfos.MineFragmentInfo
 import utils.GameEngine
 import utils.Logger
 import utils.Vertex
@@ -20,11 +21,16 @@ class FindFoodStrategy(val mGlobalConfig: WorldConfig, val mLogger: Logger) : IS
 
         if (food.isNotEmpty()) {
             analyzePlate(gameEngine)
+            if (mTargetWay == null) {
+                return StrategyResult(-1, Vertex(0.0f, 0.0f), debugMessage = "FindFood: Not applied")
+            }
+
+
             val me = gameEngine.worldParseResult.mineInfo
             mGamerStateCache = me
             val viruses = gameEngine.worldParseResult.worldObjectsInfo.mViruses
 
-            if (me.mFragmentsState.size == 1 && me.getMainFragment().mMass > 120 && gameEngine.currentTick < 1000) {
+            if (me.mFragmentsState.size == 1 && me.getMainFragment().canSplit && gameEngine.currentTick < 1000) {
                 val nearestViruses = viruses.filter {
                     it.mVertex.distance(me.getCoordinates()) <= me.getMainFragment().mRadius * 2f
                 }.sortedBy { it.mVertex.distance(me.getMainFragment().mVertex) }
@@ -33,7 +39,7 @@ class FindFoodStrategy(val mGlobalConfig: WorldConfig, val mLogger: Logger) : IS
                 }
             }
 
-            if (me.getMainFragment().mMass > 120 * 2)
+            if (me.getMainFragment().mMass > WorldConfig.MIN_SPLITABLE_MASS * 1.5f && gameEngine.worldParseResult.worldObjectsInfo.mEnemies.isNotEmpty())
                 return StrategyResult(mTargetWay!!.foodPoints.size, mTargetWay!!.target, split = true, debugMessage = "Debug : get food with split")
             else
                 return StrategyResult(mTargetWay!!.foodPoints.size, gameEngine.getMovementPointForTarget(me.getCoordinates(), mTargetWay!!.target))
@@ -50,12 +56,40 @@ class FindFoodStrategy(val mGlobalConfig: WorldConfig, val mLogger: Logger) : IS
 
     private fun analyzePlate(gameEngine: GameEngine) {
 
-        if (mTargetWay != null && (isDestinationAchieved(gameEngine.worldParseResult.worldObjectsInfo) || isGamerStateChanged(gameEngine.worldParseResult.mineInfo))) {
-            mTargetWay = null
+        if (mTargetWay != null) {
+            if (isDestinationAchieved(gameEngine.worldParseResult.worldObjectsInfo) || isGamerStateChanged(gameEngine.worldParseResult.mineInfo)) {
+                mTargetWay = null
+                return
+            }
+
+            if (gameEngine.worldParseResult.mineInfo.mFragmentsState.any { it.mCompass.isVertexInBlackArea(it.mVertex, mTargetWay!!.target) })
+                mTargetWay = null
         }
 
+//        if (mTargetWay == null) {
+//            mTargetWay = findBestWay(gameEngine.worldParseResult.worldObjectsInfo.mFood.map { it.mVertex }, gameEngine.worldParseResult.mineInfo, gameEngine.worldParseResult.mineInfo.getMainFragment().mRadius)
+//        }
         if (mTargetWay == null) {
-            mTargetWay = findBestWay(gameEngine.worldParseResult.worldObjectsInfo.mFood.map { it.mVertex }, gameEngine.worldParseResult.mineInfo.getCoordinates(), gameEngine.worldParseResult.mineInfo.getMainFragment().mRadius)
+
+            var target = Vertex(-1f, -1f)
+            var allInSector = ArrayList<Vertex>()
+
+            gameEngine.worldParseResult.mineInfo.mFragmentsState.forEach { fragment ->
+                fragment.mCompass.mRumbBorders.forEach { borders ->
+                    if (borders.canEat.size > allInSector.size) {
+                        target = borders.canEat.sortedByDescending { it.distance(fragment.mVertex) }[0]
+                        allInSector = borders.canEat
+                        gameEngine.worldParseResult.mineInfo.mFragmentsState.forEach { nested ->
+                            if (nested != fragment) {
+                                if (nested.mVertex.distance(target) < nested.mRadius && nested.mCompass.isVertexInBlackArea(nested.mVertex, target))
+                                    target = Vertex(-1f, -1f)
+                            }
+                        }
+                    }
+                }
+            }
+            if (target != Vertex(-1f, -1f))
+                mTargetWay = BestWayResult(target, allInSector)
         }
     }
 
@@ -86,12 +120,12 @@ class FindFoodStrategy(val mGlobalConfig: WorldConfig, val mLogger: Logger) : IS
         return true
     }
 
-    fun findBestWay(foodPoints: List<Vertex>, gamerPosition: Vertex, gamerRadius: Float): BestWayResult {
+    fun findBestWay(foodPoints: List<Vertex>, gamerInfo: MineInfo, gamerRadius: Float): BestWayResult {
 
         // add ejects
 
         val sortedByX = foodPoints.sortedBy { it.X }
-        val sortedByR = foodPoints.sortedBy { it.distance(gamerPosition) }
+        val sortedByR = foodPoints.sortedBy { gamerInfo.shortestDistanceTo(it) }
         val weights: HashMap<Vertex, ArrayList<Vertex>> = HashMap()
 
         sortedByR.forEach { it ->

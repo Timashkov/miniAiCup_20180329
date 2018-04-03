@@ -23,21 +23,21 @@ class FindFoodStrategyTest {
 
     @Test
     fun testSearchBestWay(){
-        val food = ArrayList<Vertex>()
-        food.add(Vertex(1f,2f))
-        food.add(Vertex(2f,1f))
-        food.add(Vertex(3f,0f))
-        food.add(Vertex(3f,2f))
-        food.add(Vertex(1f,8f))
-        food.add(Vertex(3f,14f))
-        food.add(Vertex(9f,4f))
-        food.add(Vertex(10f,3f))
-        food.add(Vertex(10f,5f))
-        food.add(Vertex(7f,10f))
-
-        val gamer = Vertex(5f,8f)
-        val strategy = FindFoodStrategy(WorldConfig(JSON), mLogger)
-        strategy.findBestWay(food, gamer,1.5f)
+//        val food = ArrayList<Vertex>()
+//        food.add(Vertex(1f,2f))
+//        food.add(Vertex(2f,1f))
+//        food.add(Vertex(3f,0f))
+//        food.add(Vertex(3f,2f))
+//        food.add(Vertex(1f,8f))
+//        food.add(Vertex(3f,14f))
+//        food.add(Vertex(9f,4f))
+//        food.add(Vertex(10f,3f))
+//        food.add(Vertex(10f,5f))
+//        food.add(Vertex(7f,10f))
+//
+//        val gamer = Vertex(5f,8f)
+//        val strategy = FindFoodStrategy(WorldConfig(JSON), mLogger)
+//        strategy.findBestWay(food, gamer,1.5f)
     }
 
 }

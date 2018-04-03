@@ -9,52 +9,56 @@ class EvasionFilter(val mGlobalConfig: WorldConfig, val mLogger: Logger) {
     // отфильтровать информацию о мире так , чтоб не давать персонажу давать идти в сторону
     // потенциальной опасности
     fun onFilter(parseResult: ParseResult): ParseResult {
-        val myMinor = parseResult.mineInfo.getMinorFragment()
+
+        var pr = removeUnreachableFood(parseResult)
+
         val enemies = parseResult.worldObjectsInfo.mEnemies
-        var xDirection = -2
-        var yDirection = -2
         if (enemies.isNotEmpty()) {
-            enemies.filter { it.mMass > myMinor.mMass * 1.2 }.forEach { enemy ->
-
-                mLogger.writeLog("Processed enemy: $enemy")
-                if (enemy.mVertex.X > myMinor.mVertex.X){
-                    val xBorder = enemy.mVertex.X - enemy.mRadius
-                    if (xDirection == -2)
-                        xDirection = -1
-                    if (xDirection == 1)
-                        xDirection = 0
-
-                    parseResult.worldObjectsInfo.mFood = ArrayList(parseResult.worldObjectsInfo.mFood.filter { it.mVertex.X <= xBorder })
-                } else {
-                    val xBorder = enemy.mVertex.X + enemy.mRadius
-                    if (xDirection == -2)
-                        xDirection = 1
-                    if (xDirection == -1)
-                        xDirection = 0
-
-                    parseResult.worldObjectsInfo.mFood = ArrayList(parseResult.worldObjectsInfo.mFood.filter { it.mVertex.X >= xBorder })
-                }
-
-                if (enemy.mVertex.Y > myMinor.mVertex.Y){
-                    val yBorder = enemy.mVertex.Y - enemy.mRadius
-                    if (yDirection == -2)
-                        yDirection = -1
-                    if (yDirection == 1)
-                        yDirection = 0
-
-                    parseResult.worldObjectsInfo.mFood = ArrayList(parseResult.worldObjectsInfo.mFood.filter { it.mVertex.Y <= yBorder })
-                }else{
-                    val yBorder = enemy.mVertex.Y + enemy.mRadius
-                    if (yDirection == -2)
-                        yDirection = 1
-                    if (yDirection == -1)
-                        yDirection = 0
-
-                    parseResult.worldObjectsInfo.mFood = ArrayList(parseResult.worldObjectsInfo.mFood.filter { it.mVertex.Y >= yBorder })
+            pr.mineInfo.mFragmentsState.forEach {
+                fragment ->
+                enemies.filter { fragment.canBeEatenByEnemy(it.mMass) }.forEach { enemy ->
+                    mLogger.writeLog("Processed enemy: $enemy")
+                    fragment.mCompass.setColorsByEnemies(fragment, enemy)
                 }
             }
         }
 
+        val food = parseResult.worldObjectsInfo.mFood
+        if (food.isNotEmpty()){
+            pr.mineInfo.mFragmentsState.forEach {
+                fragment ->
+                food.forEach { f ->
+                    mLogger.writeLog("Processed f: $f")
+                    fragment.mCompass.setColorsByFood(fragment, f)
+                }
+            }
+        }
+
+        val ejections = parseResult.worldObjectsInfo.mEjection
+        if (ejections.isNotEmpty()){
+            pr.mineInfo.mFragmentsState.forEach {
+                fragment ->
+                ejections.forEach{ e->
+                    mLogger.writeLog("Processed e: $e")
+                    fragment.mCompass.setColorsByEjection(fragment, e)
+                }
+            }
+        }
+
+        return pr
+    }
+
+
+    fun removeUnreachableFood(parseResult: ParseResult): ParseResult {
+        val cornerDistance = parseResult.mineInfo.getMainFragment().mRadius * 1.5f
+        parseResult.worldObjectsInfo.mFood = ArrayList(parseResult.worldObjectsInfo.mFood.filter {
+            it.mVertex.distance(mGlobalConfig.lbCorner) > cornerDistance && it.mVertex.distance(mGlobalConfig.ltCorner) > cornerDistance &&
+                    it.mVertex.distance(mGlobalConfig.rbCorner) > cornerDistance && it.mVertex.distance(mGlobalConfig.rtCorner) > cornerDistance
+        })
+        parseResult.worldObjectsInfo.mEjection = ArrayList(parseResult.worldObjectsInfo.mEjection.filter {
+            it.mVertex.distance(mGlobalConfig.lbCorner) > cornerDistance && it.mVertex.distance(mGlobalConfig.ltCorner) > cornerDistance &&
+                    it.mVertex.distance(mGlobalConfig.rbCorner) > cornerDistance && it.mVertex.distance(mGlobalConfig.rtCorner) > cornerDistance
+        })
         return parseResult
     }
 }
