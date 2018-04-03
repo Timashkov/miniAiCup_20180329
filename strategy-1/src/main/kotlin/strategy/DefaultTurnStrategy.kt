@@ -10,6 +10,8 @@ import kotlin.math.abs
 
 class DefaultTurnStrategy(val mGlobalConfig: WorldConfig, val mLogger: Logger) : IStrategy {
 
+    //TODO:
+//: 618.75 : 866.25?? R > Ymax-Y
     val squares: ArrayList<Square> = ArrayList()
 
     init {

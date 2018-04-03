@@ -3,9 +3,7 @@ package utils
 import data.MovementVector
 import incominginfos.EnemyInfo
 import incominginfos.MineFragmentInfo
-import kotlin.math.PI
-import kotlin.math.asin
-import kotlin.math.atan2
+import kotlin.math.*
 
 // 1/32 of circle
 class Compass {
@@ -40,10 +38,15 @@ class Compass {
 
 
     fun getShiftedIndex(index: Int, shifting: Int): Int {
-        return if (index >= 16) index - 16
-        else index + 16
+        val res = index + shifting
+        if (res > 0 && res >= mRumbBorders.size)
+            return res%mRumbBorders.size
+
+        if (res < 0 )
+            return mRumbBorders.size + res%mRumbBorders.size
+        return res
     }
-    
+
     fun getRumbIndexByVectorNormalized(mv: MovementVector): Int = getShiftedIndex(getRumbIndexByVector(mv), 16)
 
     fun setColorsByEnemies(me: MineFragmentInfo, enemy: EnemyInfo) {
@@ -51,22 +54,44 @@ class Compass {
     }
 
     fun setColorsByEnemiesInternal(myPosition: Vertex, myMass: Float, enemyPosition: Vertex, enemyR: Float, enemyMass: Float) {
+        if (myPosition.distance(enemyPosition) < enemyR) {
+            if (enemyMass >= myMass * 1.2f)
+                markWholeCompass(COLOR.BLACK)
+            return
+        }
+
         val vec = myPosition.getMovementVector(enemyPosition)
         val directAngle = (atan2(vec.SY, vec.SX) * 180f / PI).toFloat()
         val directMovementIndex = getRumbIndexByAngle(directAngle)
-        val shiftedAngle = asin(enemyR / myPosition.distance(enemyPosition))
-        val shiftedRumbIndex = getRumbIndexByAngle(shiftedAngle + directAngle)
-        val indexShifting = shiftedRumbIndex - directMovementIndex
+
 
         if (enemyMass >= myMass * 1.2f) {
+            val shiftedAngle = (asin(enemyR / myPosition.distance(enemyPosition)) * 180f / PI).toFloat()
+            val shiftedRumbIndex = getRumbIndexByAngle(shiftedAngle + directAngle)
+            val indexDelta = shiftedRumbIndex - directMovementIndex
             mRumbBorders[getShiftedIndex(directMovementIndex, 16)].color = COLOR.BLACK
-            markRumbsByDirectAndShifting(directMovementIndex, indexShifting, COLOR.BLACK)
+            markRumbsByDirectAndShifting(directMovementIndex, indexDelta, COLOR.BLACK)
         } else if (enemyMass * 1.25f <= myMass && mRumbBorders[directMovementIndex].color != COLOR.BLACK) {
-            markRumbsByDirectAndShifting(directMovementIndex, indexShifting, COLOR.GREEN)
+            markRumbsByDirectAndShifting(directMovementIndex, 1, COLOR.GREEN)
         }
+
     }
 
-    private fun markRumbsByDirectAndShifting(directMovementIndex: Int, indexShifting: Int, black: COLOR) {
+    private fun markWholeCompass(color: COLOR){
+        mRumbBorders.forEach { it.color = color }
+    }
 
+    private fun markRumbsByDirectAndShifting(directMovementIndex: Int, indexDelta: Int, color: COLOR) {
+        for (i in indexDelta * -1..indexDelta) {
+            if (color == COLOR.BLACK) {
+                mRumbBorders[getShiftedIndex(directMovementIndex, i)].color = color
+                if (abs(i) != indexDelta)
+                    mRumbBorders[getShiftedIndex(directMovementIndex, i + 16)].color = color
+                else
+                    mRumbBorders[getShiftedIndex(directMovementIndex, i + 16)].color = COLOR.GREEN
+            } else if (mRumbBorders[getShiftedIndex(directMovementIndex, i)].color != COLOR.BLACK) {
+                mRumbBorders[getShiftedIndex(directMovementIndex, i)].color = color
+            }
+        }
     }
 }

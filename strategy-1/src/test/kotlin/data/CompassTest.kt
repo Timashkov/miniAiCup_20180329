@@ -5,14 +5,15 @@ import org.junit.Before
 
 import org.junit.Test
 import utils.Compass
+import utils.Vertex
 
 class CompassTest {
 
-    lateinit var rs: Compass
+    lateinit var mCompass: Compass
 
     @Before
     fun setUp() {
-        rs = Compass()
+        mCompass = Compass()
     }
 
     @After
@@ -21,13 +22,14 @@ class CompassTest {
 
     @Test
     fun testAngle(){
-        assert(4 == rs.getRumbIndexByVectorNormalized(MovementVector(0.99f, 1f)))
+        assert(4 == mCompass.getRumbIndexByVectorNormalized(MovementVector(0.99f, 1f)))
     }
 
     @Test
     fun testColors(){
+        mCompass.setColorsByEnemiesInternal(Vertex(10f,10f), 1f,  Vertex(13f, 13f), 4f,20f)
+        assert(mCompass.mRumbBorders.size == 32)
 
-        
     }
 
 }
