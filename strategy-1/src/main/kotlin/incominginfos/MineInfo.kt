@@ -5,11 +5,14 @@ import org.json.JSONObject
 import utils.Vertex
 import WorldConfig
 
-class MineInfo(stateJson: JSONArray, globalConfig: WorldConfig) {
+class MineInfo(stateJson: JSONArray, val globalConfig: WorldConfig) {
     val mFragmentsState: ArrayList<MineFragmentInfo> = ArrayList()
 
     val mMainFragmentIndex: Int
     val mSmallestFragmentIndex : Int
+
+    val canSplit:Boolean
+    get() = globalConfig.MaxFragsCnt > mFragmentsState.size && mFragmentsState.any { it.canSplit }
 
     enum class Direction {
         TOP_LEFT, TOP_RIGHT, BOTTOM_RIGHT, BOTTOM_LEFT, STAYS

@@ -7,10 +7,17 @@ class MineFragmentInfo(fragmentJson: JSONObject) {
     val mVertex = Vertex(fragmentJson.getFloat("X"), fragmentJson.getFloat("Y"))
     val mId: String = fragmentJson.getString("Id")
     val mMass: Float = fragmentJson.getFloat("M")
-    val mRadius : Float = fragmentJson.getFloat("R")
+    val mRadius: Float = fragmentJson.getFloat("R")
     val mSX: Float = fragmentJson.getFloat("SX")
     val mSY: Float = fragmentJson.getFloat("SY")
     val mTTF: Int = if (fragmentJson.has("TTF")) fragmentJson.getInt("TTF") else 0
+
+    fun canEatEnemyByMass(enemyMass: Float): Boolean = enemyMass * WorldConfig.EAT_MASS_FACTOR < mMass
+
+    fun canEatEnemyBySplit(enemyMass: Float): Boolean = enemyMass * WorldConfig.EAT_MASS_FACTOR * 2 < mMass
+
+    val canSplit: Boolean
+        get() = mMass > WorldConfig.MIN_SPLITABLE_MASS
 }
 
 /*    {

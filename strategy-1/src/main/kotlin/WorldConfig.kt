@@ -16,4 +16,9 @@ class WorldConfig(configJson: JSONObject) {
 
     fun getDimensions(): Vertex = Vertex(GameWidth.toFloat(), GameHeight.toFloat())
     fun getCenter(): Vertex = Vertex(GameWidth * 0.5f, GameHeight * 0.5f)
+
+    companion object {
+        val EAT_MASS_FACTOR = 1.2f
+        val MIN_SPLITABLE_MASS = 120f
+    }
 }

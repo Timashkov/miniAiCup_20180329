@@ -1,9 +1,6 @@
 package strategy
 
 import WorldConfig
-import incominginfos.EnemyInfo
-import incominginfos.MineInfo
-import incominginfos.WorldObjectsInfo
 import utils.GameEngine
 import utils.Logger
 import utils.Vertex
@@ -33,8 +30,7 @@ class EatEnemyStrategy(val mGlobalConfig: WorldConfig, val mLogger: Logger) : IS
 
         // Stage 1 - search for 1.25
         val nearEnemies = enemies.filter {
-            it.mMass < me.getMainFragment().mMass / 1.25f &&
-                    it.mMass > me.getMainFragment().mMass / 2.7f
+            me.getMainFragment().canEatEnemyByMass(it.mMass) && (!me.getMainFragment().canEatEnemyBySplit(it.mMass) || !me.getMainFragment().canSplit )
         }.sortedBy { me.getCoordinates().distance(it.mVertex) }
         if (nearEnemies.isNotEmpty()) {
             val res = StrategyResult(10, gameEngine.getMovementPointForTarget(me.getCoordinates(), nearEnemies[0].mVertex), debugMessage = "Try to eat ${nearEnemies[0].mId}")
@@ -44,9 +40,9 @@ class EatEnemyStrategy(val mGlobalConfig: WorldConfig, val mLogger: Logger) : IS
 
 
         // Stage 2 search for small fragments < 2.5
-        if (me.getMainFragment().mMass > 120) {
+        if (me.canSplit) {
             val nearLowerEnemies = enemies.filter {
-                it.mMass < me.getMainFragment().mMass / 2.7f
+                me.getMainFragment().canEatEnemyBySplit(it.mMass)
             }.sortedBy { me.getCoordinates().distance(it.mVertex) }
             if (nearLowerEnemies.isNotEmpty()) {
                 val res = StrategyResult(10, nearLowerEnemies[0].mVertex, split = true, debugMessage = "Try to eat ${nearLowerEnemies[0].mId}")
