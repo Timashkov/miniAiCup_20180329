@@ -9,7 +9,7 @@ import utils.Vertex
 
 class StarBurstStrategy(val mGlobalConfig: WorldConfig, val mLogger: Logger) : IStrategy {
     override fun apply(gameEngine: GameEngine): StrategyResult {
-        if (gameEngine.worldParseResult.worldObjectsInfo.mEnemies.isNotEmpty())
+        if (gameEngine.worldParseResult.worldObjectsInfo.mEnemies.isNotEmpty() || gameEngine.currentTick >= mGlobalConfig.GameTicks * 0.3f)
             return StrategyResult(-1, Vertex(0.0f, 0.0f), debugMessage = "Star burst: Not applied")
 
         if (gameEngine.worldParseResult.mineInfo.mFragmentsState.size == 1 && gameEngine.worldParseResult.mineInfo.getMainFragment().mMass > 120) {

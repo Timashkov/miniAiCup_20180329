@@ -33,10 +33,10 @@ class FindFoodStrategy(val mGlobalConfig: WorldConfig, val mLogger: Logger) : IS
                 }
             }
 
-            if ( me.getMainFragment().mMass > 120 * 2 && me.mFragmentsState.size == 1)
+            if (me.getMainFragment().mMass > 120 * 2)
                 return StrategyResult(mTargetWay!!.foodPoints.size, mTargetWay!!.target, split = true, debugMessage = "Debug : get food with split")
             else
-                return StrategyResult(mTargetWay!!.foodPoints.size, Vertex(0f,0f)/*gameEngine.getMovementPointForTarget(me.getCoordinates(), mTargetWay!!.target)*/)
+                return StrategyResult(mTargetWay!!.foodPoints.size, gameEngine.getMovementPointForTarget(me.getCoordinates(), mTargetWay!!.target))
         }
 
         mTargetWay = null

@@ -34,15 +34,15 @@ class CompassTest {
     @Test
     fun testCrossPoints(){
         var vec = MovementVector(1f,1f)
-        assert(vec.crossPointWithBorders(900f, 900f) == Vertex(900f,900f))
+        assert(vec.crossPointWithBorders(900f, 900f, Vertex(450f, 450f)) == Vertex(900f,900f))
         vec = MovementVector(1f,-1f)
-        assert(vec.crossPointWithBorders(900f, 900f) == Vertex(900f,0f))
+        assert(vec.crossPointWithBorders(900f, 900f, Vertex(450f, 450f)) == Vertex(900f,0f))
         vec = MovementVector(-1f,-1f)
-        assert(vec.crossPointWithBorders(900f, 900f) == Vertex(0f,0f))
+        assert(vec.crossPointWithBorders(900f, 900f, Vertex(450f, 450f)) == Vertex(0f,0f))
         vec = MovementVector(-1f,1f)
-        assert(vec.crossPointWithBorders(900f, 900f) == Vertex(0f,900f))
+        assert(vec.crossPointWithBorders(900f, 900f, Vertex(450f, 450f)) == Vertex(0f,900f))
         vec = MovementVector(-1f,-0.5f)
-        assert(vec.crossPointWithBorders(900f, 900f) == Vertex(0f,225f))
+        assert(vec.crossPointWithBorders(900f, 900f, Vertex(450f, 450f)) == Vertex(0f,225f))
     }
 
 }

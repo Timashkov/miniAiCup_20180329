@@ -38,10 +38,10 @@ class DefaultTurnStrategy(val mGlobalConfig: WorldConfig, val mLogger: Logger) :
 
         val targetVertex = squares[currentSquareIndex].corners[currentCornerIndex]
 
-        val targetVector = gameEngine.getMovementPointForTarget(me.getCoordinates(), targetVertex, me.getMainFragment().mRadius)
+        val fixedVertex = gameEngine.getMovementPointForTarget(me.getCoordinates(), targetVertex)
 
 
-        return StrategyResult(0, targetVertex, debugMessage = "DEFAULT: Go TO $targetVertex")
+        return StrategyResult(0, fixedVertex, debugMessage = "DEFAULT: Go TO $targetVertex")
     }
 
     private fun getSquareByDirectionAndPosition(mineInfo: MineInfo): Int {

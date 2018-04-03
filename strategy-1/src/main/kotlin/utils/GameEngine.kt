@@ -6,10 +6,10 @@ import data.MovementVector
 import kotlin.math.pow
 import kotlin.math.sqrt
 
-class GameEngine(private val globalConfig: WorldConfig, val worldParseResult: ParseResult, val currentTick : Int) {
+class GameEngine(private val globalConfig: WorldConfig, val worldParseResult: ParseResult, val currentTick: Int) {
 
 
-    fun getMovementPointForTarget(currentPosition: Vertex, target: Vertex, radius: Float): MovementVector {
+    fun getMovementPointForTarget(currentPosition: Vertex, target: Vertex): Vertex {
         //for one fragment
         val fragment = worldParseResult.mineInfo.getMainFragment()
         val inertionK = globalConfig.InertionFactor / fragment.mMass
@@ -22,9 +22,10 @@ class GameEngine(private val globalConfig: WorldConfig, val worldParseResult: Pa
 
         val factor = sqrt(NX.pow(2) + NY.pow(2))
         // radius for minimize error
-        NX = NX * radius / factor // 1/factor * NX
-        NY = NY *radius / factor
+        NX /= factor // 1/factor * NX
+        NY /= factor
 
-        return MovementVector(currentPosition.X + NX, currentPosition.Y + NY)
+
+        return MovementVector(NX, NY).crossPointWithBorders(globalConfig.GameWidth.toFloat(), globalConfig.GameHeight.toFloat(), currentPosition)
     }
 }
