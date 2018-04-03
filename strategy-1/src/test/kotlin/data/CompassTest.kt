@@ -29,7 +29,20 @@ class CompassTest {
     fun testColors(){
         mCompass.setColorsByEnemiesInternal(Vertex(10f,10f), 1f,  Vertex(13f, 13f), 4f,20f)
         assert(mCompass.mRumbBorders.size == 32)
+    }
 
+    @Test
+    fun testCrossPoints(){
+        var vec = MovementVector(1f,1f)
+        assert(vec.crossPointWithBorders(900f, 900f) == Vertex(900f,900f))
+        vec = MovementVector(1f,-1f)
+        assert(vec.crossPointWithBorders(900f, 900f) == Vertex(900f,0f))
+        vec = MovementVector(-1f,-1f)
+        assert(vec.crossPointWithBorders(900f, 900f) == Vertex(0f,0f))
+        vec = MovementVector(-1f,1f)
+        assert(vec.crossPointWithBorders(900f, 900f) == Vertex(0f,900f))
+        vec = MovementVector(-1f,-0.5f)
+        assert(vec.crossPointWithBorders(900f, 900f) == Vertex(0f,225f))
     }
 
 }

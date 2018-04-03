@@ -85,9 +85,7 @@ class Compass {
         for (i in indexDelta * -1..indexDelta) {
             if (color == COLOR.BLACK) {
                 mRumbBorders[getShiftedIndex(directMovementIndex, i)].color = color
-                if (abs(i) != indexDelta)
-                    mRumbBorders[getShiftedIndex(directMovementIndex, i + 16)].color = color
-                else
+                if (abs(i) == indexDelta)
                     mRumbBorders[getShiftedIndex(directMovementIndex, i + 16)].color = COLOR.GREEN
             } else if (mRumbBorders[getShiftedIndex(directMovementIndex, i)].color != COLOR.BLACK) {
                 mRumbBorders[getShiftedIndex(directMovementIndex, i)].color = color
