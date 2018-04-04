@@ -6,20 +6,20 @@ import utils.Vertex
 import WorldConfig
 
 class MineInfo(stateJson: JSONArray, val globalConfig: WorldConfig) {
-    val mFragmentsState: ArrayList<MineFragmentInfo> = ArrayList()
+    val mFragmentsState: Array<MineFragmentInfo>
 
     val mMainFragmentIndex: Int
-    val mSmallestFragmentIndex : Int
+    val mSmallestFragmentIndex: Int
 
-    val canSplit:Boolean
-    get() = globalConfig.MaxFragsCnt > mFragmentsState.size && mFragmentsState.any { it.canSplit }
+    val canSplit: Boolean
+        get() = globalConfig.MaxFragsCnt > mFragmentsState.size && mFragmentsState.any { it.canSplit }
 
     enum class Direction {
         TOP_LEFT, TOP_RIGHT, BOTTOM_RIGHT, BOTTOM_LEFT, STAYS
     }
 
     init {
-        stateJson.map { it as JSONObject }.forEach { mFragmentsState.add(MineFragmentInfo(it)) }
+        mFragmentsState = Array<MineFragmentInfo>(stateJson.length(), { it -> MineFragmentInfo(stateJson.getJSONObject(it)) })
         mMainFragmentIndex = getMainFragmentIndex()
         mSmallestFragmentIndex = getSmallestFragmentIndex()
     }

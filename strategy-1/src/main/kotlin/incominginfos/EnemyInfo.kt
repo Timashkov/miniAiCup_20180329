@@ -8,4 +8,8 @@ class EnemyInfo(enemyJson: JSONObject) {
     val mId: String = enemyJson.getString("Id")
     val mMass: Float = enemyJson.getFloat("M")
     val mRadius: Float = enemyJson.getFloat("R")
+
+    override fun toString(): String {
+        return "Enemy: mass =$mMass rad = $mRadius id=$mId $mVertex"
+    }
 }

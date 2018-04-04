@@ -1,5 +1,6 @@
 package incominginfos
 
+import WorldConfig.Companion.MAGIC_MASS4EAT
 import org.json.JSONObject
 import utils.Compass
 import utils.Vertex
@@ -17,12 +18,12 @@ class MineFragmentInfo(fragmentJson: JSONObject) {
 
     fun canEatEnemyBySplit(enemyMass: Float): Boolean = enemyMass * WorldConfig.EAT_MASS_FACTOR * 2 < mMass
 
-    fun canBeEatenByEnemy(enemyMass: Float): Boolean = enemyMass > mMass * WorldConfig.EAT_MASS_FACTOR
+    fun canBeEatenByEnemy(enemyMass: Float): Boolean = enemyMass > mMass * WorldConfig.EAT_MASS_FACTOR - MAGIC_MASS4EAT
 
     val canSplit: Boolean
         get() = mMass > WorldConfig.MIN_SPLITABLE_MASS
 
-    val mCompass: Compass = Compass()
+    val mCompass: Compass = Compass(mVertex)
 
     override fun toString(): String {
         return "$mId: mass=$mMass r=$mRadius mSX=$mSX mSY=$mSY mTTF=$mTTF"

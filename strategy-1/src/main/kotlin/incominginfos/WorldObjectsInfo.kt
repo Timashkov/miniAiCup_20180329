@@ -5,20 +5,40 @@ import org.json.JSONObject
 import WorldConfig
 
 class WorldObjectsInfo(enemyJson: JSONArray, globalConfig: WorldConfig) {
-    val mViruses: ArrayList<VirusInfo> = ArrayList()
-    var mFood: ArrayList<FoodInfo> = ArrayList()
-    var mEjection: ArrayList<EjectionInfo> = ArrayList()
-    var mEnemies: ArrayList<EnemyInfo> = ArrayList()
+    val mViruses: List<VirusInfo>
+    var mFood: List<FoodInfo>
+    var mEjection: List<EjectionInfo>
+    var mEnemies: List<EnemyInfo>
 
     init {
+        val food = ArrayList<FoodInfo>()
+        val ejection = ArrayList<EjectionInfo>()
+        val enemies = ArrayList<EnemyInfo>()
+        val viruses = ArrayList<VirusInfo>()
         enemyJson.map { it as JSONObject }.forEach {
             when (it.getString("T")) {
-                "F" -> mFood.add(FoodInfo(it, globalConfig.FoodMass))
-                "E" -> mEjection.add(EjectionInfo(it))
-                "V" -> mViruses.add(VirusInfo(it))
-                "P" -> mEnemies.add(EnemyInfo(it))
+                "F" -> {
+                    val f = FoodInfo(it, globalConfig.FoodMass)
+                    if (!food.contains(f)) food.add(f)
+                }
+                "E" -> {
+                    val e = EjectionInfo(it)
+                    if (!ejection.contains(e)) ejection.add(e)
+                }
+                "V" -> {
+                    val v = VirusInfo(it)
+                    if (!viruses.contains(v)) viruses.add(v)
+                }
+                "P" -> {
+                    val e = EnemyInfo(it)
+                    if (!enemies.contains(e)) enemies.add(e)
+                }
             }
         }
+        mFood = food
+        mEjection = ejection
+        mEnemies = enemies
+        mViruses = viruses
     }
 }
 
