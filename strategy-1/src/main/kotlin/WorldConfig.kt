@@ -29,5 +29,7 @@ class WorldConfig(configJson: JSONObject) {
     companion object {
         val EAT_MASS_FACTOR = 1.2f
         val MIN_SPLITABLE_MASS = 120f
+        val MAGIC_MASS4EAT = 3
+        val MAGIC_COMPASS_BLACK_DELTA = 4
     }
 }
