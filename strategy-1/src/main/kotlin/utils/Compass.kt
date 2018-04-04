@@ -1,5 +1,6 @@
 package utils
 
+import WorldConfig.Companion.MAGIC_COMPASS_BLACK_DELTA
 import data.MovementVector
 import incominginfos.EjectionInfo
 import incominginfos.EnemyInfo
@@ -8,9 +9,9 @@ import incominginfos.MineFragmentInfo
 import kotlin.math.*
 
 // 1/32 of circle
-class Compass {
+class Compass(val mCenterVertex: Vertex) {
 
-    data class Rumb(val majorBorder: Float, var availablepoints: Int = 0, var canEat: ArrayList<Vertex> = ArrayList(), var canEatEnemy: Vertex = Vertex(-1f,-1f))
+    data class Rumb(val majorBorder: Float, var availablepoints: Int = 0, var canEat: ArrayList<Vertex> = ArrayList(), var canEatEnemy: Vertex = Vertex(-1f, -1f))
 
     val mRumbBorders: Array<Rumb>
 
@@ -49,12 +50,12 @@ class Compass {
         setColorsByEnemiesInternal(me.mVertex, me.mMass, enemy.mVertex, enemy.mRadius, enemy.mMass)
     }
 
-    fun setColorsByFood(me: MineFragmentInfo, food: FoodInfo) {
-        setColorsByFoodInternal(me.mVertex, food.mVertex)
+    fun setColorsByFood(food: FoodInfo): Boolean {
+        return setColorsByFoodInternal(mCenterVertex, food.mVertex)
     }
 
-    fun setColorsByEjection(me: MineFragmentInfo, ejection: EjectionInfo) {
-        setColorsByFoodInternal(me.mVertex, ejection.mVertex)
+    fun setColorsByEjection(ejection: EjectionInfo): Boolean {
+        return setColorsByFoodInternal(mCenterVertex, ejection.mVertex)
     }
 
     // can be private , but tests
@@ -73,7 +74,8 @@ class Compass {
         if (enemyMass >= myMass * WorldConfig.EAT_MASS_FACTOR) {
             val shiftedAngle = (asin(enemyR / myPosition.distance(enemyPosition)) * 180f / PI).toFloat()
             val shiftedRumbIndex = getRumbIndexByAngle(shiftedAngle + directAngle)
-            val indexDelta = shiftedRumbIndex - directMovementIndex
+            val indexDelta = shiftedRumbIndex - directMovementIndex + MAGIC_COMPASS_BLACK_DELTA
+
             mRumbBorders[getShiftedIndex(directMovementIndex, 16)].availablepoints = FAIL_SECTOR_POINTS
             markRumbsByDirectAndShifting(directMovementIndex, indexDelta, FAIL_SECTOR_POINTS)
         } else if (enemyMass * WorldConfig.EAT_MASS_FACTOR <= myMass && mRumbBorders[directMovementIndex].availablepoints != FAIL_SECTOR_POINTS) {
@@ -81,7 +83,7 @@ class Compass {
         }
     }
 
-    fun setColorsByFoodInternal(myPosition: Vertex, foodPosition: Vertex) {
+    fun setColorsByFoodInternal(myPosition: Vertex, foodPosition: Vertex): Boolean {
 
         val vec = myPosition.getMovementVector(foodPosition)
         val directAngle = (atan2(vec.SY, vec.SX) * 180f / PI).toFloat()
@@ -90,7 +92,9 @@ class Compass {
         if (mRumbBorders[directMovementIndex].availablepoints != FAIL_SECTOR_POINTS) {
             mRumbBorders[directMovementIndex].availablepoints = mRumbBorders[directMovementIndex].availablepoints + 1
             mRumbBorders[directMovementIndex].canEat.add(foodPosition)
+            return true
         }
+        return false
     }
 
     private fun setWholeCompassPoints(points: Int) {
