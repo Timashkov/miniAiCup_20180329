@@ -23,6 +23,14 @@ class MineFragmentInfo(fragmentJson: JSONObject) {
         get() = mMass > WorldConfig.MIN_SPLITABLE_MASS
 
     val mCompass: Compass = Compass()
+
+    override fun toString(): String {
+        return "$mId: mass=$mMass r=$mRadius mSX=$mSX mSY=$mSY mTTF=$mTTF"
+    }
+
+    fun equals(other: MineFragmentInfo): Boolean {
+        return mId==other.mId
+    }
 }
 
 /*    {
