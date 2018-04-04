@@ -2,8 +2,6 @@ package strategy
 
 import utils.Logger
 import WorldConfig
-import incominginfos.MineInfo
-import incominginfos.WorldObjectsInfo
 import utils.GameEngine
 import utils.Vertex
 
@@ -14,7 +12,7 @@ class EscapeStrategy(val mGlobalConfig: WorldConfig, val mLogger: Logger) : IStr
 
         //TODO:??
         if (gameEngine.worldParseResult.worldObjectsInfo.mEnemies.isNotEmpty() && me.mFragmentsState.size == 1) {
-            val enemies = gameEngine.worldParseResult.worldObjectsInfo.mEnemies.filter { it.mMass > me.getMainFragment().mMass * 4f }
+            val enemies = gameEngine.worldParseResult.worldObjectsInfo.mEnemies.filter { me.getMainFragment().canBeEatenByEnemy(it.mMass) }
             if (enemies.isNotEmpty()) {
                 val deltaX = enemies[0].mVertex.X - me.getMainFragment().mVertex.X
                 val k = (enemies[0].mVertex.Y - me.getMainFragment().mVertex.Y) / deltaX

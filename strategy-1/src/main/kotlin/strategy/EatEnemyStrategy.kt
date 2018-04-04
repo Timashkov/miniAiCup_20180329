@@ -24,13 +24,9 @@ class EatEnemyStrategy(val mGlobalConfig: WorldConfig, val mLogger: Logger) : IS
         val enemies = gameEngine.worldParseResult.worldObjectsInfo.mEnemies
         val me = gameEngine.worldParseResult.mineInfo
 
-        // Stage 0
-        if (me.mFragmentsState.size > 2)
-            return StrategyResult(-1, Vertex(0.0f, 0.0f), debugMessage = "Eat Enemy: Not applied")
-
         // Stage 1 - search for 1.25
         val nearEnemies = enemies.filter {
-            me.getMainFragment().canEatEnemyByMass(it.mMass) && (!me.getMainFragment().canEatEnemyBySplit(it.mMass) || !me.getMainFragment().canSplit )
+            me.getMinorFragment().canEatEnemyByMass(it.mMass) && (!me.getMinorFragment().canEatEnemyBySplit(it.mMass) || !me.getMinorFragment().canSplit )
         }.sortedBy { me.getCoordinates().distance(it.mVertex) }
         if (nearEnemies.isNotEmpty()) {
             val res = StrategyResult(10, gameEngine.getMovementPointForTarget(me.getMainFragment().mId, me.getCoordinates(), nearEnemies[0].mVertex), debugMessage = "Try to eat ${nearEnemies[0].mId}")
@@ -42,7 +38,7 @@ class EatEnemyStrategy(val mGlobalConfig: WorldConfig, val mLogger: Logger) : IS
         // Stage 2 search for small fragments < 2.5
         if (me.canSplit) {
             val nearLowerEnemies = enemies.filter {
-                me.getMainFragment().canEatEnemyBySplit(it.mMass)
+                me.getMinorFragment().canEatEnemyBySplit(it.mMass)
             }.sortedBy { me.getCoordinates().distance(it.mVertex) }
             if (nearLowerEnemies.isNotEmpty()) {
                 val res = StrategyResult(10, nearLowerEnemies[0].mVertex, split = true, debugMessage = "Try to eat ${nearLowerEnemies[0].mId}")

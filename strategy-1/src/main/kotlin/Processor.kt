@@ -39,7 +39,7 @@ class Processor(configJson: JSONObject) {
                 mLogger.writeLog("Start check strategies")
 
                 val strategyResults = listOf(
-                        mEscapeStrategy.apply(gameEngine),
+//                        mEscapeStrategy.apply(gameEngine),
                         // FussionStrategy
                         mEatEnemyStrategy.apply(gameEngine),
                         mFoodStrategy.apply(gameEngine),

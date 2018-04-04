@@ -25,27 +25,30 @@ class FindFoodStrategy(val mGlobalConfig: WorldConfig, val mLogger: Logger) : IS
                 return StrategyResult(-1, Vertex(0.0f, 0.0f), debugMessage = "FindFood: Not applied")
             }
 
+            try {
+                val me = gameEngine.worldParseResult.mineInfo
+                mGamerStateCache = me
+                val viruses = gameEngine.worldParseResult.worldObjectsInfo.mViruses
 
-            val me = gameEngine.worldParseResult.mineInfo
-            mGamerStateCache = me
-            val viruses = gameEngine.worldParseResult.worldObjectsInfo.mViruses
-
-            if (me.mFragmentsState.size == 1 && me.getMainFragment().canSplit && gameEngine.currentTick < 1000) {
-                val nearestViruses = viruses.filter {
-                    it.mVertex.distance(me.getCoordinates()) <= me.getMainFragment().mRadius * 2f
-                }.sortedBy { it.mVertex.distance(me.getMainFragment().mVertex) }
-                if (nearestViruses.isNotEmpty() && nearestViruses[0].mVertex.distance(me.getMainFragment().mVertex) < mTargetWay!!.target.distance(me.getMainFragment().mVertex)) {
-                    return StrategyResult(2, nearestViruses[0].mVertex)
+                if (me.mFragmentsState.size == 1 && me.getMainFragment().canSplit && gameEngine.currentTick < 1000) {
+                    val nearestViruses = viruses.filter {
+                        it.mVertex.distance(me.getCoordinates()) <= me.getMainFragment().mRadius * 2f
+                    }.sortedBy { it.mVertex.distance(me.getMainFragment().mVertex) }
+                    if (nearestViruses.isNotEmpty() && nearestViruses[0].mVertex.distance(me.getMainFragment().mVertex) < mTargetWay!!.target.distance(me.getMainFragment().mVertex)) {
+                        return StrategyResult(2, nearestViruses[0].mVertex)
+                    }
                 }
-            }
 
-            if (me.getMainFragment().mMass > WorldConfig.MIN_SPLITABLE_MASS * 1.5f && gameEngine.worldParseResult.worldObjectsInfo.mEnemies.isNotEmpty()) {
-                mLogger.writeLog("$DEBUG_TAG movementTarget ${mTargetWay?.target} and split for FOOD: ${mTargetWay!!.target}\n")
-                return StrategyResult(mTargetWay!!.foodPoints.size, mTargetWay!!.target, split = true, debugMessage = "Debug : get food with split")
-            } else {
-                val movementTarget = gameEngine.getMovementPointForTarget(mTargetWay!!.fragmentId, me.getCoordinates(), mTargetWay!!.target)
-                mLogger.writeLog("$DEBUG_TAG movementTarget $movementTarget  for FOOD: ${mTargetWay!!.target}\n")
-                return StrategyResult(mTargetWay!!.foodPoints.size, movementTarget)
+                if (me.getMainFragment().mMass > WorldConfig.MIN_SPLITABLE_MASS * 1.5f && gameEngine.worldParseResult.worldObjectsInfo.mEnemies.isEmpty()) {
+                    mLogger.writeLog("$DEBUG_TAG movementTarget ${mTargetWay?.target} and split for FOOD: ${mTargetWay!!.target}\n")
+                    return StrategyResult(mTargetWay!!.foodPoints.size, mTargetWay!!.target, split = true, debugMessage = "Debug : get food with split")
+                } else {
+                    val movementTarget = gameEngine.getMovementPointForTarget(mTargetWay!!.fragmentId, me.getCoordinates(), mTargetWay!!.target)
+                    mLogger.writeLog("$DEBUG_TAG movementTarget $movementTarget  for FOOD: ${mTargetWay!!.target}\n")
+                    return StrategyResult(mTargetWay!!.foodPoints.size, movementTarget)
+                }
+            } catch (e: Exception) {
+                mLogger.writeLog("Fault on apply food $e")
             }
         }
 
@@ -60,25 +63,26 @@ class FindFoodStrategy(val mGlobalConfig: WorldConfig, val mLogger: Logger) : IS
 
     private fun analyzePlate(gameEngine: GameEngine) {
 
-        if (mTargetWay != null) {
-            if (isDestinationAchieved(gameEngine.worldParseResult.worldObjectsInfo) || isGamerStateChanged(gameEngine.worldParseResult.mineInfo)) {
+        try {
+            if (mTargetWay != null && isDestinationAchieved(gameEngine.worldParseResult.worldObjectsInfo) || isGamerStateChanged(gameEngine.worldParseResult.mineInfo)) {
                 mTargetWay = null
-                return
             }
 
-            if (gameEngine.worldParseResult.mineInfo.mFragmentsState.any { it.mCompass.isVertexInBlackArea(it.mVertex, mTargetWay!!.target) }) {
+            if (mTargetWay != null && gameEngine.worldParseResult.mineInfo.mFragmentsState.any { it.mCompass.isVertexInBlackArea(it.mVertex, mTargetWay!!.target) }) {
                 mLogger.writeLog("$DEBUG_TAG fragment in black area")
                 mTargetWay = null
             }
 
-            if (gameEngine.worldParseResult.mineInfo.mFragmentsState.any { it.mVertex == mTargetWay!!.target }) {
+            if (mTargetWay != null && gameEngine.worldParseResult.mineInfo.mFragmentsState.any { it.mVertex == mTargetWay!!.target }) {
                 mLogger.writeLog("$DEBUG_TAG one fragment on the point now")
                 mTargetWay = null
             }
-        }
 
-        if (mTargetWay == null) {
-            mTargetWay = findBestWay(gameEngine.worldParseResult.worldObjectsInfo.mFood.map { it.mVertex }, gameEngine.worldParseResult.mineInfo, gameEngine.worldParseResult.mineInfo.getMainFragment().mRadius)
+            if (mTargetWay == null) {
+                mTargetWay = findBestWay(gameEngine.worldParseResult.worldObjectsInfo.mFood.map { it.mVertex }, gameEngine.worldParseResult.mineInfo, gameEngine.worldParseResult.mineInfo.getMainFragment().mRadius)
+            }
+        } catch (e: Exception) {
+            mLogger.writeLog("Fault on analyze plate $e")
         }
     }
 

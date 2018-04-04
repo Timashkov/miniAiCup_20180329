@@ -12,10 +12,9 @@ class EvasionFilter(val mGlobalConfig: WorldConfig, val mLogger: Logger) {
 
         var pr = removeUnreachableFood(parseResult)
 
-        val enemies = parseResult.worldObjectsInfo.mEnemies
+        val enemies = pr.worldObjectsInfo.mEnemies
         if (enemies.isNotEmpty()) {
-            pr.mineInfo.mFragmentsState.forEach {
-                fragment ->
+            pr.mineInfo.mFragmentsState.forEach { fragment ->
                 enemies.filter { fragment.canBeEatenByEnemy(it.mMass) }.forEach { enemy ->
                     mLogger.writeLog("Processed enemy: $enemy")
                     fragment.mCompass.setColorsByEnemies(fragment, enemy)
@@ -23,26 +22,35 @@ class EvasionFilter(val mGlobalConfig: WorldConfig, val mLogger: Logger) {
             }
         }
 
-        val food = parseResult.worldObjectsInfo.mFood
-        if (food.isNotEmpty()){
-            pr.mineInfo.mFragmentsState.forEach {
-                fragment ->
-                food.forEach { f ->
-                    mLogger.writeLog("Processed f: $f")
-                    fragment.mCompass.setColorsByFood(fragment, f)
-                }
+        val food = pr.worldObjectsInfo.mFood
+        if (food.isNotEmpty()) {
+            pr.worldObjectsInfo.mFood.filter { food ->
+                pr.mineInfo.mFragmentsState.none { fragment -> !fragment.mCompass.setColorsByFood(food) }
             }
+//            pr.mineInfo.mFragmentsState.forEach { fragment ->
+//                food.forEach { f ->
+//                    mLogger.writeLog("Processed f: $f")
+//                    if (!fragment.mCompass.setColorsByFood(f)) {
+//                        pr.worldObjectsInfo.mFood.remove(f)
+//                    }
+//                }
+//            }
         }
 
-        val ejections = parseResult.worldObjectsInfo.mEjection
-        if (ejections.isNotEmpty()){
-            pr.mineInfo.mFragmentsState.forEach {
-                fragment ->
-                ejections.forEach{ e->
-                    mLogger.writeLog("Processed e: $e")
-                    fragment.mCompass.setColorsByEjection(fragment, e)
-                }
+        val ejections = pr.worldObjectsInfo.mEjection
+        if (ejections.isNotEmpty()) {
+            pr.worldObjectsInfo.mEjection.filter { ejection ->
+                pr.mineInfo.mFragmentsState.none { fragment -> !fragment.mCompass.setColorsByEjection(ejection) }
             }
+
+//            pr.mineInfo.mFragmentsState.forEach { fragment ->
+//                ejections.forEach { e ->
+//                    mLogger.writeLog("Processed e: $e")
+//                    if (!fragment.mCompass.setColorsByEjection(e)) {
+//                        pr.worldObjectsInfo.mEjection.remove(e)
+//                    }
+//                }
+//            }
         }
 
         return pr
@@ -51,15 +59,22 @@ class EvasionFilter(val mGlobalConfig: WorldConfig, val mLogger: Logger) {
 
     fun removeUnreachableFood(parseResult: ParseResult): ParseResult {
         mLogger.writeLog("removeUnreachableFood")
-        val cornerDistance = parseResult.mineInfo.getMainFragment().mRadius * 1.5f
-        parseResult.worldObjectsInfo.mFood = ArrayList(parseResult.worldObjectsInfo.mFood.filter {
-            it.mVertex.distance(mGlobalConfig.lbCorner) > cornerDistance && it.mVertex.distance(mGlobalConfig.ltCorner) > cornerDistance &&
-                    it.mVertex.distance(mGlobalConfig.rbCorner) > cornerDistance && it.mVertex.distance(mGlobalConfig.rtCorner) > cornerDistance
-        })
+
+        val cornerDistance = parseResult.mineInfo.getMainFragment().mRadius * 1.1f
+
+        parseResult.worldObjectsInfo.mFood = parseResult.worldObjectsInfo.mFood.filter {
+            !(it.mVertex.X < cornerDistance && it.mVertex.Y < cornerDistance) &&
+                    !(it.mVertex.X > mGlobalConfig.GameWidth - cornerDistance && it.mVertex.Y < cornerDistance) &&
+                    !(it.mVertex.X > mGlobalConfig.GameWidth - cornerDistance && it.mVertex.Y > mGlobalConfig.GameHeight - cornerDistance) &&
+                    !(it.mVertex.X < cornerDistance && it.mVertex.Y > mGlobalConfig.GameHeight - cornerDistance)
+        }
         parseResult.worldObjectsInfo.mEjection = ArrayList(parseResult.worldObjectsInfo.mEjection.filter {
-            it.mVertex.distance(mGlobalConfig.lbCorner) > cornerDistance && it.mVertex.distance(mGlobalConfig.ltCorner) > cornerDistance &&
-                    it.mVertex.distance(mGlobalConfig.rbCorner) > cornerDistance && it.mVertex.distance(mGlobalConfig.rtCorner) > cornerDistance
+            !(it.mVertex.X < cornerDistance && it.mVertex.Y < cornerDistance) &&
+                    !(it.mVertex.X > mGlobalConfig.GameWidth - cornerDistance && it.mVertex.Y < cornerDistance) &&
+                    !(it.mVertex.X > mGlobalConfig.GameWidth - cornerDistance && it.mVertex.Y > mGlobalConfig.GameHeight - cornerDistance) &&
+                    !(it.mVertex.X < cornerDistance && it.mVertex.Y > mGlobalConfig.GameHeight - cornerDistance)
         })
+
         mLogger.writeLog("food removed")
         return parseResult
     }
