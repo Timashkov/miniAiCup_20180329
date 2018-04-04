@@ -20,7 +20,7 @@ class Processor(configJson: JSONObject) {
 
     // Tick Process
     fun onTick(tickData: JSONObject): JSONObject {
-        mLogger.writeLog("INCOMING ${tickData.toString()}\n")
+        mLogger.writeLog("INCOMING $tickData\n")
         val parsed = parseIncoming(tickData)
         val out = analyzeData(parsed, mCurrentTick)
         mCurrentTick++
@@ -30,24 +30,30 @@ class Processor(configJson: JSONObject) {
     private fun parseIncoming(tickData: JSONObject): ParseResult = ParseResult(MineInfo(tickData.getJSONArray("Mine"), mWorldConfig), WorldObjectsInfo(tickData.getJSONArray("Objects"), mWorldConfig))
 
     private fun analyzeData(parseResult: ParseResult, currentTickCount: Int): JSONObject {
-        val data = mEvasionFilter.onFilter(parseResult)
+        try {
+            val data = mEvasionFilter.onFilter(parseResult)
 
-        if (data.mineInfo.isNotEmpty()) {
-            val gameEngine = GameEngine(mWorldConfig, data, currentTickCount)
-            mLogger.writeLog("Start check strategies")
 
-            val strategyResults = listOf(
-                    mEscapeStrategy.apply(gameEngine),
-                    // FussionStrategy
-                    mEatEnemyStrategy.apply(gameEngine),
-                    mFoodStrategy.apply(gameEngine),
-                    mStartBurstStrategy.apply(gameEngine),
-                    mDefaultStrategy.apply(gameEngine)
-            )
+            if (data.mineInfo.isNotEmpty()) {
+                val gameEngine = GameEngine(mWorldConfig, data, currentTickCount, mLogger)
+                mLogger.writeLog("Start check strategies")
 
-            val chosen = strategyResults.sortedByDescending { it.achievementScore }[0]
-            mLogger.writeLog("Chosen strategy: $chosen\n")
-            return chosen.toJSONCommand()
+                val strategyResults = listOf(
+                        mEscapeStrategy.apply(gameEngine),
+                        // FussionStrategy
+                        mEatEnemyStrategy.apply(gameEngine),
+                        mFoodStrategy.apply(gameEngine),
+                        mStartBurstStrategy.apply(gameEngine),
+                        mDefaultStrategy.apply(gameEngine)
+                )
+
+                val chosen = strategyResults.sortedByDescending { it.achievementScore }[0]
+                mLogger.writeLog("Chosen strategy: $chosen\n")
+                return chosen.toJSONCommand()
+            }
+        } catch (e: Exception) {
+            mLogger.writeLog("Going wrong")
+            mLogger.writeLog("${e.message}")
         }
         return JSONObject(mapOf("X" to 0, "Y" to 0, "Debug" to "Died"))
     }

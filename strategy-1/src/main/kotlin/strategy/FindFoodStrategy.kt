@@ -3,14 +3,13 @@ package strategy
 import incominginfos.MineInfo
 import incominginfos.WorldObjectsInfo
 import WorldConfig
-import incominginfos.MineFragmentInfo
 import utils.GameEngine
 import utils.Logger
 import utils.Vertex
 import kotlin.math.abs
 
 class FindFoodStrategy(val mGlobalConfig: WorldConfig, val mLogger: Logger) : IStrategy {
-    data class BestWayResult(val target: Vertex, val foodPoints: List<Vertex>)
+    data class BestWayResult(val target: Vertex, val foodPoints: List<Vertex>, val fragmentId: String)
 
     private var mTargetWay: BestWayResult? = null
     private var mGamerStateCache: MineInfo? = null
@@ -22,6 +21,7 @@ class FindFoodStrategy(val mGlobalConfig: WorldConfig, val mLogger: Logger) : IS
         if (food.isNotEmpty()) {
             analyzePlate(gameEngine)
             if (mTargetWay == null) {
+                mLogger.writeLog("$DEBUG_TAG Find food is not applied \n")
                 return StrategyResult(-1, Vertex(0.0f, 0.0f), debugMessage = "FindFood: Not applied")
             }
 
@@ -39,10 +39,14 @@ class FindFoodStrategy(val mGlobalConfig: WorldConfig, val mLogger: Logger) : IS
                 }
             }
 
-            if (me.getMainFragment().mMass > WorldConfig.MIN_SPLITABLE_MASS * 1.5f && gameEngine.worldParseResult.worldObjectsInfo.mEnemies.isNotEmpty())
+            if (me.getMainFragment().mMass > WorldConfig.MIN_SPLITABLE_MASS * 1.5f && gameEngine.worldParseResult.worldObjectsInfo.mEnemies.isNotEmpty()) {
+                mLogger.writeLog("$DEBUG_TAG movementTarget ${mTargetWay?.target} and split for FOOD: ${mTargetWay!!.target}\n")
                 return StrategyResult(mTargetWay!!.foodPoints.size, mTargetWay!!.target, split = true, debugMessage = "Debug : get food with split")
-            else
-                return StrategyResult(mTargetWay!!.foodPoints.size, gameEngine.getMovementPointForTarget(me.getCoordinates(), mTargetWay!!.target))
+            } else {
+                val movementTarget = gameEngine.getMovementPointForTarget(mTargetWay!!.fragmentId, me.getCoordinates(), mTargetWay!!.target)
+                mLogger.writeLog("$DEBUG_TAG movementTarget $movementTarget  for FOOD: ${mTargetWay!!.target}\n")
+                return StrategyResult(mTargetWay!!.foodPoints.size, movementTarget)
+            }
         }
 
         mTargetWay = null
@@ -62,43 +66,32 @@ class FindFoodStrategy(val mGlobalConfig: WorldConfig, val mLogger: Logger) : IS
                 return
             }
 
-            if (gameEngine.worldParseResult.mineInfo.mFragmentsState.any { it.mCompass.isVertexInBlackArea(it.mVertex, mTargetWay!!.target) })
+            if (gameEngine.worldParseResult.mineInfo.mFragmentsState.any { it.mCompass.isVertexInBlackArea(it.mVertex, mTargetWay!!.target) }) {
+                mLogger.writeLog("$DEBUG_TAG fragment in black area")
                 mTargetWay = null
+            }
+
+            if (gameEngine.worldParseResult.mineInfo.mFragmentsState.any { it.mVertex == mTargetWay!!.target }) {
+                mLogger.writeLog("$DEBUG_TAG one fragment on the point now")
+                mTargetWay = null
+            }
         }
 
-//        if (mTargetWay == null) {
-//            mTargetWay = findBestWay(gameEngine.worldParseResult.worldObjectsInfo.mFood.map { it.mVertex }, gameEngine.worldParseResult.mineInfo, gameEngine.worldParseResult.mineInfo.getMainFragment().mRadius)
-//        }
         if (mTargetWay == null) {
-
-            var target = Vertex(-1f, -1f)
-            var allInSector = ArrayList<Vertex>()
-
-            gameEngine.worldParseResult.mineInfo.mFragmentsState.forEach { fragment ->
-                fragment.mCompass.mRumbBorders.forEach { borders ->
-                    if (borders.canEat.size > allInSector.size) {
-                        target = borders.canEat.sortedByDescending { it.distance(fragment.mVertex) }[0]
-                        allInSector = borders.canEat
-                        gameEngine.worldParseResult.mineInfo.mFragmentsState.forEach { nested ->
-                            if (nested != fragment) {
-                                if (nested.mVertex.distance(target) < nested.mRadius && nested.mCompass.isVertexInBlackArea(nested.mVertex, target))
-                                    target = Vertex(-1f, -1f)
-                            }
-                        }
-                    }
-                }
-            }
-            if (target != Vertex(-1f, -1f))
-                mTargetWay = BestWayResult(target, allInSector)
+            mTargetWay = findBestWay(gameEngine.worldParseResult.worldObjectsInfo.mFood.map { it.mVertex }, gameEngine.worldParseResult.mineInfo, gameEngine.worldParseResult.mineInfo.getMainFragment().mRadius)
         }
     }
 
     private fun isGamerStateChanged(gamerInfo: MineInfo): Boolean {
         mGamerStateCache?.let { cached ->
-            if (cached.mFragmentsState.size != gamerInfo.mFragmentsState.size)
+            if (cached.mFragmentsState.size != gamerInfo.mFragmentsState.size) {
+                mLogger.writeLog("$DEBUG_TAG state changed - fragments count")
                 return true
-            if (cached.getMainFragment().mRadius > gamerInfo.getMainFragment().mRadius * 0.95f)
-                return true
+            }
+//            if (cached.getMainFragment().mRadius > gamerInfo.getMainFragment().mRadius * 0.95f){
+//                mLogger.writeLog("$DEBUG_TAG state changed - fragments count")
+//                return true
+//            }
         }
         return false
     }
@@ -123,7 +116,6 @@ class FindFoodStrategy(val mGlobalConfig: WorldConfig, val mLogger: Logger) : IS
     fun findBestWay(foodPoints: List<Vertex>, gamerInfo: MineInfo, gamerRadius: Float): BestWayResult {
 
         // add ejects
-
         val sortedByX = foodPoints.sortedBy { it.X }
         val sortedByR = foodPoints.sortedBy { gamerInfo.shortestDistanceTo(it) }
         val weights: HashMap<Vertex, ArrayList<Vertex>> = HashMap()
@@ -157,17 +149,23 @@ class FindFoodStrategy(val mGlobalConfig: WorldConfig, val mLogger: Logger) : IS
         var points = 0
         val vertex: ArrayList<Vertex> = ArrayList()
         weights.forEach { it ->
-            if (it.value.size > points) {
-                points = it.value.size
-                vertex.clear()
-                vertex.add(it.key)
+
+            gamerInfo.mFragmentsState.forEach { nested ->
+                if (!(nested.mCompass.hasBlackAreas() && nested.mCompass.isVertexInBlackArea(nested.mVertex, it.key))) {
+                    if (it.value.size > points) {
+                        points = it.value.size
+                        vertex.clear()
+                        vertex.add(it.key)
+                    }
+                    if (it.value.size == points)
+                        vertex.add(it.key)
+                }
+
             }
-            if (it.value.size == points)
-                vertex.add(it.key)
         }
 
         if (vertex.size == 1)
-            return BestWayResult(vertex[0], weights[vertex[0]]!!)
+            return BestWayResult(vertex[0], weights[vertex[0]]!!, gamerInfo.getNearestFragment(vertex[0]).mId)
 
         var nearest = sortedByR.last()
         vertex.forEach { vert ->
@@ -175,7 +173,12 @@ class FindFoodStrategy(val mGlobalConfig: WorldConfig, val mLogger: Logger) : IS
                 nearest = vert
         }
 
-        return BestWayResult(nearest, weights[nearest]!!)
+        return BestWayResult(nearest, weights[nearest]!!, gamerInfo.getNearestFragment(vertex[0]).mId)
+
+    }
+
+    companion object {
+        val DEBUG_TAG = "FIND_FOOD"
     }
 }
 /*

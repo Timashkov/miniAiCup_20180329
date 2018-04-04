@@ -4,7 +4,7 @@ import utils.Vertex
 import kotlin.math.abs
 
 class MovementVector(val SX: Float, val SY: Float) {
-    private val K: Float = SY / SX
+    val K: Float = SY / SX
 
     fun plus(v: MovementVector): MovementVector = MovementVector(SX + v.SX, SY + v.SY)
     fun minus(v: MovementVector): MovementVector = MovementVector(SX - v.SX, SY - v.SY)
@@ -14,6 +14,14 @@ class MovementVector(val SX: Float, val SY: Float) {
         val b = sourceVertex.Y - K * sourceVertex.X
 
 
+        /*
+        * NX -30.688663
+        * NY = 56.919945
+        * X = 191.636
+        * Y = 187.953
+        *
+        * Res = -41.094, 660
+        * */
         if (abs(SX) >= abs(SY)) {
             //crosspoint with vert border
             if (SX > 0) {
@@ -35,5 +43,9 @@ class MovementVector(val SX: Float, val SY: Float) {
                 return Vertex(-b / K, 0f)
             }
         }
+    }
+
+    override fun toString(): String {
+        return "($SX; $SY)"
     }
 }

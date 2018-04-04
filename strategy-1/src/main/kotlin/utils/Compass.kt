@@ -120,4 +120,8 @@ class Compass {
         val FAIL_SECTOR_POINTS = -100 // can be eaten here
         val PREFERRED_SECTOR = 5 //
     }
+
+    fun hasBlackAreas(): Boolean {
+        return mRumbBorders.any { it.availablepoints == FAIL_SECTOR_POINTS }
+    }
 }

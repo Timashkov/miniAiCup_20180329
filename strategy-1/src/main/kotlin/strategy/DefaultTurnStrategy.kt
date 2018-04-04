@@ -38,8 +38,9 @@ class DefaultTurnStrategy(val mGlobalConfig: WorldConfig, val mLogger: Logger) :
 
         val targetVertex = squares[currentSquareIndex].corners[currentCornerIndex]
 
-        val fixedVertex = gameEngine.getMovementPointForTarget(me.getCoordinates(), targetVertex)
 
+        val fixedVertex = gameEngine.getMovementPointForTarget(me.getMainFragment().mId, me.getCoordinates(), targetVertex)
+        mLogger.writeLog("DEFAULT_TURN $fixedVertex \n")
 
         return StrategyResult(0, fixedVertex, debugMessage = "DEFAULT: Go TO $targetVertex")
     }

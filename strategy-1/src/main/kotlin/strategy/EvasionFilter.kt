@@ -50,6 +50,7 @@ class EvasionFilter(val mGlobalConfig: WorldConfig, val mLogger: Logger) {
 
 
     fun removeUnreachableFood(parseResult: ParseResult): ParseResult {
+        mLogger.writeLog("removeUnreachableFood")
         val cornerDistance = parseResult.mineInfo.getMainFragment().mRadius * 1.5f
         parseResult.worldObjectsInfo.mFood = ArrayList(parseResult.worldObjectsInfo.mFood.filter {
             it.mVertex.distance(mGlobalConfig.lbCorner) > cornerDistance && it.mVertex.distance(mGlobalConfig.ltCorner) > cornerDistance &&
@@ -59,6 +60,7 @@ class EvasionFilter(val mGlobalConfig: WorldConfig, val mLogger: Logger) {
             it.mVertex.distance(mGlobalConfig.lbCorner) > cornerDistance && it.mVertex.distance(mGlobalConfig.ltCorner) > cornerDistance &&
                     it.mVertex.distance(mGlobalConfig.rbCorner) > cornerDistance && it.mVertex.distance(mGlobalConfig.rtCorner) > cornerDistance
         })
+        mLogger.writeLog("food removed")
         return parseResult
     }
 }

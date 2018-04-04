@@ -100,6 +100,15 @@ class MineInfo(stateJson: JSONArray, val globalConfig: WorldConfig) {
         return mFragmentsState.map { it.mVertex.distance(target) }.min()!!
     }
 
+    fun getFragmentById(fragmentId: String): MineFragmentInfo {
+        val f = mFragmentsState.firstOrNull { it.mId == fragmentId } ?: return getMainFragment()
+        return f
+    }
+
+    fun getNearestFragment(target: Vertex): MineFragmentInfo {
+        return mFragmentsState.sortedBy { it.mVertex.distance(target) }[0]
+    }
+
 }
 
 //{\"Mine\":[{\"Id\":\"1\",\"M\":40,\"R\":12.649110640673518,\"SX\":0,\"SY\":0,\"TTF\":32,\"X\":474,\"Y\":178}]

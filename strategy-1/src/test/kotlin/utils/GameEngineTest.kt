@@ -137,7 +137,7 @@ class GameEngineTest {
 
     @Test
     fun getMovementPointForTarget() {
-        val gameEngine = GameEngine(mConfig, parseResult, 1)
+        val gameEngine = GameEngine(mConfig, parseResult, 1, mLogger)
         mDefaultStrategy.apply(gameEngine)
     }
 
