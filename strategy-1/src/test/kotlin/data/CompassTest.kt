@@ -13,7 +13,7 @@ class CompassTest {
 
     @Before
     fun setUp() {
-        mCompass = Compass()
+        mCompass = Compass(Vertex(450f,450f))
     }
 
     @After
