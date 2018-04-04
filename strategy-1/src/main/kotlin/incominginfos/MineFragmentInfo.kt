@@ -30,7 +30,11 @@ class MineFragmentInfo(fragmentJson: JSONObject) {
     }
 
     fun equals(other: MineFragmentInfo): Boolean {
-        return mId==other.mId
+        return mId == other.mId
+    }
+
+    fun canBurst(it: VirusInfo): Boolean {
+        return mRadius > it.mRadius * 1.2 && mMass > WorldConfig.MIN_SPLITABLE_MASS
     }
 }
 

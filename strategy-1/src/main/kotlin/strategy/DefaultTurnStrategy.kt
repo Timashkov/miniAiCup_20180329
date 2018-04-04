@@ -12,6 +12,10 @@ class DefaultTurnStrategy(val mGlobalConfig: WorldConfig, val mLogger: Logger) :
 
     //TODO:
 //: 618.75 : 866.25?? R > Ymax-Y
+
+
+    //analyze compasss
+
     val squares: ArrayList<Square> = ArrayList()
 
     init {

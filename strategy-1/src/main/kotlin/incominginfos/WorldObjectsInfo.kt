@@ -26,7 +26,7 @@ class WorldObjectsInfo(enemyJson: JSONArray, globalConfig: WorldConfig) {
                     if (!ejection.contains(e)) ejection.add(e)
                 }
                 "V" -> {
-                    val v = VirusInfo(it)
+                    val v = VirusInfo(it, globalConfig.VirusRadius)
                     if (!viruses.contains(v)) viruses.add(v)
                 }
                 "P" -> {

@@ -68,7 +68,7 @@ class FindFoodStrategy(val mGlobalConfig: WorldConfig, val mLogger: Logger) : IS
                 mTargetWay = null
             }
 
-            if (mTargetWay != null && gameEngine.worldParseResult.mineInfo.mFragmentsState.any { it.mCompass.isVertexInBlackArea(it.mVertex, mTargetWay!!.target) }) {
+            if (mTargetWay != null && gameEngine.worldParseResult.mineInfo.mFragmentsState.any { it.mCompass.isVertexInBlackArea(mTargetWay!!.target) }) {
                 mLogger.writeLog("$DEBUG_TAG fragment in black area")
                 mTargetWay = null
             }
@@ -155,7 +155,7 @@ class FindFoodStrategy(val mGlobalConfig: WorldConfig, val mLogger: Logger) : IS
         weights.forEach { it ->
 
             gamerInfo.mFragmentsState.forEach { nested ->
-                if (!(nested.mCompass.hasBlackAreas() && nested.mCompass.isVertexInBlackArea(nested.mVertex, it.key))) {
+                if (!(nested.mCompass.hasBlackAreas() && nested.mCompass.isVertexInBlackArea(it.key))) {
                     if (it.value.size > points) {
                         points = it.value.size
                         vertex.clear()

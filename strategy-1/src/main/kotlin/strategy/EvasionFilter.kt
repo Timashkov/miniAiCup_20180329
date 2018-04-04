@@ -22,19 +22,21 @@ class EvasionFilter(val mGlobalConfig: WorldConfig, val mLogger: Logger) {
             }
         }
 
+        val viruses = pr.worldObjectsInfo.mViruses
+        if (viruses.isNotEmpty()) {
+            pr.mineInfo.mFragmentsState.forEach { fragment ->
+                viruses.filter { fragment.canBurst(it) }.forEach { virus ->
+                    mLogger.writeLog("Processed enemy: $virus")
+                    fragment.mCompass.setColorsByVirus(virus)
+                }
+            }
+        }
+
         val food = pr.worldObjectsInfo.mFood
         if (food.isNotEmpty()) {
             pr.worldObjectsInfo.mFood.filter { food ->
                 pr.mineInfo.mFragmentsState.none { fragment -> !fragment.mCompass.setColorsByFood(food) }
             }
-//            pr.mineInfo.mFragmentsState.forEach { fragment ->
-//                food.forEach { f ->
-//                    mLogger.writeLog("Processed f: $f")
-//                    if (!fragment.mCompass.setColorsByFood(f)) {
-//                        pr.worldObjectsInfo.mFood.remove(f)
-//                    }
-//                }
-//            }
         }
 
         val ejections = pr.worldObjectsInfo.mEjection
@@ -42,15 +44,6 @@ class EvasionFilter(val mGlobalConfig: WorldConfig, val mLogger: Logger) {
             pr.worldObjectsInfo.mEjection.filter { ejection ->
                 pr.mineInfo.mFragmentsState.none { fragment -> !fragment.mCompass.setColorsByEjection(ejection) }
             }
-
-//            pr.mineInfo.mFragmentsState.forEach { fragment ->
-//                ejections.forEach { e ->
-//                    mLogger.writeLog("Processed e: $e")
-//                    if (!fragment.mCompass.setColorsByEjection(e)) {
-//                        pr.worldObjectsInfo.mEjection.remove(e)
-//                    }
-//                }
-//            }
         }
 
         return pr

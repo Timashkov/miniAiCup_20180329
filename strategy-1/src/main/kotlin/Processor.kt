@@ -18,6 +18,12 @@ class Processor(configJson: JSONObject) {
     private val mEscapeStrategy = EscapeStrategy(mWorldConfig, mLogger)
     private var mCurrentTick = 0
 
+    enum class ACTIONS{
+        MINE, HUNT, PURSUITE, ESCAPE
+    }
+
+    private var mAction: ACTIONS = ACTIONS.MINE
+
     // Tick Process
     fun onTick(tickData: JSONObject): JSONObject {
         mLogger.writeLog("INCOMING $tickData\n")
@@ -26,6 +32,8 @@ class Processor(configJson: JSONObject) {
         mCurrentTick++
         return out
     }
+
+    //TODO:
 
     private fun parseIncoming(tickData: JSONObject): ParseResult = ParseResult(MineInfo(tickData.getJSONArray("Mine"), mWorldConfig), WorldObjectsInfo(tickData.getJSONArray("Objects"), mWorldConfig))
 

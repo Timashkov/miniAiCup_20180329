@@ -3,7 +3,7 @@ package incominginfos
 import org.json.JSONObject
 import utils.Vertex
 
-class VirusInfo(virusJson: JSONObject) {
+class VirusInfo(virusJson: JSONObject, val mRadius: Float) {
     val mVertex = Vertex(virusJson.getFloat("X"), virusJson.getFloat("Y"))
     val mId: String = virusJson.getString("Id")
     val mMass: Float = virusJson.getFloat("M")
