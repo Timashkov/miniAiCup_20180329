@@ -1,16 +1,18 @@
 package utils
 
+import WorldConfig.Companion.FOW_RADIUS_FACTOR
 import WorldConfig.Companion.MAGIC_COMPASS_BLACK_DELTA
 import data.MovementVector
 import incominginfos.*
 import kotlin.math.*
 
 // 1/32 of circle
-class Compass(val mCenterVertex: Vertex) {
+class Compass(private val mFragment: MineFragmentInfo) {
 
-    data class Rumb(val majorBorder: Float, var availablepoints: Int = 0, var canEat: ArrayList<Vertex> = ArrayList(), var canEatEnemy: Vertex = Vertex(-1f, -1f))
+    data class Rumb(val majorBorder: Float, var areaFactor: Int = DEFAULT_AREA_FACTOR, var canEat: ArrayList<Vertex> = ArrayList(), var canEatEnemy: Vertex = Vertex(-1f, -1f))
 
     val mRumbBorders: Array<Rumb>
+    val mCenterVertex = mFragment.mVertex
 
     init {
         val rs = ArrayList<Rumb>()
@@ -29,7 +31,7 @@ class Compass(val mCenterVertex: Vertex) {
         return mRumbBorders.indexOfFirst { angle < it.majorBorder }
     }
 
-    fun getRumbPointsByVector(mv: MovementVector): Int = mRumbBorders[getRumbIndexByVector(mv)].availablepoints
+    fun getRumbPointsByVector(mv: MovementVector): Int = mRumbBorders[getRumbIndexByVector(mv)].areaFactor
 
     fun getShiftedIndex(index: Int, shifting: Int): Int {
         val res = index + shifting
@@ -44,7 +46,7 @@ class Compass(val mCenterVertex: Vertex) {
     fun getRumbIndexByVectorNormalized(mv: MovementVector): Int = getShiftedIndex(getRumbIndexByVector(mv), 16)
 
     fun setColorsByEnemies(me: MineFragmentInfo, enemy: EnemyInfo) {
-        setColorsByEnemiesInternal(me.mVertex, me.mMass, enemy.mVertex, enemy.mRadius, enemy.mMass)
+        setColorsByEnemiesInternal(me.mVertex, MovementVector(me.mSX, me.mSY), me.mMass, enemy.mVertex, enemy.mRadius, enemy.mMass)
     }
 
     fun setColorsByFood(food: FoodInfo): Boolean {
@@ -56,7 +58,7 @@ class Compass(val mCenterVertex: Vertex) {
     }
 
     // can be private , but tests
-    fun setColorsByEnemiesInternal(myPosition: Vertex, myMass: Float, enemyPosition: Vertex, enemyR: Float, enemyMass: Float) {
+    fun setColorsByEnemiesInternal(myPosition: Vertex, myVector: MovementVector, myMass: Float, enemyPosition: Vertex, enemyR: Float, enemyMass: Float) {
         if (myPosition.distance(enemyPosition) < enemyR) {
             if (enemyMass >= myMass * WorldConfig.EAT_MASS_FACTOR)
                 setWholeCompassPoints(BLACK_SECTOR_POINTS)
@@ -67,15 +69,26 @@ class Compass(val mCenterVertex: Vertex) {
         val directAngle = (atan2(vec.SY, vec.SX) * 180f / PI).toFloat()
         val directMovementIndex = getRumbIndexByAngle(directAngle)
 
+        val myMovementIndex = getRumbIndexByAngle((atan2(myVector.SY, myVector.SX) * 180f / PI).toFloat())
+
 
         if (enemyMass >= myMass * WorldConfig.EAT_MASS_FACTOR) {
             val shiftedAngle = (asin(enemyR / myPosition.distance(enemyPosition)) * 180f / PI).toFloat()
             val shiftedRumbIndex = getRumbIndexByAngle(shiftedAngle + directAngle)
             val indexDelta = shiftedRumbIndex - directMovementIndex + MAGIC_COMPASS_BLACK_DELTA
 
-            mRumbBorders[getShiftedIndex(directMovementIndex, 16)].availablepoints = BLACK_SECTOR_POINTS
+            if (myMovementIndex == directMovementIndex) {
+                mRumbBorders[getShiftedIndex(directMovementIndex, 16)].areaFactor = BLACK_SECTOR_POINTS
+            } else {
+                if (mRumbBorders[getShiftedIndex(directMovementIndex, 16)].areaFactor != BLACK_SECTOR_POINTS)
+                    mRumbBorders[getShiftedIndex(directMovementIndex, 16)].areaFactor = PREFERRED_SECTOR
+            }
             markRumbsByDirectAndShifting(directMovementIndex, indexDelta, BLACK_SECTOR_POINTS)
-        } else if (enemyMass * WorldConfig.EAT_MASS_FACTOR <= myMass && mRumbBorders[directMovementIndex].availablepoints != BLACK_SECTOR_POINTS) {
+        } else if (enemyMass * WorldConfig.EAT_MASS_FACTOR <= myMass) {
+
+            //анализ расстояния до объектов
+//             mRumbBorders[directMovementIndex].areaFactor != BLACK_SECTOR_POINTS) {
+
             markRumbsByDirectAndShifting(directMovementIndex, 1, PREFERRED_SECTOR)
         }
     }
@@ -86,8 +99,7 @@ class Compass(val mCenterVertex: Vertex) {
         val directAngle = (atan2(vec.SY, vec.SX) * 180f / PI).toFloat()
         val directMovementIndex = getRumbIndexByAngle(directAngle)
 
-        if (mRumbBorders[directMovementIndex].availablepoints != BLACK_SECTOR_POINTS) {
-            mRumbBorders[directMovementIndex].availablepoints = mRumbBorders[directMovementIndex].availablepoints + 1
+        if (mRumbBorders[directMovementIndex].areaFactor != BLACK_SECTOR_POINTS) {
             mRumbBorders[directMovementIndex].canEat.add(foodPosition)
             return true
         }
@@ -95,17 +107,17 @@ class Compass(val mCenterVertex: Vertex) {
     }
 
     private fun setWholeCompassPoints(points: Int) {
-        mRumbBorders.forEach { it.availablepoints = points }
+        mRumbBorders.forEach { it.areaFactor = points }
     }
 
     private fun markRumbsByDirectAndShifting(directMovementIndex: Int, indexDelta: Int, points: Int) {
         for (i in indexDelta * -1..indexDelta) {
             if (points == BLACK_SECTOR_POINTS) {
-                mRumbBorders[getShiftedIndex(directMovementIndex, i)].availablepoints = points
+                mRumbBorders[getShiftedIndex(directMovementIndex, i)].areaFactor = points
                 if (abs(i) == indexDelta)
-                    mRumbBorders[getShiftedIndex(directMovementIndex, i + 16)].availablepoints = PREFERRED_SECTOR
-            } else if (mRumbBorders[getShiftedIndex(directMovementIndex, i)].availablepoints != BLACK_SECTOR_POINTS) {
-                mRumbBorders[getShiftedIndex(directMovementIndex, i)].availablepoints = points
+                    mRumbBorders[getShiftedIndex(directMovementIndex, i + 16)].areaFactor = PREFERRED_SECTOR
+            } else if (mRumbBorders[getShiftedIndex(directMovementIndex, i)].areaFactor != BLACK_SECTOR_POINTS) {
+                mRumbBorders[getShiftedIndex(directMovementIndex, i)].areaFactor = points
             }
         }
     }
@@ -114,35 +126,48 @@ class Compass(val mCenterVertex: Vertex) {
         val vec = mCenterVertex.getMovementVector(target)
         val directAngle = (atan2(vec.SY, vec.SX) * 180f / PI).toFloat()
         val directMovementIndex = getRumbIndexByAngle(directAngle)
-        return mRumbBorders[directMovementIndex].availablepoints == BLACK_SECTOR_POINTS
+        return mRumbBorders[directMovementIndex].areaFactor == BLACK_SECTOR_POINTS
     }
 
     fun isVertexInBurstArea(target: Vertex): Boolean {
         val vec = mCenterVertex.getMovementVector(target)
         val directAngle = (atan2(vec.SY, vec.SX) * 180f / PI).toFloat()
         val directMovementIndex = getRumbIndexByAngle(directAngle)
-        return mRumbBorders[directMovementIndex].availablepoints == BURST_SECTOR_POINTS
+        return mRumbBorders[directMovementIndex].areaFactor == BURST_SECTOR_POINTS
     }
 
     fun isVertexInDangerArea(target: Vertex): Boolean {
         val vec = mCenterVertex.getMovementVector(target)
         val directAngle = (atan2(vec.SY, vec.SX) * 180f / PI).toFloat()
         val directMovementIndex = getRumbIndexByAngle(directAngle)
-        return mRumbBorders[directMovementIndex].availablepoints in arrayOf(BURST_SECTOR_POINTS, BLACK_SECTOR_POINTS)
+        return mRumbBorders[directMovementIndex].areaFactor in arrayOf(BURST_SECTOR_POINTS, BLACK_SECTOR_POINTS)
     }
 
+    fun getAreaFactor(target: Vertex): Int {
+        val vec = mCenterVertex.getMovementVector(target)
+        val directAngle = (atan2(vec.SY, vec.SX) * 180f / PI).toFloat()
+        val directMovementIndex = getRumbIndexByAngle(directAngle)
+        return mRumbBorders[directMovementIndex].areaFactor
+    }
 
     fun hasBlackAreas(): Boolean {
-        return mRumbBorders.any { it.availablepoints == BLACK_SECTOR_POINTS }
+        return mRumbBorders.any { it.areaFactor == BLACK_SECTOR_POINTS }
+    }
+
+    fun hasDarkAreas(): Boolean {
+        return mRumbBorders.any { it.areaFactor < 1 }
     }
 
     fun setColorsByVirus(virus: VirusInfo): Boolean {
+        if (mCenterVertex.distance(virus.mVertex) > mFragment.mRadius * FOW_RADIUS_FACTOR) {
+            return false
+        }
         val vec = mCenterVertex.getMovementVector(virus.mVertex)
         val directAngle = (atan2(vec.SY, vec.SX) * 180f / PI).toFloat()
         val directMovementIndex = getRumbIndexByAngle(directAngle)
 
-        if (mRumbBorders[directMovementIndex].availablepoints != BLACK_SECTOR_POINTS) {
-            mRumbBorders[directMovementIndex].availablepoints = BURST_SECTOR_POINTS
+        if (mRumbBorders[directMovementIndex].areaFactor != BLACK_SECTOR_POINTS) {
+            mRumbBorders[directMovementIndex].areaFactor = BURST_SECTOR_POINTS
 
             return true
         }
@@ -153,6 +178,7 @@ class Compass(val mCenterVertex: Vertex) {
         val BLACK_SECTOR_POINTS = -100 // can be eaten here
         val BURST_SECTOR_POINTS = -50
         val PREFERRED_SECTOR = 5 //
+        val DEFAULT_AREA_FACTOR = 1
     }
 
 
