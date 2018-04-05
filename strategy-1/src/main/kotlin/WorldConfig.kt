@@ -31,5 +31,6 @@ class WorldConfig(configJson: JSONObject) {
         val MIN_SPLITABLE_MASS = 120f
         val MAGIC_MASS4EAT = 3
         val MAGIC_COMPASS_BLACK_DELTA = 4
+        val FOW_RADIUS_FACTOR = 4
     }
 }
