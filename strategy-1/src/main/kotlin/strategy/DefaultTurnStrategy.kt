@@ -2,6 +2,7 @@ package strategy
 
 import incominginfos.MineInfo
 import WorldConfig
+import data.ParseResult
 import utils.GameEngine
 import utils.Logger
 import utils.Vertex
@@ -20,7 +21,7 @@ class DefaultTurnStrategy(val mGlobalConfig: WorldConfig, val mLogger: Logger) :
     var currentCornerIndex: Int = 0
     var currentSquareIndex: Int = -1
 
-    override fun apply(gameEngine: GameEngine): StrategyResult {
+    override fun apply(gameEngine: GameEngine, cachedParseResult: ParseResult?): StrategyResult {
         val me = gameEngine.worldParseResult.mineInfo
         if (currentSquareIndex == -1) {
             currentSquareIndex = getSquareByDirectionAndPosition(me)
