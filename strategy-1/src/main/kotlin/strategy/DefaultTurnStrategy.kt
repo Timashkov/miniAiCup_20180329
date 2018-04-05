@@ -10,19 +10,13 @@ import kotlin.math.abs
 
 class DefaultTurnStrategy(val mGlobalConfig: WorldConfig, val mLogger: Logger) : IStrategy {
 
-    //TODO:
-//: 618.75 : 866.25?? R > Ymax-Y
-
-
-    //analyze compasss
-
     val squares: ArrayList<Square> = ArrayList()
 
     init {
         initSquares(mGlobalConfig)
     }
 
-    val mCenter: Vertex = mGlobalConfig.getCenter()
+    private val mCenter: Vertex = mGlobalConfig.getCenter()
     var currentCornerIndex: Int = 0
     var currentSquareIndex: Int = -1
 
@@ -31,28 +25,31 @@ class DefaultTurnStrategy(val mGlobalConfig: WorldConfig, val mLogger: Logger) :
         if (currentSquareIndex == -1) {
             currentSquareIndex = getSquareByDirectionAndPosition(me)
         }
-        val corner = squares[currentSquareIndex].corners[currentCornerIndex]
+        var corner = squares[currentSquareIndex].corners[currentCornerIndex]
         if (abs(corner.X - me.getCoordinates().X) < me.getFragmentConfig(0).mRadius &&
                 abs(corner.Y - me.getCoordinates().Y) < me.getFragmentConfig(0).mRadius)
-            currentCornerIndex++
+            corner = getNextCorner()
+
+        while (me.mFragmentsState.any { fragment-> fragment.mCompass.isVertexInDangerArea(corner) })
+            corner = getNextCorner()
+
+        val fixedVertex = gameEngine.getMovementPointForTarget(me.getMainFragment().mId, me.getCoordinates(), corner)
+        mLogger.writeLog("DEFAULT_TURN $fixedVertex \n")
+
+        return StrategyResult(0, fixedVertex, debugMessage = "DEFAULT: Go TO $corner")
+    }
+
+    private fun getNextCorner(): Vertex {
+        currentCornerIndex++
         if (currentCornerIndex == 4) {
             currentCornerIndex = 0
             currentSquareIndex = getNextSquareIndex(currentSquareIndex)
         }
-
-        val targetVertex = squares[currentSquareIndex].corners[currentCornerIndex]
-
-
-        val fixedVertex = gameEngine.getMovementPointForTarget(me.getMainFragment().mId, me.getCoordinates(), targetVertex)
-        mLogger.writeLog("DEFAULT_TURN $fixedVertex \n")
-
-        return StrategyResult(0, fixedVertex, debugMessage = "DEFAULT: Go TO $targetVertex")
+        return squares[currentSquareIndex].corners[currentCornerIndex]
     }
 
     private fun getSquareByDirectionAndPosition(mineInfo: MineInfo): Int {
         val isInCenterSquare = Square(mCenter, mGlobalConfig.GameWidth / 8.0f).isInSquare(mineInfo.getCoordinates())
-
-        val quart = getQuart(mineInfo.getCoordinates(), mCenter) - 1
 
         when (mineInfo.getDirection()) {
             MineInfo.Direction.TOP_LEFT -> {
@@ -84,7 +81,7 @@ class DefaultTurnStrategy(val mGlobalConfig: WorldConfig, val mLogger: Logger) :
         return next
     }
 
-    fun getQuart(vertex: Vertex, center: Vertex): Int {
+    private fun getQuart(vertex: Vertex, center: Vertex): Int {
         if (vertex.X <= center.X) {
             if (vertex.Y <= center.Y)
                 return 1
