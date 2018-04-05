@@ -18,7 +18,7 @@ class Processor(configJson: JSONObject) {
     private val mEscapeStrategy = EscapeStrategy(mWorldConfig, mLogger)
     private var mCurrentTick = 0
 
-    enum class ACTIONS{
+    enum class ACTIONS {
         MINE, HUNT, PURSUITE, ESCAPE
     }
 
@@ -41,29 +41,42 @@ class Processor(configJson: JSONObject) {
         try {
             val data = mEvasionFilter.onFilter(parseResult)
 
-
             if (data.mineInfo.isNotEmpty()) {
                 val gameEngine = GameEngine(mWorldConfig, data, currentTickCount, mLogger)
                 mLogger.writeLog("Start check strategies")
-
-                val strategyResults = listOf(
+                checkTriggers(gameEngine)
+                when (mAction) {
+                    ACTIONS.ESCAPE -> {
+                    }
+                    ACTIONS.HUNT -> {
+                    }
+                    ACTIONS.PURSUITE -> {
+                    }
+                    else -> {
+                        //MINE
+                        val strategyResults = listOf(
 //                        mEscapeStrategy.apply(gameEngine),
-                        // FussionStrategy
-                        mEatEnemyStrategy.apply(gameEngine),
-                        mFoodStrategy.apply(gameEngine),
-                        mStartBurstStrategy.apply(gameEngine),
-                        mDefaultStrategy.apply(gameEngine)
-                )
+                                mEatEnemyStrategy.apply(gameEngine),
+                                mFoodStrategy.apply(gameEngine),
+                                mStartBurstStrategy.apply(gameEngine),
+                                mDefaultStrategy.apply(gameEngine)
+                        )
 
-                val chosen = strategyResults.sortedByDescending { it.achievementScore }[0]
-                mLogger.writeLog("Chosen strategy: $chosen\n")
-                return chosen.toJSONCommand()
+                        val chosen = strategyResults.sortedByDescending { it.achievementScore }[0]
+                        mLogger.writeLog("Chosen strategy: $chosen\n")
+                        return chosen.toJSONCommand()
+                    }
+                }
             }
         } catch (e: Exception) {
             mLogger.writeLog("Going wrong")
             mLogger.writeLog("${e.message}")
         }
         return JSONObject(mapOf("X" to 0, "Y" to 0, "Debug" to "Died"))
+    }
+
+    private fun checkTriggers(gameEngine: GameEngine) {
+        mAction = ACTIONS.MINE
     }
 }
 
