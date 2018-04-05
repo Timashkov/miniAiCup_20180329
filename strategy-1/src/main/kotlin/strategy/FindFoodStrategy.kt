@@ -3,6 +3,7 @@ package strategy
 import incominginfos.MineInfo
 import incominginfos.WorldObjectsInfo
 import WorldConfig
+import data.ParseResult
 import utils.GameEngine
 import utils.Logger
 import utils.Vertex
@@ -14,7 +15,7 @@ class FindFoodStrategy(val mGlobalConfig: WorldConfig, val mLogger: Logger) : IS
     private var mBestKnownWay: BestWayResult? = null
     private var mGamerStateCache: MineInfo? = null
 
-    override fun apply(gameEngine: GameEngine): StrategyResult {
+    override fun apply(gameEngine: GameEngine, cachedParseResult: ParseResult?): StrategyResult {
 
         val food = gameEngine.worldParseResult.worldObjectsInfo.mFood
 
