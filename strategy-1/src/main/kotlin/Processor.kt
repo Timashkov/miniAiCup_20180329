@@ -33,7 +33,7 @@ class Processor(configJson: JSONObject) {
         return out
     }
 
-    //TODO:
+    //TODO: merge previous compass and current
 
     private fun parseIncoming(tickData: JSONObject): ParseResult = ParseResult(MineInfo(tickData.getJSONArray("Mine"), mWorldConfig), WorldObjectsInfo(tickData.getJSONArray("Objects"), mWorldConfig))
 

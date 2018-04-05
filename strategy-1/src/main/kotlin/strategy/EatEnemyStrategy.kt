@@ -20,7 +20,7 @@ class EatEnemyStrategy(val mGlobalConfig: WorldConfig, val mLogger: Logger) : IS
     }
 
     private fun searchForEnemies(gameEngine: GameEngine): StrategyResult {
-
+//TODO: review
         val enemies = gameEngine.worldParseResult.worldObjectsInfo.mEnemies
         val me = gameEngine.worldParseResult.mineInfo
 
@@ -38,9 +38,10 @@ class EatEnemyStrategy(val mGlobalConfig: WorldConfig, val mLogger: Logger) : IS
 
 
         // Stage 2 search for small fragments < 2.5
+
         if (me.canSplit) {
             val nearLowerEnemies = enemies.filter {
-                me.getMinorFragment().canEatEnemyBySplit(it.mMass) && (me.mFragmentsState.none { fragment -> fragment.mCompass.isVertexInBlackArea(it.mVertex) })
+                me.getMinorFragment().canEatEnemyBySplit(it.mMass) && (me.mFragmentsState.none { fragment -> fragment.mCompass.isVertexInDangerArea(it.mVertex) })
             }.sortedBy { me.getCoordinates().distance(it.mVertex) }
             if (nearLowerEnemies.isNotEmpty()) {
                 val res = StrategyResult(10, nearLowerEnemies[0].mVertex, split = true, debugMessage = "Try to eat ${nearLowerEnemies[0].mId}")

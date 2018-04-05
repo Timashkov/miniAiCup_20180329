@@ -49,9 +49,6 @@ class GameEngine(private val globalConfig: WorldConfig, val worldParseResult: Pa
             dest = fixByBorders(source, dest)
 
         return dest
-//        MovementVector(NX, NY).crossPointWithBorders(globalConfig.GameWidth.toFloat(), globalConfig.GameHeight.toFloat(), currentPosition)
-//        val vert1 = currentPosition.plus(Vertex(vectorTarget.SX, vectorTarget.SY))
-
     }
 
     private fun fixByBorders(source: Vertex, dest: Vertex): Vertex {

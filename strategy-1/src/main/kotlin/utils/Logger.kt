@@ -6,10 +6,10 @@ import java.io.PrintWriter
 class Logger {
 
 //    private var mLogFile: File = File("/Users/aleksey/projects/agario/log.txt")
-//    private var mLogFile: File = File("/home/timashkov/Experience/aicup/log.txt")
+    private var mLogFile: File = File("/home/timashkov/Experience/aicup/log.txt")
 
 
     fun writeLog(message: String){
-//        mLogFile.appendText(message + "\n")
+        mLogFile.appendText(message + "\n")
     }
 }

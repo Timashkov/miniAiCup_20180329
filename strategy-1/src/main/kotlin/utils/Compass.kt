@@ -109,6 +109,7 @@ class Compass(private val mFragment: MineFragmentInfo) {
     private fun setWholeCompassPoints(points: Int) {
         mRumbBorders.forEach { it.areaFactor = points }
     }
+    //TODO: set area factor by enemies with calc of distance
 
     private fun markRumbsByDirectAndShifting(directMovementIndex: Int, indexDelta: Int, points: Int) {
         for (i in indexDelta * -1..indexDelta) {
@@ -159,7 +160,7 @@ class Compass(private val mFragment: MineFragmentInfo) {
     }
 
     fun setColorsByVirus(virus: VirusInfo): Boolean {
-        if (mCenterVertex.distance(virus.mVertex) > mFragment.mRadius * FOW_RADIUS_FACTOR) {
+        if (mCenterVertex.distance(virus.mVertex)-virus.mRadius > mFragment.mRadius * FOW_RADIUS_FACTOR) {
             return false
         }
         val vec = mCenterVertex.getMovementVector(virus.mVertex)
@@ -171,6 +172,11 @@ class Compass(private val mFragment: MineFragmentInfo) {
 
             return true
         }
+
+        val shiftedAngle = (asin(virus.mRadius / mCenterVertex.distance(virus.mVertex)) * 180f / PI).toFloat()
+        val shiftedRumbIndex = getRumbIndexByAngle(shiftedAngle + directAngle)
+        val indexDelta = shiftedRumbIndex - directMovementIndex
+        markRumbsByDirectAndShifting(directMovementIndex, indexDelta, BURST_SECTOR_POINTS)
         return false
     }
 

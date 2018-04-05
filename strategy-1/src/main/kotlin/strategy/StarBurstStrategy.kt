@@ -2,12 +2,13 @@ package strategy
 
 import utils.Logger
 import WorldConfig
-import incominginfos.MineInfo
-import incominginfos.WorldObjectsInfo
 import utils.GameEngine
 import utils.Vertex
 
 class StarBurstStrategy(val mGlobalConfig: WorldConfig, val mLogger: Logger) : IStrategy {
+
+    // Check inertion and viscosity to check ability of burst
+    // compass and gray sectors
     override fun apply(gameEngine: GameEngine): StrategyResult {
         if (gameEngine.worldParseResult.worldObjectsInfo.mEnemies.isNotEmpty() || gameEngine.currentTick >= mGlobalConfig.GameTicks * 0.3f)
             return StrategyResult(-1, Vertex(0.0f, 0.0f), debugMessage = "Star burst: Not applied")

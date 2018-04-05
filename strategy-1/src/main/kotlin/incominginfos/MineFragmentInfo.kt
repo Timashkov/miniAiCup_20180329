@@ -23,7 +23,7 @@ class MineFragmentInfo(fragmentJson: JSONObject) {
     val canSplit: Boolean
         get() = mMass > WorldConfig.MIN_SPLITABLE_MASS
 
-    val mCompass: Compass = Compass(mVertex)
+    val mCompass: Compass = Compass(this)
 
     override fun toString(): String {
         return "$mId: mass=$mMass r=$mRadius mSX=$mSX mSY=$mSY mTTF=$mTTF"
