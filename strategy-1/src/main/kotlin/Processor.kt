@@ -17,6 +17,7 @@ class Processor(configJson: JSONObject) {
     private val mStartBurstStrategy = StarBurstStrategy(mWorldConfig, mLogger)
     private val mEscapeStrategy = EscapeStrategy(mWorldConfig, mLogger)
     private var mCurrentTick = 0
+    private var mCachedParseResult: ParseResult? = null
 
     enum class ACTIONS {
         MINE, HUNT, PURSUITE, ESCAPE
@@ -38,40 +39,49 @@ class Processor(configJson: JSONObject) {
     private fun parseIncoming(tickData: JSONObject): ParseResult = ParseResult(MineInfo(tickData.getJSONArray("Mine"), mWorldConfig), WorldObjectsInfo(tickData.getJSONArray("Objects"), mWorldConfig))
 
     private fun analyzeData(parseResult: ParseResult, currentTickCount: Int): JSONObject {
+        val data = mEvasionFilter.onFilter(parseResult)
         try {
-            val data = mEvasionFilter.onFilter(parseResult)
 
             if (data.mineInfo.isNotEmpty()) {
                 val gameEngine = GameEngine(mWorldConfig, data, currentTickCount, mLogger)
                 mLogger.writeLog("Start check strategies")
-                checkTriggers(gameEngine)
-                when (mAction) {
-                    ACTIONS.ESCAPE -> {
-                    }
-                    ACTIONS.HUNT -> {
-                    }
-                    ACTIONS.PURSUITE -> {
-                    }
-                    else -> {
-                        //MINE
-                        val strategyResults = listOf(
-//                        mEscapeStrategy.apply(gameEngine),
-                                mEatEnemyStrategy.apply(gameEngine),
-                                mFoodStrategy.apply(gameEngine),
-                                mStartBurstStrategy.apply(gameEngine),
-                                mDefaultStrategy.apply(gameEngine)
-                        )
 
-                        val chosen = strategyResults.sortedByDescending { it.achievementScore }[0]
-                        mLogger.writeLog("Chosen strategy: $chosen\n")
-                        return chosen.toJSONCommand()
-                    }
+                var strategyResult = mEscapeStrategy.apply(gameEngine, mCachedParseResult)
+                if (strategyResult.achievementScore > 0) {
+                    mLogger.writeLog("APPLY escape: $strategyResult\n")
+                    return strategyResult.toJSONCommand()
+                }
+
+                strategyResult = mEatEnemyStrategy.apply(gameEngine, mCachedParseResult)
+                if (strategyResult.achievementScore > 0) {
+                    mLogger.writeLog("APPLY eat enemy: $strategyResult\n")
+                    return strategyResult.toJSONCommand()
+                }
+
+                val strategyResults = listOf(
+                        mFoodStrategy.apply(gameEngine),
+                        mStartBurstStrategy.apply(gameEngine)
+                )
+
+                strategyResult = strategyResults.sortedByDescending { it.achievementScore }[0]
+                if (strategyResult.achievementScore > 0) {
+                    mLogger.writeLog("Chosen strategy: $strategyResult\n")
+                    return strategyResult.toJSONCommand()
+                }
+
+                strategyResult = mDefaultStrategy.apply(gameEngine)
+                if (strategyResult.achievementScore > 0) {
+                    mLogger.writeLog("Chosen Default strategy: $strategyResult\n")
+                    return strategyResult.toJSONCommand()
                 }
             }
         } catch (e: Exception) {
             mLogger.writeLog("Going wrong")
             mLogger.writeLog("${e.message}")
+        } finally {
+            mCachedParseResult = data
         }
+        mLogger.writeLog("DEFAULT DIED")
         return JSONObject(mapOf("X" to 0, "Y" to 0, "Debug" to "Died"))
     }
 

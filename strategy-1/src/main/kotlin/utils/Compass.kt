@@ -73,9 +73,11 @@ class Compass(private val mFragment: MineFragmentInfo) {
 
 
         if (enemyMass >= myMass * WorldConfig.EAT_MASS_FACTOR) {
-            val shiftedAngle = (asin(enemyR / myPosition.distance(enemyPosition)) * 180f / PI).toFloat()
+//            val shiftedAngle = (asin(enemyR / myPosition.distance(enemyPosition)) * 180f / PI).toFloat()
+            val shiftedAngle = (asin(enemyR / (mFragment.mRadius / 3f + enemyR)) * 180f / PI).toFloat()
             val shiftedRumbIndex = getRumbIndexByAngle(shiftedAngle + directAngle)
-            val indexDelta = shiftedRumbIndex - directMovementIndex + MAGIC_COMPASS_BLACK_DELTA
+            val indexDelta = shiftedRumbIndex - directMovementIndex
+            // + MAGIC_COMPASS_BLACK_DELTA
 
             if (myMovementIndex == directMovementIndex) {
                 mRumbBorders[getShiftedIndex(directMovementIndex, 16)].areaFactor = BLACK_SECTOR_POINTS

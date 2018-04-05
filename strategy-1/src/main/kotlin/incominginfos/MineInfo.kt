@@ -4,6 +4,7 @@ import org.json.JSONArray
 import org.json.JSONObject
 import utils.Vertex
 import WorldConfig
+import utils.Compass
 
 class MineInfo(stateJson: JSONArray, val globalConfig: WorldConfig) {
     val mFragmentsState: Array<MineFragmentInfo>
