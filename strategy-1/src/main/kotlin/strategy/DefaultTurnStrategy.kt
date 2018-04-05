@@ -30,12 +30,8 @@ class DefaultTurnStrategy(val mGlobalConfig: WorldConfig, val mLogger: Logger) :
                 abs(corner.Y - me.getCoordinates().Y) < me.getFragmentConfig(0).mRadius)
             corner = getNextCorner()
 
-        while (me.mFragmentsState.any { fragment-> fragment.mCompass.getAreaFactor(corner) < 1 })
-            corner = getNextCorner()
-
         val fixedVertex = gameEngine.getMovementPointForTarget(me.getMainFragment().mId, me.getCoordinates(), corner)
         mLogger.writeLog("DEFAULT_TURN $fixedVertex \n")
-
         return StrategyResult(0, fixedVertex, debugMessage = "DEFAULT: Go TO $corner")
     }
 
