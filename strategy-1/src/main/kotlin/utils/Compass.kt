@@ -28,7 +28,7 @@ class Compass(private val mFragment: MineFragmentInfo) {
     }
 
     private fun getRumbIndexByAngle(angle: Float): Int {
-        return mRumbBorders.indexOfFirst { angle < it.majorBorder }
+        return mRumbBorders.indexOfFirst { angle <= it.majorBorder }
     }
 
     fun getRumbPointsByVector(mv: MovementVector): Int = mRumbBorders[getRumbIndexByVector(mv)].areaFactor
@@ -162,7 +162,7 @@ class Compass(private val mFragment: MineFragmentInfo) {
     }
 
     fun setColorsByVirus(virus: VirusInfo): Boolean {
-        if (mCenterVertex.distance(virus.mVertex)-virus.mRadius > mFragment.mRadius * FOW_RADIUS_FACTOR) {
+        if (mCenterVertex.distance(virus.mVertex) - virus.mRadius > mFragment.mRadius * FOW_RADIUS_FACTOR) {
             return false
         }
         val vec = mCenterVertex.getMovementVector(virus.mVertex)
@@ -180,6 +180,10 @@ class Compass(private val mFragment: MineFragmentInfo) {
         val indexDelta = shiftedRumbIndex - directMovementIndex
         markRumbsByDirectAndShifting(directMovementIndex, indexDelta, BURST_SECTOR_POINTS)
         return false
+    }
+
+    fun getWhiteSectorsIndexesArray(): List<Rumb> {
+        return mRumbBorders.filter { it.areaFactor >= 0 }
     }
 
     companion object {
