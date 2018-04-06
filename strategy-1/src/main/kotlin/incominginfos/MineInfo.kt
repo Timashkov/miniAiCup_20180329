@@ -1,12 +1,11 @@
 package incominginfos
 
 import org.json.JSONArray
-import org.json.JSONObject
 import utils.Vertex
 import WorldConfig
-import utils.Compass
+import utils.Logger
 
-class MineInfo(stateJson: JSONArray, val globalConfig: WorldConfig) {
+class MineInfo(stateJson: JSONArray, val globalConfig: WorldConfig, val mLogger: Logger) {
     val mFragmentsState: Array<MineFragmentInfo>
 
     val mMainFragmentIndex: Int
@@ -20,9 +19,11 @@ class MineInfo(stateJson: JSONArray, val globalConfig: WorldConfig) {
     }
 
     init {
-        mFragmentsState = Array<MineFragmentInfo>(stateJson.length(), { it -> MineFragmentInfo(stateJson.getJSONObject(it)) })
+        mLogger.writeLog("Start parse mine info")
+        mFragmentsState = Array(stateJson.length(), { it -> MineFragmentInfo(stateJson.getJSONObject(it)) })
         mMainFragmentIndex = getMainFragmentIndex()
         mSmallestFragmentIndex = getSmallestFragmentIndex()
+        mLogger.writeLog("Mine info parsed")
     }
 
     fun isNotEmpty(): Boolean {
