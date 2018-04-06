@@ -3,14 +3,16 @@ package incominginfos
 import org.json.JSONArray
 import org.json.JSONObject
 import WorldConfig
+import utils.Logger
 
-class WorldObjectsInfo(enemyJson: JSONArray, globalConfig: WorldConfig) {
+class WorldObjectsInfo(enemyJson: JSONArray, globalConfig: WorldConfig, val mLogger: Logger) {
     val mViruses: List<VirusInfo>
     var mFood: List<FoodInfo>
     var mEjection: List<EjectionInfo>
     var mEnemies: List<EnemyInfo>
 
     init {
+        mLogger.writeLog("Start parse world")
         val food = ArrayList<FoodInfo>()
         val ejection = ArrayList<EjectionInfo>()
         val enemies = ArrayList<EnemyInfo>()
@@ -35,10 +37,12 @@ class WorldObjectsInfo(enemyJson: JSONArray, globalConfig: WorldConfig) {
                 }
             }
         }
+
         mFood = food
         mEjection = ejection
         mEnemies = enemies
         mViruses = viruses
+        mLogger.writeLog("World parsed")
     }
 }
 
