@@ -14,6 +14,7 @@ class EvasionFilter(val mGlobalConfig: WorldConfig, val mLogger: Logger) {
 
         val enemies = pr.worldObjectsInfo.mEnemies
         if (enemies.isNotEmpty()) {
+            mLogger.writeLog("Enemies total : ${enemies.size}")
             pr.mineInfo.mFragmentsState.forEach { fragment ->
                 enemies.filter { fragment.canBeEatenByEnemy(it.mMass) }.forEach { enemy ->
                     mLogger.writeLog("Processed enemy: $enemy")
@@ -24,9 +25,10 @@ class EvasionFilter(val mGlobalConfig: WorldConfig, val mLogger: Logger) {
 
         val viruses = pr.worldObjectsInfo.mViruses
         if (viruses.isNotEmpty()) {
+            mLogger.writeLog("Viruses total : ${viruses.size}")
             pr.mineInfo.mFragmentsState.forEach { fragment ->
                 viruses.filter { fragment.canBurst(it) }.forEach { virus ->
-                    mLogger.writeLog("Processed enemy: $virus")
+                    mLogger.writeLog("Processed virus: $virus")
                     fragment.mCompass.setColorsByVirus(virus)
                 }
             }
@@ -34,13 +36,15 @@ class EvasionFilter(val mGlobalConfig: WorldConfig, val mLogger: Logger) {
 
         val food = pr.worldObjectsInfo.mFood
         if (food.isNotEmpty()) {
-            pr.worldObjectsInfo.mFood.filter { food ->
-                pr.mineInfo.mFragmentsState.none { fragment -> !fragment.mCompass.setColorsByFood(food) }
+            mLogger.writeLog("Food total : ${food.size}")
+            pr.worldObjectsInfo.mFood.filter { f ->
+                pr.mineInfo.mFragmentsState.none { fragment -> !fragment.mCompass.setColorsByFood(f) }
             }
         }
 
         val ejections = pr.worldObjectsInfo.mEjection
         if (ejections.isNotEmpty()) {
+            mLogger.writeLog("Ejections total : ${ejections.size}")
             pr.worldObjectsInfo.mEjection.filter { ejection ->
                 pr.mineInfo.mFragmentsState.none { fragment -> !fragment.mCompass.setColorsByEjection(ejection) }
             }
@@ -50,7 +54,7 @@ class EvasionFilter(val mGlobalConfig: WorldConfig, val mLogger: Logger) {
     }
 
 
-    fun removeUnreachableFood(parseResult: ParseResult): ParseResult {
+    private fun removeUnreachableFood(parseResult: ParseResult): ParseResult {
         mLogger.writeLog("removeUnreachableFood")
 
         val cornerDistance = parseResult.mineInfo.getMainFragment().mRadius * 1.1f
