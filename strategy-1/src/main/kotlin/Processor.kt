@@ -27,7 +27,8 @@ class Processor(configJson: JSONObject) {
 
     // Tick Process
     fun onTick(tickData: JSONObject): JSONObject {
-        mLogger.writeLog("INCOMING $tickData\n")
+        mLogger.writeLog("\nTICK $mCurrentTick")
+        mLogger.writeLog("INCOMING $tickData")
         val parsed = parseIncoming(tickData)
         val out = analyzeData(parsed, mCurrentTick)
         mCurrentTick++
@@ -36,7 +37,8 @@ class Processor(configJson: JSONObject) {
 
     //TODO: merge previous compass and current
 
-    private fun parseIncoming(tickData: JSONObject): ParseResult = ParseResult(MineInfo(tickData.getJSONArray("Mine"), mWorldConfig), WorldObjectsInfo(tickData.getJSONArray("Objects"), mWorldConfig))
+    private fun parseIncoming(tickData: JSONObject): ParseResult =
+            ParseResult(MineInfo(tickData.getJSONArray("Mine"), mWorldConfig, mLogger), WorldObjectsInfo(tickData.getJSONArray("Objects"), mWorldConfig, mLogger))
 
     private fun analyzeData(parseResult: ParseResult, currentTickCount: Int): JSONObject {
         val data = mEvasionFilter.onFilter(parseResult)
@@ -44,15 +46,17 @@ class Processor(configJson: JSONObject) {
 
             if (data.mineInfo.isNotEmpty()) {
                 val gameEngine = GameEngine(mWorldConfig, data, currentTickCount, mLogger)
-                mLogger.writeLog("Start check strategies")
+                mLogger.writeLog("GE Parsed. Start check strategies")
 
                 var strategyResult = mEscapeStrategy.apply(gameEngine, mCachedParseResult)
+                mLogger.writeLog("$strategyResult")
                 if (strategyResult.achievementScore > 0) {
                     mLogger.writeLog("APPLY escape: $strategyResult\n")
                     return strategyResult.toJSONCommand()
                 }
 
                 strategyResult = mEatEnemyStrategy.apply(gameEngine, mCachedParseResult)
+                mLogger.writeLog("$strategyResult")
                 if (strategyResult.achievementScore > 0) {
                     mLogger.writeLog("APPLY eat enemy: $strategyResult\n")
                     return strategyResult.toJSONCommand()
@@ -64,13 +68,15 @@ class Processor(configJson: JSONObject) {
                 )
 
                 strategyResult = strategyResults.sortedByDescending { it.achievementScore }[0]
+                mLogger.writeLog("$strategyResult")
                 if (strategyResult.achievementScore > 0) {
                     mLogger.writeLog("Chosen strategy: $strategyResult\n")
                     return strategyResult.toJSONCommand()
                 }
 
                 strategyResult = mDefaultStrategy.apply(gameEngine)
-                if (strategyResult.achievementScore > 0) {
+                mLogger.writeLog("$strategyResult")
+                if (strategyResult.achievementScore >= 0) {
                     mLogger.writeLog("Chosen Default strategy: $strategyResult\n")
                     return strategyResult.toJSONCommand()
                 }
