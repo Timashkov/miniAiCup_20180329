@@ -17,6 +17,7 @@ class FindFoodStrategy(val mGlobalConfig: WorldConfig, val mLogger: Logger) : IS
 
     override fun apply(gameEngine: GameEngine, cachedParseResult: ParseResult?): StrategyResult {
 
+        mLogger.writeLog("Try to apply food search\n")
         val food = gameEngine.worldParseResult.worldObjectsInfo.mFood
 
         if (food.isEmpty()) {
@@ -41,11 +42,11 @@ class FindFoodStrategy(val mGlobalConfig: WorldConfig, val mLogger: Logger) : IS
                     }
 
                     if (me.getMainFragment().mMass > WorldConfig.MIN_SPLITABLE_MASS && me.mFragmentsState.none { fragment -> fragment.mCompass.isVertexInDangerArea(bestWay.target) }) {
-                        mLogger.writeLog("$DEBUG_TAG movementTarget ${bestWay.target} and split for FOOD: ${bestWay.target}\n")
+                        mLogger.writeLog("$DEBUG_TAG movementTarget ${bestWay.target} and split for FOOD: ${bestWay.target}")
                         return StrategyResult(bestWay.foodPoints.size, bestWay.target, split = true, debugMessage = "Debug : get food with split")
                     } else {
                         val movementTarget = gameEngine.getMovementPointForTarget(bestWay.fragmentId, me.getCoordinates(), bestWay.target)
-                        mLogger.writeLog("$DEBUG_TAG movementTarget $movementTarget  for FOOD: ${bestWay.target}\n")
+                        mLogger.writeLog("$DEBUG_TAG movementTarget $movementTarget  for FOOD: ${bestWay.target}")
                         return StrategyResult(bestWay.foodPoints.size, movementTarget)
                     }
                 }
@@ -53,7 +54,7 @@ class FindFoodStrategy(val mGlobalConfig: WorldConfig, val mLogger: Logger) : IS
                 mLogger.writeLog("Fault on apply food $e")
             }
 
-            mLogger.writeLog("$DEBUG_TAG Find food is not applied \n")
+            mLogger.writeLog("$DEBUG_TAG Find food is not applied")
             return StrategyResult(-1, Vertex(0.0f, 0.0f), debugMessage = "FindFood: Not applied")
         }
     }
