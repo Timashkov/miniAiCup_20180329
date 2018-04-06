@@ -3,7 +3,11 @@ package incominginfos
 import org.json.JSONArray
 import utils.Vertex
 import WorldConfig
+import utils.Compass
 import utils.Logger
+import kotlin.math.PI
+import kotlin.math.sqrt
+import kotlin.math.tan
 
 class MineInfo(stateJson: JSONArray, val globalConfig: WorldConfig, val mLogger: Logger) {
     val mFragmentsState: Array<MineFragmentInfo>
@@ -109,6 +113,33 @@ class MineInfo(stateJson: JSONArray, val globalConfig: WorldConfig, val mLogger:
 
     fun getNearestFragment(target: Vertex): MineFragmentInfo {
         return mFragmentsState.sortedBy { it.mVertex.distance(target) }[0]
+    }
+
+    fun getBestEscapePoint(source: Vertex): Vertex {
+        mLogger.writeLog("Looking for best escape sector")
+        val rumbHash = HashMap<Float, Int>()
+        mFragmentsState.forEach { fr ->
+            fr.mCompass.getWhiteSectorsIndexesArray().forEach { rumb ->
+                if (rumbHash.containsKey(rumb.majorBorder))
+                    rumbHash[rumb.majorBorder] = rumbHash[rumb.majorBorder]!! + rumb.areaFactor
+                else
+                    rumbHash[rumb.majorBorder] = rumb.areaFactor
+            }
+        }
+        val sector = rumbHash.maxBy { it.value }
+        mLogger.writeLog("Sector $sector")
+
+        val distance = source.distance(getMinorFragment().mVertex)
+        // val vec = myPosition.getMovementVector(enemyPosition)
+        //val directAngle = (atan2(vec.SY, vec.SX) * 180f / PI).toFloat()
+
+        mLogger.writeLog("Danger distance $distance")
+        val K = tan(sector!!.key * PI / 180f).toFloat()
+        val X = distance / sqrt(K * K + 1)
+        val Y = K * X
+
+        mLogger.writeLog("K=$K X=$X Y=$Y")
+        return Vertex(source.X + X, source.Y + Y)
     }
 
 }

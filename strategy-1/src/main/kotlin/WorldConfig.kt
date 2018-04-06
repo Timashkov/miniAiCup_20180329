@@ -32,5 +32,6 @@ class WorldConfig(configJson: JSONObject) {
         val MAGIC_MASS4EAT = 3
         val MAGIC_COMPASS_BLACK_DELTA = 4
         val FOW_RADIUS_FACTOR = 4
+        val STAR_BURST_DISABLE_TICK = 1200
     }
 }

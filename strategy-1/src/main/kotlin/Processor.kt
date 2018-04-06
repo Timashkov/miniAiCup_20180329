@@ -37,10 +37,10 @@ class Processor(configJson: JSONObject) {
 
     //TODO: merge previous compass and current
 
-    private fun parseIncoming(tickData: JSONObject): ParseResult =
+    fun parseIncoming(tickData: JSONObject): ParseResult =
             ParseResult(MineInfo(tickData.getJSONArray("Mine"), mWorldConfig, mLogger), WorldObjectsInfo(tickData.getJSONArray("Objects"), mWorldConfig, mLogger))
 
-    private fun analyzeData(parseResult: ParseResult, currentTickCount: Int): JSONObject {
+    fun analyzeData(parseResult: ParseResult, currentTickCount: Int): JSONObject {
         val data = mEvasionFilter.onFilter(parseResult)
         try {
 

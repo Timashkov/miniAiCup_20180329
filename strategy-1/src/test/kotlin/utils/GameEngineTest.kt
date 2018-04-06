@@ -23,7 +23,7 @@ class GameEngineTest {
         val json = JSONObject("{\"FOOD_MASS\":1,\"GAME_HEIGHT\":660,\"GAME_TICKS\":75000,\"GAME_WIDTH\":660,\"INERTION_FACTOR\":1,\"MAX_FRAGS_CNT\":10,\"SPEED_FACTOR\":100,\"TICKS_TIL_FUSION\":250,\"VIRUS_RADIUS\":40,\"VIRUS_SPLIT_MASS\":80,\"VISCOSITY\":0.25}")
         mConfig = WorldConfig(json)
         val jsarr = JSONArray("[{\"R\":12.649110640673518,\"SX\":0,\"SY\":0,\"X\":482.7,\"Y\":278.3,\"Id\":\"1\",\"M\":40}]")
-        parseResult = ParseResult(MineInfo(jsarr, mConfig), WorldObjectsInfo(JSONArray("[{\"T\":\"V\",\"X\":113,\"Y\":161,\"Id\":\"20\",\"M\":40},{\"T\":\"V\",\"X\":547,\"Y\":161,\"Id\":\"21\",\"M\":40},{\"T\":\"V\",\"X\":547,\"Y\":499,\"Id\":\"22\",\"M\":40},{\"T\":\"V\",\"X\":113,\"Y\":499,\"Id\":\"23\",\"M\":40}]"), mConfig))
+        parseResult = ParseResult(MineInfo(jsarr, mConfig, mLogger), WorldObjectsInfo(JSONArray("[{\"T\":\"V\",\"X\":113,\"Y\":161,\"Id\":\"20\",\"M\":40},{\"T\":\"V\",\"X\":547,\"Y\":161,\"Id\":\"21\",\"M\":40},{\"T\":\"V\",\"X\":547,\"Y\":499,\"Id\":\"22\",\"M\":40},{\"T\":\"V\",\"X\":113,\"Y\":499,\"Id\":\"23\",\"M\":40}]"), mConfig, mLogger))
         mDefaultStrategy = DefaultTurnStrategy(mConfig, mLogger)
     }
 

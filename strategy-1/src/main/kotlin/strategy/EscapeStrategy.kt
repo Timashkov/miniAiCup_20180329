@@ -9,6 +9,7 @@ import utils.Vertex
 class EscapeStrategy(val mGlobalConfig: WorldConfig, val mLogger: Logger) : IStrategy {
     override fun apply(gameEngine: GameEngine, cachedParseResult: ParseResult?): StrategyResult {
 
+        mLogger.writeLog("Try to escape")
         val me = gameEngine.worldParseResult.mineInfo
 /*
 * 1) анализ массы и радиуса противника
@@ -57,15 +58,20 @@ class EscapeStrategy(val mGlobalConfig: WorldConfig, val mLogger: Logger) : IStr
         if (gameEngine.worldParseResult.worldObjectsInfo.mEnemies.isNotEmpty()) {
             val enemies = gameEngine.worldParseResult.worldObjectsInfo.mEnemies.filter { enemy -> me.mFragmentsState.any { fragment -> fragment.canBeEatenByEnemy(enemy.mMass) } }
             if (enemies.isNotEmpty()) {
-                val deltaX = enemies[0].mVertex.X - me.getMainFragment().mVertex.X
-                val k = (enemies[0].mVertex.Y - me.getMainFragment().mVertex.Y) / deltaX
+                val fat = enemies.maxBy { it.mMass }
+                val target = me.getBestEscapePoint(fat!!.mVertex)
 
-                val targetX = if (deltaX > 0) me.getMainFragment().mVertex.X - deltaX else me.getMainFragment().mVertex.X + deltaX
-                val targetY = targetX * (-k)
-                return StrategyResult(100, Vertex(targetX, targetY), debugMessage = "ESCAPE!!!!")
+
+//                val deltaX = enemies[0].mVertex.X - me.getMainFragment().mVertex.X
+//                val k = (enemies[0].mVertex.Y - me.getMainFragment().mVertex.Y) / deltaX
+//
+//                val targetX = if (deltaX > 0) me.getMainFragment().mVertex.X - deltaX else me.getMainFragment().mVertex.X + deltaX
+//                val targetY = targetX * (-k)
+                return StrategyResult(100, target, debugMessage = "ESCAPE!!!!")
             }
         }
-        return StrategyResult(-1, Vertex(0.0f, 0.0f), debugMessage = "FindFood: Not applied")
+
+        return StrategyResult(-1, Vertex(0.0f, 0.0f), debugMessage = "Escape: Not applied")
     }
 
     override fun stopStrategy() {

@@ -80,7 +80,9 @@ class Compass(private val mFragment: MineFragmentInfo) {
             // + MAGIC_COMPASS_BLACK_DELTA
 
             if (myMovementIndex == directMovementIndex) {
+                mRumbBorders[getShiftedIndex(directMovementIndex, 15)].areaFactor = PREFERRED_SECTOR
                 mRumbBorders[getShiftedIndex(directMovementIndex, 16)].areaFactor = BLACK_SECTOR_POINTS
+                mRumbBorders[getShiftedIndex(directMovementIndex, 17)].areaFactor = PREFERRED_SECTOR
             } else {
                 if (mRumbBorders[getShiftedIndex(directMovementIndex, 16)].areaFactor != BLACK_SECTOR_POINTS)
                     mRumbBorders[getShiftedIndex(directMovementIndex, 16)].areaFactor = PREFERRED_SECTOR
