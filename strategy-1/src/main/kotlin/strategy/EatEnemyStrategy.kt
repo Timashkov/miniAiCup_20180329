@@ -10,6 +10,7 @@ class EatEnemyStrategy(val mGlobalConfig: WorldConfig, val mLogger: Logger) : IS
 
     override fun apply(gameEngine: GameEngine, cachedParseResult: ParseResult?): StrategyResult {
 
+        mLogger.writeLog("Try to apply Eat Enemy")
         if (gameEngine.worldParseResult.worldObjectsInfo.mEnemies.isNotEmpty()) {
             return searchForEnemies(gameEngine, cachedParseResult)
         }
@@ -37,12 +38,13 @@ class EatEnemyStrategy(val mGlobalConfig: WorldConfig, val mLogger: Logger) : IS
             cachedParseResult?.let { cache ->
                 val cachedEnemy = cache.worldObjectsInfo.mEnemies.firstOrNull { it.mId == chosenEnemy.mId }
                 cachedEnemy?.let { enemy ->
+                    mLogger.writeLog("Cached Enemy : $enemy")
                     targetVertex = targetVertex.plus(targetVertex.minus(enemy.mVertex))
                 }
             }
 
             val res = StrategyResult(10, gameEngine.getMovementPointForTarget(me.getMainFragment().mId, me.getCoordinates(), targetVertex), debugMessage = "Try to eat ${chosenEnemy.mId}")
-            mLogger.writeLog("Enemy strat: ${res}")
+            mLogger.writeLog("Enemy strat: $res")
             return res
         }
 
@@ -59,12 +61,13 @@ class EatEnemyStrategy(val mGlobalConfig: WorldConfig, val mLogger: Logger) : IS
                 cachedParseResult?.let { cache ->
                     val cachedEnemy = cache.worldObjectsInfo.mEnemies.firstOrNull { it.mId == chosenEnemy.mId }
                     cachedEnemy?.let { enemy ->
+                        mLogger.writeLog("Cached Enemy : $enemy")
                         targetVertex = targetVertex.plus(targetVertex.minus(enemy.mVertex))
                     }
                 }
 
                 val res = StrategyResult(10, chosenEnemy.mVertex, split = true, debugMessage = "Try to eat ${chosenEnemy.mId}")
-                mLogger.writeLog("Enemy 2 strat: ${res}")
+                mLogger.writeLog("Enemy 2 strat: $res")
                 return res
             }
         }
