@@ -66,10 +66,10 @@ class EscapeStrategy(val mGlobalConfig: WorldConfig, val mLogger: Logger) : IStr
 //                val fat = enemies.maxBy { it.mMass }
                 mLogger.writeLog("Known pervious target $mChosenVertex")
                 mChosenVertex?.let { chosen ->
-                    if (!me.getMinorFragment().mCompass.isVertexInDangerArea(chosen)) {
+                    if (!me.getMinorFragment().mCompass.isVertexInDangerArea(chosen) && chosen.distance(me.getMinorFragment().mVertex) > me.getMinorFragment().mRadius * 1.2f) {
                         mLogger.writeLog("Target for escaping is prev target $chosen")
                         val fixedVertex = gameEngine.getMovementPointForTarget(me.getMinorFragment().mId, me.getMinorFragment().mVertex, chosen)
-                        return StrategyResult(100, fixedVertex, debugMessage = "ESCAPE!!!!")
+                        return StrategyResult(5, fixedVertex, debugMessage = "ESCAPE!!!!")
                     }
                 }
 //﻿ZXY6HS7LEN-fail
@@ -83,7 +83,7 @@ class EscapeStrategy(val mGlobalConfig: WorldConfig, val mLogger: Logger) : IStr
 //                val targetX = if (deltaX > 0) me.getMainFragment().mVertex.X - deltaX else me.getMainFragment().mVertex.X + deltaX
 //                val targetY = targetX * (-k)
                     val fixedVertex = gameEngine.getMovementPointForTarget(me.getMinorFragment().mId, me.getMinorFragment().mVertex, chosen)
-                    return StrategyResult(100, fixedVertex, debugMessage = "ESCAPE!!!!")
+                    return StrategyResult(5, fixedVertex, debugMessage = "ESCAPE!!!!")
                 }
             }
         }

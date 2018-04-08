@@ -41,7 +41,7 @@ class FindFoodStrategy(val mGlobalConfig: WorldConfig, val mLogger: Logger) : IS
                         }
                     }
 
-                    if (me.getMainFragment().mMass > WorldConfig.MIN_SPLITABLE_MASS && me.mFragmentsState.none { fragment -> fragment.mCompass.isVertexInDangerArea(bestWay.target) }) {
+                    if (me.getMainFragment().mMass > WorldConfig.MIN_SPLITABLE_MASS * 1.2f && me.mFragmentsState.none { fragment -> fragment.mCompass.isVertexInDangerArea(bestWay.target) }) {
                         mLogger.writeLog("$DEBUG_TAG movementTarget ${bestWay.target} and split for FOOD: ${bestWay.target}")
                         return StrategyResult(bestWay.foodPoints.size, bestWay.target, split = true, debugMessage = "Debug : get food with split")
                     } else {

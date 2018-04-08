@@ -29,6 +29,13 @@ class Compass(private val mFragment: MineFragmentInfo, private val mGlobalConfig
     }
 
     private fun getRumbIndexByAngle(angle: Float): Int {
+        var target = angle
+        while (angle > 180f) {
+            target -= 360f
+        }
+        while (angle < -180f) {
+            target += 360f
+        }
         return mRumbBorders.indexOfFirst { angle <= it.majorBorder }
     }
 
@@ -76,8 +83,18 @@ class Compass(private val mFragment: MineFragmentInfo, private val mGlobalConfig
         if (enemyMass >= myMass * WorldConfig.EAT_MASS_FACTOR) {
 //            val shiftedAngle = (asin(enemyR / myPosition.distance(enemyPosition)) * 180f / PI).toFloat()
             val shiftedAngle = (asin(enemyR / (mFragment.mRadius / 3f + enemyR)) * 180f / PI).toFloat()
-            val shiftedRumbIndex = getRumbIndexByAngle(shiftedAngle + directAngle)
-            val indexDelta = shiftedRumbIndex - directMovementIndex
+
+            var searchingAngle = shiftedAngle + directAngle
+            var K = 1
+            if (searchingAngle > 180f) {
+                K = -1
+                searchingAngle = directAngle - shiftedAngle
+            }
+
+            val shiftedRumbIndex = getRumbIndexByAngle(searchingAngle)
+
+            var indexDelta = K * (shiftedRumbIndex - directMovementIndex)
+
             // + MAGIC_COMPASS_BLACK_DELTA
 
             if (myMovementIndex == directMovementIndex) {
@@ -196,10 +213,10 @@ class Compass(private val mFragment: MineFragmentInfo, private val mGlobalConfig
         val K = tan(rumbBorder * PI / 180f).toFloat()
         val b = mCenterVertex.Y - mCenterVertex.X * K
 
-        if (rumbBorder == 90f){
+        if (rumbBorder == 90f) {
             return Vertex(mCenterVertex.X, mGlobalConfig.GameHeight.toFloat())
         }
-        if (rumbBorder == -90f){
+        if (rumbBorder == -90f) {
             return Vertex(mCenterVertex.X, 0f)
         }
         if (rumbBorder < -90 || rumbBorder > 90) {
