@@ -66,7 +66,7 @@ class EatEnemyStrategy(val mGlobalConfig: WorldConfig, val mLogger: Logger) : IS
                     }
                 }
 
-                val res = StrategyResult(10, chosenEnemy.mVertex, split = true, debugMessage = "Try to eat ${chosenEnemy.mId}")
+                val res = StrategyResult(10, gameEngine.getMovementPointForTarget(me.getMainFragment().mId, me.getCoordinates(), chosenEnemy.mVertex), split = true, debugMessage = "Try to eat ${chosenEnemy.mId}")
                 mLogger.writeLog("Enemy 2 strat: $res")
                 return res
             }
