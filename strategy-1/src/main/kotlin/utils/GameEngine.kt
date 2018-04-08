@@ -27,7 +27,7 @@ class GameEngine(private val globalConfig: WorldConfig, val worldParseResult: Pa
         mLogger.writeLog("$DEBUG_TAG maxSpeed = $maxSpeed")
         val vectorTarget = source.getMovementVector(target).minus(sVector)
         mLogger.writeLog("$DEBUG_TAG vector target = $vectorTarget")
-        if (vectorTarget == MovementVector(0f,0f)){
+        if (vectorTarget == MovementVector(0f, 0f)) {
             //no move
             return target
         }
@@ -46,22 +46,73 @@ class GameEngine(private val globalConfig: WorldConfig, val worldParseResult: Pa
 
         var dest = source.plus(Vertex(NX, NY))
         if (dest.X > globalConfig.GameWidth || dest.X < 0 || dest.Y > globalConfig.GameHeight || dest.Y < 0)
-            dest = fixByBorders(source, dest)
-
-        return dest
-    }
-
-    private fun fixByBorders(source: Vertex, dest: Vertex): Vertex {
-        val k = (dest.X - source.X) / (dest.Y - source.Y)
-        val b = dest.Y - k * dest.X
-
-        /////////
+            dest = fixByBorders(source, dest, globalConfig.GameWidth.toFloat(), globalConfig.GameHeight.toFloat())
 
         return dest
     }
 
     companion object {
         val DEBUG_TAG = "GameEngine"
+        fun fixByBorders(source: Vertex, dest: Vertex, maxX: Float, maxY: Float): Vertex {
+
+            if (dest.X == source.X) {
+                if (dest.Y == source.Y) {
+                    return source
+                }
+                if (dest.Y > source.Y) {
+                    return Vertex(source.X, maxY)
+                }
+                if (dest.Y < source.Y) {
+                    return Vertex(source.X, 0f)
+                }
+            }
+            if (dest.Y == source.Y) {
+                if (dest.X > source.X) {
+                    return Vertex(maxX, source.Y)
+                }
+                if (dest.X < source.X) {
+                    return Vertex(0f, source.Y)
+                }
+            }
+
+            val deltaX = dest.X - source.X
+            val deltaY = dest.Y - source.Y
+
+            val k = deltaY / deltaX
+            val b = dest.Y - k * dest.X
+
+            val minBK = -b / k
+            val maxBK = (maxY - b) / k
+
+            val vert1 = Vertex(0f, b)
+            val vert2 = Vertex(minBK, 0f)
+            val vert3 = Vertex(maxBK, maxY)
+            val vert4 = Vertex(maxX, maxX * k + b)
+
+
+            if (deltaX > 0) {
+                if (deltaY < 0 && minBK <= maxX && minBK >= 0) {
+                    //vert2 || vert4
+                    return vert2
+                }
+                if (deltaY > 0 && maxBK <= maxX && maxBK >= 0) {
+                    //vert 3 || vert 4
+                    return vert3
+                }
+                return vert4
+            } else {
+
+                if (deltaY < 0 && minBK >= 0 && minBK <= maxY) {
+                    //vert2 || vert1
+                    return vert2
+                }
+                if (deltaY > 0 && maxBK >= 0 && minBK <= maxY) {
+                    //vert 3 || vert 1
+                    return vert3
+                }
+                return vert1
+            }
+        }
     }
     // Return point between fragments ??
     // turn for other fragments ?
