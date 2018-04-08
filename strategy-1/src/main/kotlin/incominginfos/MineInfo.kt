@@ -24,7 +24,7 @@ class MineInfo(stateJson: JSONArray, val globalConfig: WorldConfig, val mLogger:
 
     init {
         mLogger.writeLog("Start parse mine info")
-        mFragmentsState = Array(stateJson.length(), { it -> MineFragmentInfo(stateJson.getJSONObject(it)) })
+        mFragmentsState = Array(stateJson.length(), { it -> MineFragmentInfo(stateJson.getJSONObject(it), globalConfig) })
         mMainFragmentIndex = getMainFragmentIndex()
         mSmallestFragmentIndex = getSmallestFragmentIndex()
         mLogger.writeLog("Mine info parsed")
@@ -115,7 +115,11 @@ class MineInfo(stateJson: JSONArray, val globalConfig: WorldConfig, val mLogger:
         return mFragmentsState.sortedBy { it.mVertex.distance(target) }[0]
     }
 
-    fun getBestEscapePoint(source: Vertex): Vertex {
+    data class sectorsSet(var sectorNum: Int, var sectorsCount: Int)
+
+    // пытаемся покинуть зону в сторону границы карты
+    fun getBestEscapePoint(): Vertex {
+
         mLogger.writeLog("Looking for best escape sector")
         val rumbHash = HashMap<Float, Int>()
         mFragmentsState.forEach { fr ->
@@ -126,20 +130,58 @@ class MineInfo(stateJson: JSONArray, val globalConfig: WorldConfig, val mLogger:
                     rumbHash[rumb.majorBorder] = rumb.areaFactor
             }
         }
-        val sector = rumbHash.maxBy { it.value }
-        mLogger.writeLog("Sector $sector")
+//        val sector = rumbHash.maxBy { it.value }
+//        mLogger.writeLog("Sector $sector")
 
-        val distance = source.distance(getMinorFragment().mVertex)
-        // val vec = myPosition.getMovementVector(enemyPosition)
-        //val directAngle = (atan2(vec.SY, vec.SX) * 180f / PI).toFloat()
+        var first = -16
+        var count = 0
+        val rr = ArrayList<sectorsSet>()
+        for (i in -15..16) {
+            val border = 11.25f * i
+            if (rumbHash.containsKey(border)) {
+                if (first > -16) {
+                    count++
+                } else {
+                    first = i
+                    count++
+                }
+            } else {
+                if (first > -16) {
+                    rr.add(sectorsSet(first, count))
+                    first = -16
+                    count = 0
+                }
+            }
+        }
+        if (first > -16) {
+            // last sector still +
+            if (rr[0].sectorNum == -15) {
+                rr[0].sectorNum = first
+                rr[0].sectorsCount += count
+            } else
+                rr.add(sectorsSet(first, count))
+            first = -16
+            count = 0
+        }
 
-        mLogger.writeLog("Danger distance $distance")
-        val K = tan(sector!!.key * PI / 180f).toFloat()
-        val X = distance / sqrt(K * K + 1)
-        val Y = K * X
+        val secIndex = rr.maxBy { it -> it.sectorsCount }
+        val targetIndex = secIndex!!.sectorNum + secIndex!!.sectorsCount / 2
 
-        mLogger.writeLog("K=$K X=$X Y=$Y")
-        return Vertex(source.X + X, source.Y + Y)
+//        val targetVertex = getMinorFragment().mCompass.getMapEdgeBySector(sector!!.key)
+        val targetVertex = getMinorFragment().mCompass.getMapEdgeBySector(targetIndex * 11.25f)
+
+
+        return targetVertex
+//        val modX = distance / sqrt(K * K + 1)
+
+//        if (rightPart){
+//            val y = K * globalConfig.GameWidth
+//            if (y)
+//        }
+//        val Y = K * X
+//
+//        mLogger.writeLog("K=$K X=$X Y=$Y")
+//        return Vertex(source.X + X, source.Y + Y)
     }
 
 }

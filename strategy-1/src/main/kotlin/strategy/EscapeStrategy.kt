@@ -7,10 +7,14 @@ import utils.GameEngine
 import utils.Vertex
 
 class EscapeStrategy(val mGlobalConfig: WorldConfig, val mLogger: Logger) : IStrategy {
+
+    var mChosenVertex: Vertex? = null
+
     override fun apply(gameEngine: GameEngine, cachedParseResult: ParseResult?): StrategyResult {
 
         mLogger.writeLog("Try to escape")
         val me = gameEngine.worldParseResult.mineInfo
+
 /*
 * 1) анализ массы и радиуса противника
 * 2) если мы внутри его зоны видимости полностью -> убегаем по кратчайшей
@@ -58,19 +62,33 @@ class EscapeStrategy(val mGlobalConfig: WorldConfig, val mLogger: Logger) : IStr
         if (gameEngine.worldParseResult.worldObjectsInfo.mEnemies.isNotEmpty()) {
             val enemies = gameEngine.worldParseResult.worldObjectsInfo.mEnemies.filter { enemy -> me.mFragmentsState.any { fragment -> fragment.canBeEatenByEnemy(enemy.mMass) } }
             if (enemies.isNotEmpty()) {
-                val fat = enemies.maxBy { it.mMass }
-                val target = me.getBestEscapePoint(fat!!.mVertex)
-
+//enemies already in compass
+//                val fat = enemies.maxBy { it.mMass }
+                mLogger.writeLog("Known pervious target $mChosenVertex")
+                mChosenVertex?.let { chosen ->
+                    if (!me.getMinorFragment().mCompass.isVertexInDangerArea(chosen)) {
+                        mLogger.writeLog("Target for escaping is prev target $chosen")
+                        val fixedVertex = gameEngine.getMovementPointForTarget(me.getMinorFragment().mId, me.getMinorFragment().mVertex, chosen)
+                        return StrategyResult(100, fixedVertex, debugMessage = "ESCAPE!!!!")
+                    }
+                }
+//﻿ZXY6HS7LEN-fail
+                mChosenVertex = me.getBestEscapePoint()
+                mChosenVertex?.let { chosen ->
+                    mLogger.writeLog("Target for escaping $chosen")
 
 //                val deltaX = enemies[0].mVertex.X - me.getMainFragment().mVertex.X
 //                val k = (enemies[0].mVertex.Y - me.getMainFragment().mVertex.Y) / deltaX
 //
 //                val targetX = if (deltaX > 0) me.getMainFragment().mVertex.X - deltaX else me.getMainFragment().mVertex.X + deltaX
 //                val targetY = targetX * (-k)
-                return StrategyResult(100, target, debugMessage = "ESCAPE!!!!")
+                    val fixedVertex = gameEngine.getMovementPointForTarget(me.getMinorFragment().mId, me.getMinorFragment().mVertex, chosen)
+                    return StrategyResult(100, fixedVertex, debugMessage = "ESCAPE!!!!")
+                }
             }
         }
 
+        mChosenVertex = null
         return StrategyResult(-1, Vertex(0.0f, 0.0f), debugMessage = "Escape: Not applied")
     }
 

@@ -4,8 +4,9 @@ import WorldConfig.Companion.MAGIC_MASS4EAT
 import org.json.JSONObject
 import utils.Compass
 import utils.Vertex
+import WorldConfig
 
-class MineFragmentInfo(fragmentJson: JSONObject) {
+class MineFragmentInfo(fragmentJson: JSONObject, mGlobalConfig: WorldConfig) {
     val mVertex = Vertex(fragmentJson.getFloat("X"), fragmentJson.getFloat("Y"))
     val mId: String = fragmentJson.getString("Id")
     val mMass: Float = fragmentJson.getFloat("M")
@@ -23,7 +24,7 @@ class MineFragmentInfo(fragmentJson: JSONObject) {
     val canSplit: Boolean
         get() = mMass > WorldConfig.MIN_SPLITABLE_MASS
 
-    val mCompass: Compass = Compass(this)
+    val mCompass: Compass = Compass(this, mGlobalConfig)
 
     override fun toString(): String {
         return "$mId: mass=$mMass r=$mRadius mSX=$mSX mSY=$mSY mTTF=$mTTF"

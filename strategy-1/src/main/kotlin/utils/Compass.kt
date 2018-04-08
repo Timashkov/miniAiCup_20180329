@@ -5,9 +5,10 @@ import WorldConfig.Companion.MAGIC_COMPASS_BLACK_DELTA
 import data.MovementVector
 import incominginfos.*
 import kotlin.math.*
+import WorldConfig
 
 // 1/32 of circle
-class Compass(private val mFragment: MineFragmentInfo) {
+class Compass(private val mFragment: MineFragmentInfo, private val mGlobalConfig: WorldConfig) {
 
     data class Rumb(val majorBorder: Float, var areaFactor: Int = DEFAULT_AREA_FACTOR, var canEat: ArrayList<Vertex> = ArrayList(), var canEatEnemy: Vertex = Vertex(-1f, -1f))
 
@@ -119,8 +120,8 @@ class Compass(private val mFragment: MineFragmentInfo) {
         for (i in indexDelta * -1..indexDelta) {
             if (points == BLACK_SECTOR_POINTS) {
                 mRumbBorders[getShiftedIndex(directMovementIndex, i)].areaFactor = points
-                if (abs(i) == indexDelta)
-                    mRumbBorders[getShiftedIndex(directMovementIndex, i + 16)].areaFactor = PREFERRED_SECTOR
+//                if (abs(i) == indexDelta)
+//                    mRumbBorders[getShiftedIndex(directMovementIndex, i + 16)].areaFactor = PREFERRED_SECTOR
             } else if (mRumbBorders[getShiftedIndex(directMovementIndex, i)].areaFactor != BLACK_SECTOR_POINTS) {
                 mRumbBorders[getShiftedIndex(directMovementIndex, i)].areaFactor = points
             }
@@ -188,12 +189,49 @@ class Compass(private val mFragment: MineFragmentInfo) {
         return mRumbBorders.filter { it.areaFactor >= 0 }
     }
 
+    fun getMapEdgeBySector(rumbBorder: Float): Vertex {
+        // val vec = myPosition.getMovementVector(enemyPosition)
+        //val directAngle = (atan2(vec.SY, vec.SX) * 180f / PI).toFloat()
+
+        val K = tan(rumbBorder * PI / 180f).toFloat()
+        val b = mCenterVertex.Y - mCenterVertex.X * K
+
+        if (rumbBorder == 90f){
+            return Vertex(mCenterVertex.X, mGlobalConfig.GameHeight.toFloat())
+        }
+        if (rumbBorder == -90f){
+            return Vertex(mCenterVertex.X, 0f)
+        }
+        if (rumbBorder < -90 || rumbBorder > 90) {
+            return GameEngine.fixByBorders(mCenterVertex, Vertex(0f, b), mGlobalConfig.GameWidth.toFloat(), mGlobalConfig.GameHeight.toFloat())
+        } else {
+            return GameEngine.fixByBorders(mCenterVertex, Vertex(mGlobalConfig.GameWidth.toFloat(), mGlobalConfig.GameWidth.toFloat() * K + b), mGlobalConfig.GameWidth.toFloat(), mGlobalConfig.GameHeight.toFloat())
+        }
+    }
+
+    fun setColorByEdge(vertex: Vertex) {
+        setColorsByEdgeInternal(mCenterVertex, vertex)
+    }
+
+    fun setColorsByEdgeInternal(myPosition: Vertex, foodPosition: Vertex): Boolean {
+
+        val vec = myPosition.getMovementVector(foodPosition)
+        val directAngle = (atan2(vec.SY, vec.SX) * 180f / PI).toFloat()
+        val directMovementIndex = getRumbIndexByAngle(directAngle)
+
+        if (mRumbBorders[directMovementIndex].areaFactor != BLACK_SECTOR_POINTS) {
+            mRumbBorders[directMovementIndex].areaFactor = EDGE_SECTOR
+            return true
+        }
+        return false
+    }
+
     companion object {
         val BLACK_SECTOR_POINTS = -100 // can be eaten here
         val BURST_SECTOR_POINTS = -50
         val PREFERRED_SECTOR = 5 //
+        val EDGE_SECTOR = -10 //
         val DEFAULT_AREA_FACTOR = 1
     }
-
 
 }
