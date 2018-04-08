@@ -3,6 +3,7 @@ package strategy
 import utils.Logger
 import WorldConfig
 import data.ParseResult
+import utils.Vertex
 
 class EvasionFilter(val mGlobalConfig: WorldConfig, val mLogger: Logger) {
 
@@ -24,7 +25,7 @@ class EvasionFilter(val mGlobalConfig: WorldConfig, val mLogger: Logger) {
         }
 
         val viruses = pr.worldObjectsInfo.mViruses
-        if (viruses.isNotEmpty()) {
+        if (viruses.isNotEmpty() && pr.mineInfo.mFragmentsState.size < mGlobalConfig.MaxFragsCnt) {
             mLogger.writeLog("Viruses total : ${viruses.size}")
             pr.mineInfo.mFragmentsState.forEach { fragment ->
                 viruses.filter { fragment.canBurst(it) }.forEach { virus ->
@@ -48,6 +49,22 @@ class EvasionFilter(val mGlobalConfig: WorldConfig, val mLogger: Logger) {
             pr.worldObjectsInfo.mEjection.filter { ejection ->
                 pr.mineInfo.mFragmentsState.none { fragment -> !fragment.mCompass.setColorsByEjection(ejection) }
             }
+        }
+
+        pr.mineInfo.mFragmentsState.forEach { fragment ->
+            if (fragment.mVertex.X < fragment.mRadius * 1.2) {
+                fragment.mCompass.setColorByEdge(Vertex(0f, fragment.mVertex.Y))
+            }
+            if (fragment.mVertex.Y < fragment.mRadius * 1.2) {
+                fragment.mCompass.setColorByEdge(Vertex(fragment.mVertex.X, 0f))
+            }
+            if (fragment.mVertex.X > mGlobalConfig.GameWidth - fragment.mRadius * 1.2) {
+                fragment.mCompass.setColorByEdge(Vertex(mGlobalConfig.GameWidth.toFloat(), fragment.mVertex.Y))
+            }
+            if (fragment.mVertex.Y > mGlobalConfig.GameHeight - fragment.mRadius * 1.2) {
+                fragment.mCompass.setColorByEdge(Vertex(fragment.mVertex.X, mGlobalConfig.GameWidth.toFloat()))
+            }
+
         }
 
         return pr
