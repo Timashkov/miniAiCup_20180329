@@ -35,7 +35,12 @@ class Processor(configJson: JSONObject) {
         return out
     }
 
-    //TODO: merge previous compass and current
+    // TODO: склеивать состояния компаса за последние n tick
+    // TODO: за едой бежать не в точку с едой, а сквозь нее ( к ребру по возможности )
+    // TODO: при разнице масс фрагментов более чем на 10 % сначала полное объединение, потом уже разделение ( делит только один за один ход, то при необъодимости разделить 2 - придется потратить пару ходов )
+    // TODO: защита через стрельбу ( стреляем вперед, получаем ускорение )
+    // TODO: атака разделением - посчитать время и дистанцию отстрела
+
 
     fun parseIncoming(tickData: JSONObject): ParseResult =
             ParseResult(MineInfo(tickData.getJSONArray("Mine"), mWorldConfig, mLogger), WorldObjectsInfo(tickData.getJSONArray("Objects"), mWorldConfig, mLogger))
