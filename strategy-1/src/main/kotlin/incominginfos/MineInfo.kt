@@ -123,52 +123,50 @@ class MineInfo(stateJson: JSONArray, val globalConfig: WorldConfig, val mLogger:
         mLogger.writeLog("Looking for best escape sector")
         val rumbHash = HashMap<Float, Int>()
         mFragmentsState.forEach { fr ->
-            fr.mCompass.getWhiteSectorsIndexesArray().forEach { rumb ->
+            fr.mCompass.mRumbBorders.forEach { rumb ->
                 if (rumbHash.containsKey(rumb.majorBorder))
                     rumbHash[rumb.majorBorder] = rumbHash[rumb.majorBorder]!! + rumb.areaFactor
                 else
                     rumbHash[rumb.majorBorder] = rumb.areaFactor
             }
         }
-//        val sector = rumbHash.maxBy { it.value }
-//        mLogger.writeLog("Sector $sector")
+        val sector = rumbHash.maxBy { it.value }
+        mLogger.writeLog("Sector $sector")
 
-        var first = -16
-        var count = 0
-        val rr = ArrayList<sectorsSet>()
-        for (i in -15..16) {
-            val border = 11.25f * i
-            if (rumbHash.containsKey(border)) {
-                if (first > -16) {
-                    count++
-                } else {
-                    first = i
-                    count++
-                }
-            } else {
-                if (first > -16) {
-                    rr.add(sectorsSet(first, count))
-                    first = -16
-                    count = 0
-                }
-            }
-        }
-        if (first > -16) {
-            // last sector still +
-            if (rr[0].sectorNum == -15) {
-                rr[0].sectorNum = first
-                rr[0].sectorsCount += count
-            } else
-                rr.add(sectorsSet(first, count))
-            first = -16
-            count = 0
-        }
+//        var first = -16
+//        var count = 0
+//        val rr = ArrayList<sectorsSet>()
+//        for (i in -15..16) {
+//            val border = 11.25f * i
+//            if (rumbHash.containsKey(border) && rumbHash[border]!! > 0) {
+//                if (first > -16) {
+//                    count++
+//                } else {
+//                    first = i
+//                    count++
+//                }
+//            } else {
+//                if (first > -16) {
+//                    rr.add(sectorsSet(first, count))
+//                    first = -16
+//                    count = 0
+//                }
+//            }
+//        }
+//        if (first > -16) {
+//            // last sector still +
+//            if (rr[0].sectorNum == -15) {
+//                rr[0].sectorNum = first
+//                rr[0].sectorsCount += count
+//            } else
+//                rr.add(sectorsSet(first, count))
+//        }
+//
+//        val secIndex = rr.maxBy { it -> it.sectorsCount }
+//        val targetIndex = secIndex!!.sectorNum + secIndex.sectorsCount / 2
 
-        val secIndex = rr.maxBy { it -> it.sectorsCount }
-        val targetIndex = secIndex!!.sectorNum + secIndex!!.sectorsCount / 2
-
-//        val targetVertex = getMinorFragment().mCompass.getMapEdgeBySector(sector!!.key)
-        val targetVertex = getMinorFragment().mCompass.getMapEdgeBySector(targetIndex * 11.25f)
+        val targetVertex = getMinorFragment().mCompass.getMapEdgeBySector(sector!!.key)
+//        val targetVertex = getMinorFragment().mCompass.getMapEdgeBySector(targetIndex * 11.25f)
 
 
         return targetVertex

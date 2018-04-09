@@ -52,16 +52,16 @@ class EvasionFilter(val mGlobalConfig: WorldConfig, val mLogger: Logger) {
         }
 
         pr.mineInfo.mFragmentsState.forEach { fragment ->
-            if (fragment.mVertex.X < fragment.mRadius * 1.2) {
+            if (fragment.mVertex.X < fragment.mRadius * 2f) {
                 fragment.mCompass.setColorByEdge(Vertex(0f, fragment.mVertex.Y))
             }
-            if (fragment.mVertex.Y < fragment.mRadius * 1.2) {
+            if (fragment.mVertex.Y < fragment.mRadius * 2f) {
                 fragment.mCompass.setColorByEdge(Vertex(fragment.mVertex.X, 0f))
             }
-            if (fragment.mVertex.X > mGlobalConfig.GameWidth - fragment.mRadius * 1.2) {
+            if (fragment.mVertex.X > mGlobalConfig.GameWidth - fragment.mRadius * 2f) {
                 fragment.mCompass.setColorByEdge(Vertex(mGlobalConfig.GameWidth.toFloat(), fragment.mVertex.Y))
             }
-            if (fragment.mVertex.Y > mGlobalConfig.GameHeight - fragment.mRadius * 1.2) {
+            if (fragment.mVertex.Y > mGlobalConfig.GameHeight - fragment.mRadius * 2f) {
                 fragment.mCompass.setColorByEdge(Vertex(fragment.mVertex.X, mGlobalConfig.GameWidth.toFloat()))
             }
 

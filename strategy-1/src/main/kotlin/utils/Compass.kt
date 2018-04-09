@@ -203,7 +203,7 @@ class Compass(private val mFragment: MineFragmentInfo, private val mGlobalConfig
     }
 
     fun getWhiteSectorsIndexesArray(): List<Rumb> {
-        return mRumbBorders.filter { it.areaFactor >= 0 }
+        return mRumbBorders.filter { it.areaFactor >= BURST_SECTOR_POINTS }
     }
 
     fun getMapEdgeBySector(rumbBorder: Float): Vertex {
@@ -226,21 +226,19 @@ class Compass(private val mFragment: MineFragmentInfo, private val mGlobalConfig
         }
     }
 
-    fun setColorByEdge(vertex: Vertex) {
-        setColorsByEdgeInternal(mCenterVertex, vertex)
+    fun setColorByEdge(edgeVertex: Vertex) {
+        setColorsByEdgeInternal(mCenterVertex, edgeVertex)
     }
 
-    fun setColorsByEdgeInternal(myPosition: Vertex, foodPosition: Vertex): Boolean {
+    fun setColorsByEdgeInternal(myPosition: Vertex, edgeVertex: Vertex): Boolean {
 
-        val vec = myPosition.getMovementVector(foodPosition)
+        val vec = myPosition.getMovementVector(edgeVertex)
         val directAngle = (atan2(vec.SY, vec.SX) * 180f / PI).toFloat()
         val directMovementIndex = getRumbIndexByAngle(directAngle)
+        val shiftingDelta = 4
 
-        if (mRumbBorders[directMovementIndex].areaFactor != BLACK_SECTOR_POINTS) {
-            mRumbBorders[directMovementIndex].areaFactor = EDGE_SECTOR
-            return true
-        }
-        return false
+        markRumbsByDirectAndShifting(directMovementIndex, shiftingDelta, EDGE_SECTOR)
+        return true
     }
 
     companion object {
