@@ -16,7 +16,7 @@ class EscapeStrategy(val mGlobalConfig: WorldConfig, val mLogger: Logger) : IStr
         val me = gameEngine.worldParseResult.mineInfo
 
 /*
-* 1) анализ массы и радиуса противника
+* 1) TODO:анализ массы и радиуса противника
 * 2) если мы внутри его зоны видимости полностью -> убегаем по кратчайшей
 * 3) смотрим на границы карты
 *
@@ -66,7 +66,7 @@ class EscapeStrategy(val mGlobalConfig: WorldConfig, val mLogger: Logger) : IStr
 //                val fat = enemies.maxBy { it.mMass }
                 mLogger.writeLog("Known pervious target $mChosenVertex")
                 mChosenVertex?.let { chosen ->
-                    if (!me.getMinorFragment().mCompass.isVertexInDangerArea(chosen) && chosen.distance(me.getMinorFragment().mVertex) > me.getMinorFragment().mRadius * 1.2f) {
+                    if (!me.getMinorFragment().mCompass.isVertexInDangerArea(chosen) && me.mFragmentsState.none { fragment -> fragment.mVertex.distance(chosen) <= fragment.mRadius * 1.2f }) {
                         mLogger.writeLog("Target for escaping is prev target $chosen")
                         val fixedVertex = gameEngine.getMovementPointForTarget(me.getMinorFragment().mId, me.getMinorFragment().mVertex, chosen)
                         return StrategyResult(5, fixedVertex, debugMessage = "ESCAPE!!!!")
@@ -93,6 +93,6 @@ class EscapeStrategy(val mGlobalConfig: WorldConfig, val mLogger: Logger) : IStr
     }
 
     override fun stopStrategy() {
-
+        mChosenVertex = null
     }
 }
