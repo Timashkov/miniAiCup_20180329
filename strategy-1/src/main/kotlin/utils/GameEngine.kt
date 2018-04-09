@@ -53,6 +53,32 @@ class GameEngine(private val globalConfig: WorldConfig, val worldParseResult: Pa
 
     companion object {
         val DEBUG_TAG = "GameEngine"
+
+        fun vectorEdgeCrossPoint(source: Vertex, vector: MovementVector, maxX: Float, maxY: Float): Vertex {
+            if (vector.SX == 0f) {
+                if (vector.SY == 0f) {
+                    return source
+                }
+                if (vector.SY > 0f) {
+                    return Vertex(source.X, maxY)
+                }
+                if (vector.SY < 0f) {
+                    return Vertex(source.X, 0f)
+                }
+            }
+            if (vector.SY == 0f) {
+                if (vector.SX > 0) {
+                    return Vertex(maxX, vector.SY)
+                }
+                if (vector.SX < 0) {
+                    return Vertex(0f, vector.SY)
+                }
+            }
+
+            return vectorEdgeCrossPointInternal(source, vector.SX, vector.SY, maxX, maxY)
+        }
+
+
         fun fixByBorders(source: Vertex, dest: Vertex, maxX: Float, maxY: Float): Vertex {
 
             if (dest.X == source.X) {
@@ -78,8 +104,13 @@ class GameEngine(private val globalConfig: WorldConfig, val worldParseResult: Pa
             val deltaX = dest.X - source.X
             val deltaY = dest.Y - source.Y
 
+            return vectorEdgeCrossPointInternal(source, deltaX, deltaY, maxX, maxY)
+        }
+
+        fun vectorEdgeCrossPointInternal(source: Vertex, deltaX: Float, deltaY: Float, maxX: Float, maxY: Float): Vertex {
             val k = deltaY / deltaX
-            val b = dest.Y - k * dest.X
+            val b = source.Y - k * source.X
+
 
             val minBK = -b / k
             val maxBK = (maxY - b) / k

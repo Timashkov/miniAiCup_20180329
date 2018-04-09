@@ -5,9 +5,6 @@ import utils.Vertex
 import WorldConfig
 import utils.Compass
 import utils.Logger
-import kotlin.math.PI
-import kotlin.math.sqrt
-import kotlin.math.tan
 
 class MineInfo(stateJson: JSONArray, val globalConfig: WorldConfig, val mLogger: Logger) {
     val mFragmentsState: Array<MineFragmentInfo>
@@ -115,22 +112,17 @@ class MineInfo(stateJson: JSONArray, val globalConfig: WorldConfig, val mLogger:
         return mFragmentsState.sortedBy { it.mVertex.distance(target) }[0]
     }
 
-    data class sectorsSet(var sectorNum: Int, var sectorsCount: Int)
-
-    // пытаемся покинуть зону в сторону границы карты
     fun getBestEscapePoint(): Vertex {
 
         mLogger.writeLog("Looking for best escape sector")
-        val rumbHash = HashMap<Float, Int>()
+        val currentCompass = Compass(getMinorFragment(), globalConfig)
+
         mFragmentsState.forEach { fr ->
-            fr.mCompass.mRumbBorders.forEach { rumb ->
-                if (rumbHash.containsKey(rumb.majorBorder))
-                    rumbHash[rumb.majorBorder] = rumbHash[rumb.majorBorder]!! + rumb.areaFactor
-                else
-                    rumbHash[rumb.majorBorder] = rumb.areaFactor
-            }
+            currentCompass.mergeCompass(fr.mCompass, 1f)
         }
-        val sector = rumbHash.maxBy { it.value }
+
+        val sector = currentCompass.mRumbBorders.maxBy { it.areaScore } ?: return Vertex(0f, 0f)
+
         mLogger.writeLog("Sector $sector")
 
 //        var first = -16
@@ -165,7 +157,7 @@ class MineInfo(stateJson: JSONArray, val globalConfig: WorldConfig, val mLogger:
 //        val secIndex = rr.maxBy { it -> it.sectorsCount }
 //        val targetIndex = secIndex!!.sectorNum + secIndex.sectorsCount / 2
 
-        val targetVertex = getMinorFragment().mCompass.getMapEdgeBySector(sector!!.key)
+        val targetVertex = getMinorFragment().mCompass.getMapEdgeBySector(sector.majorBorder)
 //        val targetVertex = getMinorFragment().mCompass.getMapEdgeBySector(targetIndex * 11.25f)
 
 

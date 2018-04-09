@@ -30,18 +30,18 @@ class EscapeStrategy(val mGlobalConfig: WorldConfig, val mLogger: Logger) : IStr
 //        val squareIndex = currentSquareIndex
 //        val cornerIndex = currentCornerIndex
 //
-//        while (me.mFragmentsState.any { fragment -> fragment.mCompass.getAreaFactor(corner) < 1 } && (squareIndex != currentSquareIndex || cornerIndex != currentCornerIndex)) {
+//        while (me.mFragmentsState.any { fragment -> fragment.mCompass.getAreaScore(corner) < 1 } && (squareIndex != currentSquareIndex || cornerIndex != currentCornerIndex)) {
 //            corner = getNextCorner()
 //            mLogger.writeLog("DEFAULT_TURN $corner \n")
 //        }
 //
 //
 //
-//        if (squareIndex == currentSquareIndex && cornerIndex == currentCornerIndex && me.mFragmentsState.any { fragment -> fragment.mCompass.getAreaFactor(corner) < 1 }) {
+//        if (squareIndex == currentSquareIndex && cornerIndex == currentCornerIndex && me.mFragmentsState.any { fragment -> fragment.mCompass.getAreaScore(corner) < 1 }) {
 //            // border
 //            var found = false
 //            arrayOf(mGlobalConfig.ltCorner, mGlobalConfig.rtCorner, mGlobalConfig.rbCorner, mGlobalConfig.lbCorner).forEach { it ->
-//                if (me.mFragmentsState.none { fragment -> fragment.mCompass.getAreaFactor(corner) < 1 }) {
+//                if (me.mFragmentsState.none { fragment -> fragment.mCompass.getAreaScore(corner) < 1 }) {
 //                    corner = it
 //                    found = true
 //                }
