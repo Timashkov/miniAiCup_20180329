@@ -71,7 +71,7 @@ class EscapeStrategy(val mGlobalConfig: WorldConfig, val mLogger: Logger) : IStr
                     }
                 }
 
-                mChosenVertex = me.getBestEscapePoint()
+                mChosenVertex = me.getBestMovementPoint()
                 mChosenVertex?.let { chosen ->
                     mLogger.writeLog("Target for escaping $chosen")
 

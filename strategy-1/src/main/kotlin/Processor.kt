@@ -18,6 +18,7 @@ class Processor(configJson: JSONObject) {
     private val mEscapeStrategy = EscapeStrategy(mWorldConfig, mLogger)
     private var mCurrentTick = 0
     private var mCachedParseResult: ParseResult? = null
+    private val mFindFoodV2 = FindFoodStrategyV2(mWorldConfig, mLogger)
 
     enum class ACTIONS {
         MINE, HUNT, PURSUITE, ESCAPE
@@ -52,26 +53,31 @@ class Processor(configJson: JSONObject) {
                 val gameEngine = GameEngine(mWorldConfig, data, currentTickCount, mLogger)
                 mLogger.writeLog("GE Parsed. Start check strategies")
 
-                //FIXME: for tests only
-//                var strategyResult = mEatEnemyStrategy.apply(gameEngine, mCachedParseResult)
-//                mLogger.writeLog("$strategyResult")
-//                if (strategyResult.achievementScore > 0) {
-//                    mLogger.writeLog("APPLY eat enemy: $strategyResult\n")
-//                    return strategyResult.toJSONCommand()
-//                }
+                var sr = mFindFoodV2.apply(gameEngine, mCachedParseResult)
+                if (sr.achievementScore > -1){
+                    mLogger.writeLog("APPLY FF2: $sr\n")
+                    return sr.toJSONCommand()
+                }
 
-                val strategyResults = listOf(
-                        mFoodStrategy.apply(gameEngine),
-                        mStartBurstStrategy.apply(gameEngine),
-                        mEscapeStrategy.apply(gameEngine, mCachedParseResult)
-                )
-
-                var strategyResult = strategyResults.sortedByDescending { it.achievementScore }[0]
+                var strategyResult = mEatEnemyStrategy.apply(gameEngine, mCachedParseResult)
                 mLogger.writeLog("$strategyResult")
                 if (strategyResult.achievementScore > 0) {
-                    mLogger.writeLog("Chosen strategy: $strategyResult\n")
+                    mLogger.writeLog("APPLY eat enemy: $strategyResult\n")
                     return strategyResult.toJSONCommand()
                 }
+
+//                val strategyResults = listOf(
+//                        mFoodStrategy.apply(gameEngine),
+//                        mStartBurstStrategy.apply(gameEngine),
+//                        mEscapeStrategy.apply(gameEngine, mCachedParseResult)
+//                )
+//
+//                strategyResult = strategyResults.sortedByDescending { it.achievementScore }[0]
+//                mLogger.writeLog("$strategyResult")
+//                if (strategyResult.achievementScore > 0) {
+//                    mLogger.writeLog("Chosen strategy: $strategyResult\n")
+//                    return strategyResult.toJSONCommand()
+//                }
 
                 strategyResult = mDefaultStrategy.apply(gameEngine)
                 mLogger.writeLog("$strategyResult")

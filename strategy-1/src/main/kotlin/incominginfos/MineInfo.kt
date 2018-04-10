@@ -5,6 +5,7 @@ import utils.Vertex
 import WorldConfig
 import utils.Compass
 import utils.Logger
+import utils.Square
 
 class MineInfo(stateJson: JSONArray, val globalConfig: WorldConfig, val mLogger: Logger) {
     val mFragmentsState: Array<MineFragmentInfo>
@@ -112,70 +113,38 @@ class MineInfo(stateJson: JSONArray, val globalConfig: WorldConfig, val mLogger:
         return mFragmentsState.sortedBy { it.mVertex.distance(target) }[0]
     }
 
-    fun getBestEscapePoint(): Vertex {
+    fun getBestMovementPoint(): Vertex {
 
         mLogger.writeLog("Looking for best escape sector")
-        val currentCompass = Compass(getMinorFragment(), globalConfig)
+        val currentCompass = Compass(getMinorFragment(), globalConfig, true)
 
         mFragmentsState.forEach { fr ->
             currentCompass.mergeCompass(fr.mCompass, 1f)
         }
 
         val sector = currentCompass.mRumbBorders.maxBy { it.areaScore } ?: return Vertex(0f, 0f)
-
         mLogger.writeLog("Sector $sector")
 
-//        var first = -16
-//        var count = 0
-//        val rr = ArrayList<sectorsSet>()
-//        for (i in -15..16) {
-//            val border = 11.25f * i
-//            if (rumbHash.containsKey(border) && rumbHash[border]!! > 0) {
-//                if (first > -16) {
-//                    count++
-//                } else {
-//                    first = i
-//                    count++
-//                }
-//            } else {
-//                if (first > -16) {
-//                    rr.add(sectorsSet(first, count))
-//                    first = -16
-//                    count = 0
-//                }
-//            }
-//        }
-//        if (first > -16) {
-//            // last sector still +
-//            if (rr[0].sectorNum == -15) {
-//                rr[0].sectorNum = first
-//                rr[0].sectorsCount += count
-//            } else
-//                rr.add(sectorsSet(first, count))
-//        }
-//
-//        val secIndex = rr.maxBy { it -> it.sectorsCount }
-//        val targetIndex = secIndex!!.sectorNum + secIndex.sectorsCount / 2
-
-        val targetVertex = getMinorFragment().mCompass.getMapEdgeBySector(sector.majorBorder)
-//        val targetVertex = getMinorFragment().mCompass.getMapEdgeBySector(targetIndex * 11.25f)
-
-
-        return targetVertex
-//        val modX = distance / sqrt(K * K + 1)
-
-//        if (rightPart){
-//            val y = K * globalConfig.GameWidth
-//            if (y)
-//        }
-//        val Y = K * X
-//
-//        mLogger.writeLog("K=$K X=$X Y=$Y")
-//        return Vertex(source.X + X, source.Y + Y)
+        if (sector.areaScore == Compass.DEFAULT_AREA_SCORE * mFragmentsState.size)
+            return Vertex.DEFAULT
+        return currentCompass.getSectorFoodPoint(sector)
     }
+
 
     fun reconfigureCompass(foodPoints: ArrayList<Vertex>) {
         mFragmentsState.forEach { it.reconfigureCompass(foodPoints) }
+    }
+
+    private fun getQuart(vertex: Vertex, center: Vertex): Int {
+        if (vertex.X <= center.X) {
+            if (vertex.Y <= center.Y)
+                return 1
+            return 4
+        }
+        if (vertex.Y <= center.Y) {
+            return 2
+        }
+        return 3
     }
 
 }
