@@ -5,7 +5,7 @@ import WorldConfig
 import data.ParseResult
 import utils.Vertex
 
-class EvasionFilter(private val mGlobalConfig: WorldConfig, val mLogger: Logger) {
+class WorldObjectsFilter(private val mGlobalConfig: WorldConfig, val mLogger: Logger) {
 
     // отфильтровать информацию о мире так , чтоб не давать персонажу давать идти в сторону
     // потенциальной опасности
@@ -51,22 +51,30 @@ class EvasionFilter(private val mGlobalConfig: WorldConfig, val mLogger: Logger)
             }
         }
 
-        pr.mineInfo.mFragmentsState.forEach { fragment ->
-            val borderDistance = fragment.mRadius * 6f
-            if (fragment.mVertex.X < borderDistance) {
-                fragment.mCompass.setColorByEdge(Vertex(0f, fragment.mVertex.Y))
-            }
-            if (fragment.mVertex.Y < borderDistance) {
-                fragment.mCompass.setColorByEdge(Vertex(fragment.mVertex.X, 0f))
-            }
-            if (fragment.mVertex.X > mGlobalConfig.GameWidth - borderDistance) {
-                fragment.mCompass.setColorByEdge(Vertex(mGlobalConfig.GameWidth.toFloat(), fragment.mVertex.Y))
-            }
-            if (fragment.mVertex.Y > mGlobalConfig.GameHeight - borderDistance) {
-                fragment.mCompass.setColorByEdge(Vertex(fragment.mVertex.X, mGlobalConfig.GameWidth.toFloat()))
-            }
-        }
+        val foodPoints: ArrayList<Vertex> = ArrayList()
+        if (food.isNotEmpty())
+            foodPoints.addAll(food.map { it.mVertex })
+        if (ejections.isNotEmpty())
+            foodPoints.addAll(ejections.map { it.mVertex })
 
+        if (pr.worldObjectsInfo.mEnemies.isNotEmpty())
+            pr.mineInfo.mFragmentsState.forEach { fragment ->
+                val borderDistance = fragment.mRadius * 6f
+                if (fragment.mVertex.X < borderDistance) {
+                    fragment.mCompass.setColorByEdge(Vertex(0f, fragment.mVertex.Y))
+                }
+                if (fragment.mVertex.Y < borderDistance) {
+                    fragment.mCompass.setColorByEdge(Vertex(fragment.mVertex.X, 0f))
+                }
+                if (fragment.mVertex.X > mGlobalConfig.GameWidth - borderDistance) {
+                    fragment.mCompass.setColorByEdge(Vertex(mGlobalConfig.GameWidth.toFloat(), fragment.mVertex.Y))
+                }
+                if (fragment.mVertex.Y > mGlobalConfig.GameHeight - borderDistance) {
+                    fragment.mCompass.setColorByEdge(Vertex(fragment.mVertex.X, mGlobalConfig.GameWidth.toFloat()))
+                }
+            }
+
+        pr.mineInfo.reconfigureCompass(foodPoints)
         return pr
     }
 

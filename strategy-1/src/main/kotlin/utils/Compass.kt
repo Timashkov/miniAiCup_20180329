@@ -5,11 +5,12 @@ import data.MovementVector
 import incominginfos.*
 import kotlin.math.*
 import WorldConfig
+import data.FoodPoint
 
 // 1/32 of circle
 class Compass(private val mFragment: MineFragmentInfo, private val mGlobalConfig: WorldConfig) {
 
-    data class Rumb(val majorBorder: Float, var areaScore: Int = DEFAULT_AREA_FACTOR, var canEat: ArrayList<Vertex> = ArrayList(), var canEatEnemy: ArrayList<Vertex> = ArrayList(), var canBeEatenByEnemy: ArrayList<Vertex> = ArrayList())
+    data class Rumb(val majorBorder: Float, var areaScore: Int = DEFAULT_AREA_FACTOR, var canEat: ArrayList<FoodPoint> = ArrayList(), var canEatEnemy: ArrayList<Vertex> = ArrayList(), var canBeEatenByEnemy: ArrayList<Vertex> = ArrayList())
 
     val mRumbBorders: Array<Rumb>
     val mCenterVertex = mFragment.mVertex
@@ -110,8 +111,8 @@ class Compass(private val mFragment: MineFragmentInfo, private val mGlobalConfig
         val directMovementIndex = getRumbIndexByAngle(directAngle)
 
         if (mRumbBorders[directMovementIndex].areaScore != BLACK_SECTOR_POINTS) {
-            mRumbBorders[directMovementIndex].canEat.add(foodPosition)
-            mRumbBorders[directMovementIndex].areaScore++
+//            mRumbBorders[directMovementIndex].canEat.add(FoodPoint(foodPosition, arrayListOf(foodPosition), mFragment.mId))
+//            mRumbBorders[directMovementIndex].areaScore++
             return true
         }
         return false
@@ -221,6 +222,98 @@ class Compass(private val mFragment: MineFragmentInfo, private val mGlobalConfig
         markRumbsByDirectAndShifting(directMovementIndex, shiftingDelta, EDGE_SECTOR)
     }
 
+    fun reconfigure(foodPoints: ArrayList<Vertex>) {
+        setFoodToSectors(foodPoints)
+        updateScore()
+    }
+
+    private fun setFoodToSectors(foodPoints: ArrayList<Vertex>) {
+//        mRumbBorders.forEach { it.canEat.clear() }
+        val filtered = foodPoints.filter { !isVertexInDangerArea(it) }
+
+        val sortedByX = filtered.sortedBy { it.X }
+        val sortedByR = filtered.sortedBy { mCenterVertex.distance(it) }
+
+
+        sortedByR.forEach { it ->
+            val verts: ArrayList<Vertex> = ArrayList()
+            verts.add(it)
+            val xIndex = sortedByX.indexOf(it)
+
+            if (xIndex > 0) {
+                for (i in xIndex - 1 downTo 0) {
+                    if (abs(sortedByX[i].X - it.X) < mFragment.mRadius) {
+                        if (it.distance(sortedByX[i]) < mFragment.mRadius * 0.95f)
+                            verts.add(sortedByX[i])
+                    } else
+                        break
+                }
+            }
+            if (xIndex < filtered.size - 1) {
+                for (i in xIndex + 1 until filtered.size)
+                    if (abs(sortedByX[i].X - it.X) < mFragment.mRadius) {
+                        if (it.distance(sortedByX[i]) < mFragment.mRadius * 0.95f)
+                            verts.add(sortedByX[i])
+                    } else
+                        break
+            }
+
+            val vec = mCenterVertex.getMovementVector(it)
+            val directAngle = (atan2(vec.SY, vec.SX) * 180f / PI).toFloat()
+            val directMovementIndex = getRumbIndexByAngle(directAngle)
+            mRumbBorders[directMovementIndex].canEat.add(FoodPoint(it, verts, mFragment.mId))
+            mRumbBorders[directMovementIndex].areaScore += verts.size
+        }
+    }
+
+
+    private fun updateScore() {
+        var first = -16
+        var count = 0
+        val sectorsSet: HashMap<Int, Int> = HashMap()
+
+        mRumbBorders.forEach { sector ->
+
+            if (sector.areaScore > -1) {
+                if (first > -1) {
+                    count += 1
+                } else {
+                    first = mRumbBorders.indexOf(sector)
+                    count += 1
+                }
+            } else {
+                if (first > -1) {
+                    sectorsSet[first] = count
+                    first = -1
+                    count = 0
+                }
+            }
+        }
+
+        if (first > -1) {
+            // last sector still +
+            if (sectorsSet.containsKey(0)) {
+                sectorsSet[first] = sectorsSet[0]!! + count
+                sectorsSet.remove(0)
+            } else
+                sectorsSet[first] = count
+        }
+
+        sectorsSet.forEach { startIndex, count ->
+            val factor = count / 2
+
+            val directMovementIndex = getShiftedIndex(startIndex, factor)
+            if (count % 2 == 1) {
+                mRumbBorders[directMovementIndex].areaScore *= 2f.pow(factor).toInt()
+            }
+
+            for (i in 1..factor) {
+                mRumbBorders[getShiftedIndex(directMovementIndex, i-1)].areaScore *= 2f.pow(factor-i).toInt()
+                mRumbBorders[getShiftedIndex(directMovementIndex, -i)].areaScore *= 2f.pow(factor-i).toInt()
+            }
+        }
+        // best koeff = 2^(sectorscount/2)
+    }
     //TODO: set area factor by enemies with calc of distance
 
     companion object {

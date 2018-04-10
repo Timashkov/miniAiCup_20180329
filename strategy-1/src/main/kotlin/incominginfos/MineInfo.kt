@@ -174,6 +174,10 @@ class MineInfo(stateJson: JSONArray, val globalConfig: WorldConfig, val mLogger:
 //        return Vertex(source.X + X, source.Y + Y)
     }
 
+    fun reconfigureCompass(foodPoints: ArrayList<Vertex>) {
+        mFragmentsState.forEach { it.reconfigureCompass(foodPoints) }
+    }
+
 }
 
 //{\"Mine\":[{\"Id\":\"1\",\"M\":40,\"R\":12.649110640673518,\"SX\":0,\"SY\":0,\"TTF\":32,\"X\":474,\"Y\":178}]

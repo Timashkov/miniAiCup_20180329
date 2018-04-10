@@ -37,6 +37,10 @@ class MineFragmentInfo(fragmentJson: JSONObject, mGlobalConfig: WorldConfig) {
     fun canBurst(it: VirusInfo): Boolean {
         return mRadius > it.mRadius * 1.2 && mMass > WorldConfig.MIN_SPLITABLE_MASS
     }
+
+    fun reconfigureCompass(foodPoints: ArrayList<Vertex>) {
+        mCompass.reconfigure(foodPoints)
+    }
 }
 
 /*    {
