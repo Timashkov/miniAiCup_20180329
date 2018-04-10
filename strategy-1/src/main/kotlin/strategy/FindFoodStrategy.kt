@@ -3,6 +3,7 @@ package strategy
 import incominginfos.MineInfo
 import incominginfos.WorldObjectsInfo
 import WorldConfig
+import data.FoodPoint
 import data.ParseResult
 import utils.GameEngine
 import utils.Logger
@@ -10,9 +11,8 @@ import utils.Vertex
 import kotlin.math.abs
 
 class FindFoodStrategy(val mGlobalConfig: WorldConfig, val mLogger: Logger) : IStrategy {
-    data class BestWayResult(val target: Vertex, val foodPoints: List<Vertex>, val fragmentId: String)
 
-    private var mBestKnownWay: BestWayResult? = null
+    private var mKnownWay: FoodPoint? = null
     private var mGamerStateCache: MineInfo? = null
 
     override fun apply(gameEngine: GameEngine, cachedParseResult: ParseResult?): StrategyResult {
@@ -21,13 +21,13 @@ class FindFoodStrategy(val mGlobalConfig: WorldConfig, val mLogger: Logger) : IS
         val food = gameEngine.worldParseResult.worldObjectsInfo.mFood
 
         if (food.isEmpty()) {
-            mBestKnownWay = null
+            mKnownWay = null
             return StrategyResult(-1, Vertex(0.0f, 0.0f), debugMessage = "FindFood: Not applied")
         } else {
             analyzePlate(gameEngine)
 
             try {
-                mBestKnownWay?.let { bestWay ->
+                mKnownWay?.let { bestWay ->
                     val me = gameEngine.worldParseResult.mineInfo
                     mGamerStateCache = me
                     val viruses = gameEngine.worldParseResult.worldObjectsInfo.mViruses
@@ -60,35 +60,35 @@ class FindFoodStrategy(val mGlobalConfig: WorldConfig, val mLogger: Logger) : IS
     }
 
     override fun stopStrategy() {
-        mBestKnownWay = null
+        mKnownWay = null
         mGamerStateCache = null
     }
 
-    private fun shouldSplit(me: MineInfo, bestWay: BestWayResult): Boolean {
+    private fun shouldSplit(me: MineInfo, way: FoodPoint): Boolean {
         var shouldSplit = me.getMainFragment().mMass > WorldConfig.MIN_SPLITABLE_MASS * 1.2f
-        shouldSplit = shouldSplit && me.mFragmentsState.none { fragment -> fragment.mCompass.isVertexInDangerArea(bestWay.target) }
+        shouldSplit = shouldSplit && me.mFragmentsState.none { fragment -> fragment.mCompass.isVertexInDangerArea(way.target) }
         return shouldSplit
     }
 
     private fun analyzePlate(gameEngine: GameEngine) {
 
         try {
-            if (mBestKnownWay != null && isDestinationAchieved(gameEngine.worldParseResult.worldObjectsInfo) || isGamerStateChanged(gameEngine.worldParseResult.mineInfo)) {
-                mBestKnownWay = null
+            if (mKnownWay != null && isDestinationAchieved(gameEngine.worldParseResult.worldObjectsInfo) || isGamerStateChanged(gameEngine.worldParseResult.mineInfo)) {
+                mKnownWay = null
             }
 
-            if (mBestKnownWay != null && gameEngine.worldParseResult.mineInfo.mFragmentsState.any { it.mCompass.isVertexInBlackArea(mBestKnownWay!!.target) }) {
+            if (mKnownWay != null && gameEngine.worldParseResult.mineInfo.mFragmentsState.any { it.mCompass.isVertexInBlackArea(mKnownWay!!.target) }) {
                 mLogger.writeLog("$DEBUG_TAG fragment in black area")
-                mBestKnownWay = null
+                mKnownWay = null
             }
 
-            if (mBestKnownWay != null && gameEngine.worldParseResult.mineInfo.mFragmentsState.any { it.mVertex == mBestKnownWay!!.target }) {
+            if (mKnownWay != null && gameEngine.worldParseResult.mineInfo.mFragmentsState.any { it.mVertex == mKnownWay!!.target }) {
                 mLogger.writeLog("$DEBUG_TAG one fragment on the point now")
-                mBestKnownWay = null
+                mKnownWay = null
             }
 
-            if (mBestKnownWay == null) {
-                mBestKnownWay = findBestWay(gameEngine.worldParseResult.worldObjectsInfo.mFood.map { it.mVertex }, gameEngine.worldParseResult.mineInfo, gameEngine.worldParseResult.mineInfo.getMainFragment().mRadius)
+            if (mKnownWay == null) {
+                mKnownWay = findBestWay(gameEngine.worldParseResult.worldObjectsInfo.mFood.map { it.mVertex }, gameEngine.worldParseResult.mineInfo, gameEngine.worldParseResult.mineInfo.getMainFragment().mRadius)
             }
         } catch (e: Exception) {
             mLogger.writeLog("Fault on analyze plate $e")
@@ -108,7 +108,7 @@ class FindFoodStrategy(val mGlobalConfig: WorldConfig, val mLogger: Logger) : IS
     private fun isDestinationAchieved(worldInfo: WorldObjectsInfo): Boolean {
         //если съели целевую точку, а ее соседки остались - то надо доесть
 
-        mBestKnownWay?.let { targetWay ->
+        mKnownWay?.let { targetWay ->
             var c = 0
             targetWay.foodPoints.forEach { fp ->
                 if (worldInfo.mFood.map { it.mVertex }.any { it.equals(fp) }) {
@@ -122,7 +122,7 @@ class FindFoodStrategy(val mGlobalConfig: WorldConfig, val mLogger: Logger) : IS
         return true
     }
 
-    fun findBestWay(foodPoints: List<Vertex>, gamerInfo: MineInfo, gamerRadius: Float): BestWayResult? {
+    fun findBestWay(foodPoints: List<Vertex>, gamerInfo: MineInfo, gamerRadius: Float): FoodPoint? {
 
         // add ejects
         val sortedByX = foodPoints.sortedBy { it.X }
@@ -177,7 +177,7 @@ class FindFoodStrategy(val mGlobalConfig: WorldConfig, val mLogger: Logger) : IS
         }
 
         if (vertex.size == 1)
-            return BestWayResult(vertex[0], weights[vertex[0]]!!, gamerInfo.getNearestFragment(vertex[0]).mId)
+            return FoodPoint(vertex[0], weights[vertex[0]]!!, gamerInfo.getNearestFragment(vertex[0]).mId)
 
         var nearest = sortedByR.last()
         vertex.forEach { vert ->
@@ -185,7 +185,7 @@ class FindFoodStrategy(val mGlobalConfig: WorldConfig, val mLogger: Logger) : IS
                 nearest = vert
         }
 
-        return BestWayResult(nearest, weights[nearest]!!, gamerInfo.getNearestFragment(vertex[0]).mId)
+        return FoodPoint(nearest, weights[nearest]!!, gamerInfo.getNearestFragment(vertex[0]).mId)
 
     }
 
