@@ -29,4 +29,8 @@ data class Vertex(val X: Float, val Y: Float) {
 
     fun plus(v: Vertex): Vertex = Vertex(X + v.X, Y + v.Y)
     fun minus(v: Vertex): Vertex = Vertex(X - v.X, Y - v.Y)
+
+    companion object {
+        val DEFAULT = Vertex(-1f, -1f)
+    }
 }
