@@ -62,8 +62,6 @@ class EscapeStrategy(val mGlobalConfig: WorldConfig, val mLogger: Logger) : IStr
         if (gameEngine.worldParseResult.worldObjectsInfo.mEnemies.isNotEmpty()) {
             val enemies = gameEngine.worldParseResult.worldObjectsInfo.mEnemies.filter { enemy -> me.mFragmentsState.any { fragment -> fragment.canBeEatenByEnemy(enemy.mMass) } }
             if (enemies.isNotEmpty()) {
-//enemies already in compass
-//                val fat = enemies.maxBy { it.mMass }
                 mLogger.writeLog("Known pervious target $mChosenVertex")
                 mChosenVertex?.let { chosen ->
                     if (!me.getMinorFragment().mCompass.isVertexInDangerArea(chosen) && me.mFragmentsState.none { fragment -> fragment.mVertex.distance(chosen) <= fragment.mRadius * 1.2f }) {
@@ -72,7 +70,7 @@ class EscapeStrategy(val mGlobalConfig: WorldConfig, val mLogger: Logger) : IStr
                         return StrategyResult(5, fixedVertex, debugMessage = "ESCAPE!!!!")
                     }
                 }
-//﻿ZXY6HS7LEN-fail
+
                 mChosenVertex = me.getBestEscapePoint()
                 mChosenVertex?.let { chosen ->
                     mLogger.writeLog("Target for escaping $chosen")

@@ -8,21 +8,19 @@ import kotlin.math.sqrt
 
 class GameEngine(private val globalConfig: WorldConfig, val worldParseResult: ParseResult, val currentTick: Int, val mLogger: Logger) {
 
-    fun getMovementPointForTarget(fragmentId: String, currentPosition: Vertex, target: Vertex): Vertex {
+    fun getMovementPointForTarget(fragmentId: String, source: Vertex, target: Vertex): Vertex {
         val fragment = worldParseResult.mineInfo.getFragmentById(fragmentId)
 
         mLogger.writeLog("$DEBUG_TAG $fragment")
-        return getMovementPointForTargetInner(fragment.mMass, MovementVector(fragment.mSX, fragment.mSY), currentPosition, target)
-    }
+        val sVector = MovementVector(fragment.mSX, fragment.mSY)
 
-    fun getMovementPointForTargetInner(mass: Float, sVector: MovementVector, source: Vertex, target: Vertex): Vertex {
         //for one fragment
 
         mLogger.writeLog("$DEBUG_TAG $sVector $source $target")
 
-        val inertionK = globalConfig.InertionFactor / mass
+        val inertionK = globalConfig.InertionFactor / fragment.mMass
         mLogger.writeLog("$DEBUG_TAG inertion = $inertionK")
-        val maxSpeed = globalConfig.SpeedFactor / sqrt(mass)
+        val maxSpeed = globalConfig.SpeedFactor / sqrt(fragment.mMass)
 
         mLogger.writeLog("$DEBUG_TAG maxSpeed = $maxSpeed")
         val vectorTarget = source.getMovementVector(target).minus(sVector)
@@ -44,11 +42,7 @@ class GameEngine(private val globalConfig: WorldConfig, val worldParseResult: Pa
         NX *= factor //
         NY *= factor
 
-        var dest = source.plus(Vertex(NX, NY))
-        if (dest.X > globalConfig.GameWidth || dest.X < 0 || dest.Y > globalConfig.GameHeight || dest.Y < 0)
-            dest = fixByBorders(source, dest, globalConfig.GameWidth.toFloat(), globalConfig.GameHeight.toFloat())
-
-        return dest
+        return vectorEdgeCrossPoint(source, MovementVector(NX, NY), globalConfig.GameWidth.toFloat(), globalConfig.GameHeight.toFloat())
     }
 
     companion object {

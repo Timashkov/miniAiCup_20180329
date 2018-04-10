@@ -5,13 +5,13 @@ import WorldConfig
 import data.ParseResult
 import utils.Vertex
 
-class EvasionFilter(val mGlobalConfig: WorldConfig, val mLogger: Logger) {
+class EvasionFilter(private val mGlobalConfig: WorldConfig, val mLogger: Logger) {
 
     // отфильтровать информацию о мире так , чтоб не давать персонажу давать идти в сторону
     // потенциальной опасности
     fun onFilter(parseResult: ParseResult): ParseResult {
 
-        var pr = removeUnreachableFood(parseResult)
+        val pr = removeUnreachableFood(parseResult)
 
         val enemies = pr.worldObjectsInfo.mEnemies
         if (enemies.isNotEmpty()) {

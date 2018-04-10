@@ -36,7 +36,6 @@ class Processor(configJson: JSONObject) {
     }
 
     // TODO: склеивать состояния компаса за последние n tick
-    // TODO: за едой бежать не в точку с едой, а сквозь нее ( к ребру по возможности )
     // TODO: при разнице масс фрагментов более чем на 10 % сначала полное объединение, потом уже разделение ( делит только один за один ход, то при необъодимости разделить 2 - придется потратить пару ходов )
     // TODO: защита через стрельбу ( стреляем вперед, получаем ускорение )
     // TODO: атака разделением - посчитать время и дистанцию отстрела
@@ -46,10 +45,10 @@ class Processor(configJson: JSONObject) {
             ParseResult(MineInfo(tickData.getJSONArray("Mine"), mWorldConfig, mLogger), WorldObjectsInfo(tickData.getJSONArray("Objects"), mWorldConfig, mLogger))
 
     fun analyzeData(parseResult: ParseResult, currentTickCount: Int): JSONObject {
-        val data = mEvasionFilter.onFilter(parseResult)
-        try {
+        if (parseResult.mineInfo.isNotEmpty()) {
+            val data = mEvasionFilter.onFilter(parseResult)
+            try {
 
-            if (data.mineInfo.isNotEmpty()) {
                 val gameEngine = GameEngine(mWorldConfig, data, currentTickCount, mLogger)
                 mLogger.writeLog("GE Parsed. Start check strategies")
 
@@ -80,12 +79,13 @@ class Processor(configJson: JSONObject) {
                     mLogger.writeLog("Chosen Default strategy: $strategyResult\n")
                     return strategyResult.toJSONCommand()
                 }
+
+            } catch (e: Exception) {
+                mLogger.writeLog("Going wrong")
+                mLogger.writeLog("${e.message}")
+            } finally {
+                mCachedParseResult = data
             }
-        } catch (e: Exception) {
-            mLogger.writeLog("Going wrong")
-            mLogger.writeLog("${e.message}")
-        } finally {
-            mCachedParseResult = data
         }
         mLogger.writeLog("DEFAULT DIED")
         return JSONObject(mapOf("X" to 0, "Y" to 0, "Debug" to "Died"))

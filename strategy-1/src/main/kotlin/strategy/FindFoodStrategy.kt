@@ -41,7 +41,7 @@ class FindFoodStrategy(val mGlobalConfig: WorldConfig, val mLogger: Logger) : IS
                         }
                     }
 
-                    if (me.getMainFragment().mMass > WorldConfig.MIN_SPLITABLE_MASS * 1.2f && me.mFragmentsState.none { fragment -> fragment.mCompass.isVertexInDangerArea(bestWay.target) }) {
+                    if (shouldSplit(me, bestWay)) {
                         mLogger.writeLog("$DEBUG_TAG movementTarget ${bestWay.target} and split for FOOD: ${bestWay.target}")
                         return StrategyResult(bestWay.foodPoints.size, bestWay.target, split = true, debugMessage = "Debug : get food with split")
                     } else {
@@ -62,6 +62,12 @@ class FindFoodStrategy(val mGlobalConfig: WorldConfig, val mLogger: Logger) : IS
     override fun stopStrategy() {
         mBestKnownWay = null
         mGamerStateCache = null
+    }
+
+    private fun shouldSplit(me: MineInfo, bestWay: BestWayResult): Boolean {
+        var shouldSplit = me.getMainFragment().mMass > WorldConfig.MIN_SPLITABLE_MASS * 1.2f
+        shouldSplit = shouldSplit && me.mFragmentsState.none { fragment -> fragment.mCompass.isVertexInDangerArea(bestWay.target) }
+        return shouldSplit
     }
 
     private fun analyzePlate(gameEngine: GameEngine) {
@@ -154,7 +160,7 @@ class FindFoodStrategy(val mGlobalConfig: WorldConfig, val mLogger: Logger) : IS
         weights.forEach { it ->
 
             var factor = 0
-            gamerInfo.mFragmentsState.forEach { fragment -> factor += fragment.mCompass.getAreaFactor(it.key) }
+            gamerInfo.mFragmentsState.forEach { fragment -> factor += fragment.mCompass.getAreaScore(it.key) }
             if (factor > 0) {
                 if (it.value.size > maxPoints) {
                     maxPoints = it.value.size * factor

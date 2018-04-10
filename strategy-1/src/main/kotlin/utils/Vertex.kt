@@ -24,7 +24,7 @@ data class Vertex(val X: Float, val Y: Float) {
     fun equals(other: Vertex?): Boolean {
         if (other == null)
             return false
-        return other.X == this.X && other.Y == this.Y
+        return other.X.toInt() == this.X.toInt() && other.Y.toInt() == this.Y.toInt()
     }
 
     fun plus(v: Vertex): Vertex = Vertex(X + v.X, Y + v.Y)
