@@ -45,7 +45,7 @@ class FindFoodStrategy(val mGlobalConfig: WorldConfig, val mLogger: Logger) : IS
                         mLogger.writeLog("$DEBUG_TAG movementTarget ${bestWay.target} and split for FOOD: ${bestWay.target}")
                         return StrategyResult(bestWay.foodPoints.size, bestWay.target, split = true, debugMessage = "Debug : get food with split")
                     } else {
-                        val movementTarget = gameEngine.getMovementPointForTarget(bestWay.fragmentId, me.getCoordinates(), bestWay.target)
+                        val movementTarget = gameEngine.getMovementPointForTarget(bestWay.fragmentId, bestWay.target)
                         mLogger.writeLog("$DEBUG_TAG movementTarget $movementTarget  for FOOD: ${bestWay.target}")
                         return StrategyResult(bestWay.foodPoints.size, movementTarget)
                     }

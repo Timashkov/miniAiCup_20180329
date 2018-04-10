@@ -8,7 +8,7 @@ import kotlin.math.sqrt
 
 class GameEngine(private val globalConfig: WorldConfig, val worldParseResult: ParseResult, val currentTick: Int, val mLogger: Logger) {
 
-    fun getMovementPointForTarget(fragmentId: String, source: Vertex, target: Vertex): Vertex {
+    fun getMovementPointForTarget(fragmentId: String, target: Vertex): Vertex {
         val fragment = worldParseResult.mineInfo.getFragmentById(fragmentId)
 
         mLogger.writeLog("$DEBUG_TAG $fragment")
@@ -16,14 +16,14 @@ class GameEngine(private val globalConfig: WorldConfig, val worldParseResult: Pa
 
         //for one fragment
 
-        mLogger.writeLog("$DEBUG_TAG $sVector $source $target")
+        mLogger.writeLog("$DEBUG_TAG $sVector ${fragment.mVertex} $target")
 
         val inertionK = globalConfig.InertionFactor / fragment.mMass
         mLogger.writeLog("$DEBUG_TAG inertion = $inertionK")
         val maxSpeed = globalConfig.SpeedFactor / sqrt(fragment.mMass)
 
         mLogger.writeLog("$DEBUG_TAG maxSpeed = $maxSpeed")
-        val vectorTarget = source.getMovementVector(target).minus(sVector)
+        val vectorTarget = fragment.mVertex.getMovementVector(target).minus(sVector)
         mLogger.writeLog("$DEBUG_TAG vector target = $vectorTarget")
         if (vectorTarget == MovementVector(0f, 0f)) {
             //no move
@@ -35,14 +35,14 @@ class GameEngine(private val globalConfig: WorldConfig, val worldParseResult: Pa
 
         mLogger.writeLog("$DEBUG_TAG NX=$NX NY=$NY")
 
-        val factor = 1 / sqrt(NX.pow(2) + NY.pow(2)) * source.distance(target)
+        val factor = 1 / sqrt(NX.pow(2) + NY.pow(2)) * fragment.mVertex.distance(target)
         mLogger.writeLog("$DEBUG_TAG factor $factor")
         mLogger.writeLog("$DEBUG_TAG Ktarget = ${vectorTarget.K} KN = ${MovementVector(NX, NY).K}")
 
         NX *= factor //
         NY *= factor
 
-        return vectorEdgeCrossPoint(source, MovementVector(NX, NY), globalConfig.GameWidth.toFloat(), globalConfig.GameHeight.toFloat())
+        return vectorEdgeCrossPoint(fragment.mVertex, MovementVector(NX, NY), globalConfig.GameWidth.toFloat(), globalConfig.GameHeight.toFloat())
     }
 
     companion object {

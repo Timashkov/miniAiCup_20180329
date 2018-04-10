@@ -3,6 +3,7 @@ package incominginfos
 import org.json.JSONArray
 import utils.Vertex
 import WorldConfig
+import data.FoodPoint
 import utils.Compass
 import utils.Logger
 import utils.Square
@@ -113,7 +114,7 @@ class MineInfo(stateJson: JSONArray, val globalConfig: WorldConfig, val mLogger:
         return mFragmentsState.sortedBy { it.mVertex.distance(target) }[0]
     }
 
-    fun getBestMovementPoint(): Vertex {
+    fun getBestMovementPoint(): FoodPoint {
 
         mLogger.writeLog("Looking for best escape sector")
         val currentCompass = Compass(getMinorFragment(), globalConfig, true)
@@ -122,11 +123,11 @@ class MineInfo(stateJson: JSONArray, val globalConfig: WorldConfig, val mLogger:
             currentCompass.mergeCompass(fr.mCompass, 1f)
         }
 
-        val sector = currentCompass.mRumbBorders.maxBy { it.areaScore } ?: return Vertex(0f, 0f)
+        val sector = currentCompass.mRumbBorders.maxBy { it.areaScore } ?: return FoodPoint.DEFAULT
         mLogger.writeLog("Sector $sector")
 
         if (sector.areaScore == Compass.DEFAULT_AREA_SCORE * mFragmentsState.size)
-            return Vertex.DEFAULT
+            return FoodPoint.DEFAULT
         return currentCompass.getSectorFoodPoint(sector)
     }
 

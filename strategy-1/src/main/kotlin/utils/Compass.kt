@@ -326,12 +326,13 @@ class Compass(private val mFragment: MineFragmentInfo, private val mGlobalConfig
         // best koeff = 2^(sectorscount/2)
     }
 
-    fun getSectorFoodPoint(sector: Rumb): Vertex {
+    fun getSectorFoodPoint(sector: Rumb): FoodPoint {
         val canEat = mRumbBorders[getRumbIndexByAngle(sector.majorBorder)].canEat
         if (canEat.isNotEmpty())
-            return canEat.maxBy { it.target.distance(mCenterVertex) }!!.target
+            return canEat.maxBy { it.target.distance(mCenterVertex) }!!
 
-        return getVertexBySector(sector.majorBorder)
+        val target = getVertexBySector(sector.majorBorder)
+        return FoodPoint(target, listOf(target), mFragment.mId)
     }
 
     fun getVertexBySector(rumbBorder: Float): Vertex {

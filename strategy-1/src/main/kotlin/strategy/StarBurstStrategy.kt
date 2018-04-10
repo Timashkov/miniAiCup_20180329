@@ -31,7 +31,7 @@ class StarBurstStrategy(val mGlobalConfig: WorldConfig, val mLogger: Logger) : I
             }.sortedBy { it.mVertex.distance(mineInfo.getMainFragment().mVertex) }
             if (nearestViruses.isNotEmpty()) {
                 mLogger.writeLog("Go to star $nearestViruses[0].mVertex")
-                return StrategyResult(2, gameEngine.getMovementPointForTarget(mineInfo.getMainFragment().mId, mineInfo.getCoordinates(),nearestViruses[0].mVertex))
+                return StrategyResult(2, gameEngine.getMovementPointForTarget(mineInfo.getMainFragment().mId, nearestViruses[0].mVertex))
             }
         }
 

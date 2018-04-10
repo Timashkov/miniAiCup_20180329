@@ -1,3 +1,4 @@
+import data.FoodPoint
 import org.json.JSONObject
 import utils.Logger
 import utils.Vertex
@@ -30,7 +31,7 @@ class IncomingInfoTest {
         val parsed = mProcessor.parseIncoming(tickData)
         mProcessor.analyzeData(parsed, 2)
         val point = parsed.mineInfo.getBestMovementPoint()
-        assert(point != Vertex(200f, 200f))
+        assert(point != FoodPoint.DEFAULT)
     }
 
 }

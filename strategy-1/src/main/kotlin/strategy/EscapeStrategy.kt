@@ -66,12 +66,12 @@ class EscapeStrategy(val mGlobalConfig: WorldConfig, val mLogger: Logger) : IStr
                 mChosenVertex?.let { chosen ->
                     if (!me.getMinorFragment().mCompass.isVertexInDangerArea(chosen) && me.mFragmentsState.none { fragment -> fragment.mVertex.distance(chosen) <= fragment.mRadius * 1.2f }) {
                         mLogger.writeLog("Target for escaping is prev target $chosen")
-                        val fixedVertex = gameEngine.getMovementPointForTarget(me.getMinorFragment().mId, me.getMinorFragment().mVertex, chosen)
+                        val fixedVertex = gameEngine.getMovementPointForTarget(me.getMinorFragment().mId, chosen)
                         return StrategyResult(5, fixedVertex, debugMessage = "ESCAPE!!!!")
                     }
                 }
 
-                mChosenVertex = me.getBestMovementPoint()
+                mChosenVertex = me.getBestMovementPoint().target
                 mChosenVertex?.let { chosen ->
                     mLogger.writeLog("Target for escaping $chosen")
 
@@ -80,7 +80,7 @@ class EscapeStrategy(val mGlobalConfig: WorldConfig, val mLogger: Logger) : IStr
 //
 //                val targetX = if (deltaX > 0) me.getMainFragment().mVertex.X - deltaX else me.getMainFragment().mVertex.X + deltaX
 //                val targetY = targetX * (-k)
-                    val fixedVertex = gameEngine.getMovementPointForTarget(me.getMinorFragment().mId, me.getMinorFragment().mVertex, chosen)
+                    val fixedVertex = gameEngine.getMovementPointForTarget(me.getMinorFragment().mId, chosen)
                     return StrategyResult(5, fixedVertex, debugMessage = "ESCAPE!!!!")
                 }
             }
