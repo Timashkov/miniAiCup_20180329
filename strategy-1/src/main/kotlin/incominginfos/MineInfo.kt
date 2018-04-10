@@ -114,21 +114,37 @@ class MineInfo(stateJson: JSONArray, val globalConfig: WorldConfig, val mLogger:
         return mFragmentsState.sortedBy { it.mVertex.distance(target) }[0]
     }
 
+//    fun getBestMovementPoint(): FoodPoint {
+//
+//        mLogger.writeLog("Looking for best escape sector")
+//        val currentCompass = Compass(getMinorFragment(), globalConfig, true)
+//
+//        mFragmentsState.forEach { fr ->
+//            currentCompass.mergeCompass(fr.mCompass, 1f)
+//        }
+//
+//        val sector = currentCompass.mRumbBorders.maxBy { it.areaScore } ?: return FoodPoint.DEFAULT
+//        mLogger.writeLog("Sector $sector")
+//
+//        if (sector.areaScore == Compass.DEFAULT_AREA_SCORE * mFragmentsState.size)
+//            return FoodPoint.DEFAULT
+//        return currentCompass.getSectorFoodPoint(sector)
+//    }
+
     fun getBestMovementPoint(): FoodPoint {
+        mLogger.writeLog("Looking for best sector")
 
-        mLogger.writeLog("Looking for best escape sector")
-        val currentCompass = Compass(getMinorFragment(), globalConfig, true)
-
-        mFragmentsState.forEach { fr ->
-            currentCompass.mergeCompass(fr.mCompass, 1f)
+        mFragmentsState.sortedBy { fr -> fr.mCompass.mRumbBorders.maxBy { rumb-> rumb.areaScore } !! }.forEach { fr ->
+            fr.mCompass.mRumbBorders.filter { rumb -> rumb.areaScore > Compass.DEFAULT_AREA_SCORE }.forEach { rumb ->
+                val fp = fr.mCompass.getSectorFoodPoint(rumb)
+                mLogger.writeLog("BS: $fp")
+                if (mFragmentsState.none { state -> state.mCompass.isVertexInDangerArea(fp.target) }){
+                    return fp
+                }
+            }
         }
 
-        val sector = currentCompass.mRumbBorders.maxBy { it.areaScore } ?: return FoodPoint.DEFAULT
-        mLogger.writeLog("Sector $sector")
-
-        if (sector.areaScore == Compass.DEFAULT_AREA_SCORE * mFragmentsState.size)
-            return FoodPoint.DEFAULT
-        return currentCompass.getSectorFoodPoint(sector)
+        return FoodPoint.DEFAULT
     }
 
 
