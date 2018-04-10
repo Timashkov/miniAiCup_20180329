@@ -13,7 +13,7 @@ class Processor(configJson: JSONObject) {
     private val mFoodStrategy = FindFoodStrategy(mWorldConfig, mLogger)
     private val mDefaultStrategy = DefaultTurnStrategy(mWorldConfig, mLogger)
     private val mEatEnemyStrategy = EatEnemyStrategy(mWorldConfig, mLogger)
-    private val mEvasionFilter = EvasionFilter(mWorldConfig, mLogger)
+    private val mEvasionFilter = WorldObjectsFilter(mWorldConfig, mLogger)
     private val mStartBurstStrategy = StarBurstStrategy(mWorldConfig, mLogger)
     private val mEscapeStrategy = EscapeStrategy(mWorldConfig, mLogger)
     private var mCurrentTick = 0
