@@ -16,45 +16,45 @@ class FindFoodStrategyV2(val mGlobalConfig: WorldConfig, val mLogger: Logger) : 
 
     override fun apply(gameEngine: GameEngine, cache: ParseResult?): StrategyResult {
         mLogger.writeLog("Try to apply food search\n")
-        val food = gameEngine.worldParseResult.worldObjectsInfo.mFood
 
-        if (food.isEmpty()) {
-            mKnownWay = null
-            return StrategyResult(-1, Vertex(0.0f, 0.0f), debugMessage = "FindFood: Not applied")
-        } else {
-            analyzePlate(gameEngine)
+        analyzePlate(gameEngine)
 
-            try {
-                mKnownWay?.let{ bestWay->
-                    val me = gameEngine.worldParseResult.mineInfo
-                    mGamerStateCache = me
-                    val viruses = gameEngine.worldParseResult.worldObjectsInfo.mViruses
+        try {
+            mKnownWay?.let { bestWay ->
 
-                    if (me.mFragmentsState.size == 1 && me.getMainFragment().canSplit && gameEngine.currentTick < 1000) {
-                        val nearestViruses = viruses.filter {
-                            it.mVertex.distance(me.getCoordinates()) <= me.getMainFragment().mRadius * 2f
-                        }.sortedBy { it.mVertex.distance(me.getMainFragment().mVertex) }
-                        if (nearestViruses.isNotEmpty() && nearestViruses[0].mVertex.distance(me.getMainFragment().mVertex) < bestWay.target.distance(me.getMainFragment().mVertex)) {
-                            return StrategyResult(2, nearestViruses[0].mVertex)
-                        }
-                    }
+                if (bestWay.target == Vertex.DEFAULT) {
+                    return StrategyResult(-1, Vertex(0.0f, 0.0f), debugMessage = "FindFood2: Not applied")
+                }
 
-                    if (shouldSplit(me, bestWay)) {
-                        mLogger.writeLog("$DEBUG_TAG movementTarget $mKnownWay and split for FOOD: $mKnownWay")
-                        return StrategyResult(1, bestWay.target, split = true, debugMessage = "Debug : get food with split")
-                    } else {
-                        val movementTarget = gameEngine.getMovementPointForTarget(bestWay.fragmentId, bestWay.target)
-                        mLogger.writeLog("$DEBUG_TAG movementTarget $movementTarget  for FOOD: $mKnownWay")
-                        return StrategyResult(1, movementTarget)
+                val me = gameEngine.worldParseResult.mineInfo
+                mGamerStateCache = me
+                val viruses = gameEngine.worldParseResult.worldObjectsInfo.mViruses
+
+                if (me.mFragmentsState.size == 1 && me.getMainFragment().canSplit && gameEngine.currentTick < 1000) {
+                    val nearestViruses = viruses.filter {
+                        it.mVertex.distance(me.getCoordinates()) <= me.getMainFragment().mRadius * 2f
+                    }.sortedBy { it.mVertex.distance(me.getMainFragment().mVertex) }
+                    if (nearestViruses.isNotEmpty() && nearestViruses[0].mVertex.distance(me.getMainFragment().mVertex) < bestWay.target.distance(me.getMainFragment().mVertex)) {
+                        return StrategyResult(2, nearestViruses[0].mVertex)
                     }
                 }
-            } catch (e: Exception) {
-                mLogger.writeLog("Fault on apply food $e")
-            }
 
-            mLogger.writeLog("$DEBUG_TAG Find food is not applied")
-            return StrategyResult(-1, Vertex(0.0f, 0.0f), debugMessage = "FindFood: Not applied")
+                if (shouldSplit(me, bestWay)) {
+                    mLogger.writeLog("$DEBUG_TAG movementTarget $mKnownWay and split for FOOD: $mKnownWay")
+                    return StrategyResult(1, bestWay.target, eject = bestWay.useEjections, split = true, debugMessage = "Debug : get food with split")
+                } else {
+                    val movementTarget = gameEngine.getMovementPointForTarget(bestWay.fragmentId, bestWay.target)
+                    mLogger.writeLog("$DEBUG_TAG movementTarget $movementTarget  for FOOD: $mKnownWay")
+                    return StrategyResult(1, movementTarget, eject = bestWay.useEjections, debugMessage = "Eat food on $movementTarget")
+                }
+            }
+        } catch (e: Exception) {
+            mLogger.writeLog("Fault on apply food $e")
         }
+
+        mLogger.writeLog("$DEBUG_TAG Find food is not applied")
+        return StrategyResult(-1, Vertex(0.0f, 0.0f), debugMessage = "FindFood: Not applied")
+
     }
 
     override fun stopStrategy() {

@@ -151,7 +151,7 @@ class MineInfo(stateJson: JSONArray, val globalConfig: WorldConfig, val mLogger:
             fr.mCompass.mRumbBorders.filter { rumb -> rumb.areaScore > Compass.DEFAULT_AREA_SCORE }.sortedByDescending { it.areaScore }.forEach { rumb ->
                 val fp = fr.mCompass.getSectorFoodPoint(rumb)
                 mLogger.writeLog("BS: $fp")
-                if (mFragmentsState.none { state -> state.mCompass.isVertexInDangerArea(fp.target) }) {
+                if (mFragmentsState.none { state -> state.mCompass.isVertexInDangerArea(fp.target) } || rumb.areaScore >= Compass.ESCAPE_SECTOR_SCORE) {
                     return fp
                 }
             }

@@ -117,7 +117,7 @@ class Compass(private val mFragment: MineFragmentInfo, private val mGlobalConfig
         escapeVector?.let { vec->
             val directAngle = (atan2(vec.SY, vec.SX) * 180f / PI).toFloat()
             val directMovementIndex = getRumbIndexByAngle(directAngle)
-            mRumbBorders[directMovementIndex].areaScore = PREFERRED_SECTOR_SCORE * 1000
+            mRumbBorders[directMovementIndex].areaScore = ESCAPE_SECTOR_SCORE
         }
     }
 
@@ -332,12 +332,12 @@ class Compass(private val mFragment: MineFragmentInfo, private val mGlobalConfig
     }
 
     fun getSectorFoodPoint(sector: Rumb): FoodPoint {
-        val canEat = mRumbBorders[getRumbIndexByAngle(sector.majorBorder)].canEat
+        val canEat = sector.canEat
         if (canEat.isNotEmpty())
             return canEat.maxBy { it.target.distance(mCenterVertex) }!!
 
         val target = getVertexBySector(sector.majorBorder)
-        return FoodPoint(target, listOf(target), mFragment.mId)
+        return FoodPoint(target, listOf(target), mFragment.mId, sector.areaScore >= ESCAPE_SECTOR_SCORE ) // there is no food
     }
 
     fun getVertexBySector(rumbBorder: Float): Vertex {
@@ -376,6 +376,7 @@ class Compass(private val mFragment: MineFragmentInfo, private val mGlobalConfig
         val PREFERRED_SECTOR_SCORE = 5 //
         val EDGE_SECTOR_SCORE = -10 //
         val DEFAULT_AREA_SCORE = 1
+        val ESCAPE_SECTOR_SCORE = Int.MAX_VALUE
     }
 
 }

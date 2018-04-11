@@ -17,7 +17,10 @@ class WorldObjectsFilter(private val mGlobalConfig: WorldConfig, val mLogger: Lo
         if (enemies.isNotEmpty()) {
             mLogger.writeLog("Enemies total : ${enemies.size}")
             pr.mineInfo.mFragmentsState.forEach { fragment ->
-                enemies.filter { fragment.canBeEatenByEnemy(it.mMass) && (it.mRadius * 4f + fragment.mRadius) > it.mVertex.distance(fragment.mVertex) }.forEach { enemy ->
+                enemies.filter {
+                    fragment.canBeEatenByEnemy(it.mMass) &&
+                            it.mVertex.distance(fragment.mVertex) < (it.mRadius * 4f + fragment.mRadius)
+                }.forEach { enemy ->
                     mLogger.writeLog("Processed enemy: $enemy")
                     fragment.mCompass.setColorsByEnemies(fragment, enemy)
                 }
