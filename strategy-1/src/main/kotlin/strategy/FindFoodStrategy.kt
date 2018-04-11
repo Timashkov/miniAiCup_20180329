@@ -3,7 +3,7 @@ package strategy
 import incominginfos.MineInfo
 import incominginfos.WorldObjectsInfo
 import WorldConfig
-import data.FoodPoint
+import data.StepPoint
 import data.ParseResult
 import utils.GameEngine
 import utils.Logger
@@ -12,7 +12,7 @@ import kotlin.math.abs
 
 class FindFoodStrategy(val mGlobalConfig: WorldConfig, val mLogger: Logger) : IStrategy {
 
-    private var mKnownWay: FoodPoint? = null
+    private var mKnownWay: StepPoint? = null
     private var mGamerStateCache: MineInfo? = null
 
     override fun apply(gameEngine: GameEngine, cachedParseResult: ParseResult?): StrategyResult {
@@ -64,7 +64,7 @@ class FindFoodStrategy(val mGlobalConfig: WorldConfig, val mLogger: Logger) : IS
         mGamerStateCache = null
     }
 
-    private fun shouldSplit(me: MineInfo, way: FoodPoint): Boolean {
+    private fun shouldSplit(me: MineInfo, way: StepPoint): Boolean {
         var shouldSplit = me.getMainFragment().mMass > WorldConfig.MIN_SPLITABLE_MASS * 1.2f
         shouldSplit = shouldSplit && me.mFragmentsState.none { fragment -> fragment.mCompass.isVertexInDangerArea(way.target) }
         return shouldSplit
@@ -122,7 +122,7 @@ class FindFoodStrategy(val mGlobalConfig: WorldConfig, val mLogger: Logger) : IS
         return true
     }
 
-    fun findBestWay(foodPoints: List<Vertex>, gamerInfo: MineInfo, gamerRadius: Float): FoodPoint? {
+    fun findBestWay(foodPoints: List<Vertex>, gamerInfo: MineInfo, gamerRadius: Float): StepPoint? {
 
         // add ejects
         val sortedByX = foodPoints.sortedBy { it.X }
@@ -177,7 +177,7 @@ class FindFoodStrategy(val mGlobalConfig: WorldConfig, val mLogger: Logger) : IS
         }
 
         if (vertex.size == 1)
-            return FoodPoint(vertex[0], weights[vertex[0]]!!, gamerInfo.getNearestFragment(vertex[0]).mId)
+            return StepPoint(vertex[0], vertex[0], weights[vertex[0]]!!, gamerInfo.getNearestFragment(vertex[0]).mId)
 
         var nearest = sortedByR.last()
         vertex.forEach { vert ->
@@ -185,7 +185,7 @@ class FindFoodStrategy(val mGlobalConfig: WorldConfig, val mLogger: Logger) : IS
                 nearest = vert
         }
 
-        return FoodPoint(nearest, weights[nearest]!!, gamerInfo.getNearestFragment(vertex[0]).mId)
+        return StepPoint(nearest, nearest, weights[nearest]!!, gamerInfo.getNearestFragment(vertex[0]).mId)
 
     }
 

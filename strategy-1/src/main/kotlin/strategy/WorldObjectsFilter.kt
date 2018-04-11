@@ -9,6 +9,9 @@ class WorldObjectsFilter(private val mGlobalConfig: WorldConfig, val mLogger: Lo
 
     // отфильтровать информацию о мире так , чтоб не давать персонажу давать идти в сторону
     // потенциальной опасности
+
+    //TODO: проверить сумму всех фрагментов одного игрока рядом, если она приводит к поеданию - валим!!
+
     fun onFilter(parseResult: ParseResult): ParseResult {
 
         val pr = removeUnreachableFood(parseResult)
@@ -19,7 +22,7 @@ class WorldObjectsFilter(private val mGlobalConfig: WorldConfig, val mLogger: Lo
             pr.mineInfo.mFragmentsState.forEach { fragment ->
                 enemies.filter {
                     fragment.canBeEatenByEnemy(it.mMass) &&
-                            it.mVertex.distance(fragment.mVertex) < (it.mRadius * 4f + fragment.mRadius)
+                            it.mVertex.distance(fragment.mVertex) < (it.mRadius * 5f + fragment.mRadius)
                 }.forEach { enemy ->
                     mLogger.writeLog("Processed enemy: $enemy")
                     fragment.mCompass.setColorsByEnemies(fragment, enemy)

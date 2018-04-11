@@ -24,6 +24,9 @@ class MineFragmentInfo(fragmentJson: JSONObject, mGlobalConfig: WorldConfig) {
     val canSplit: Boolean
         get() = mMass > WorldConfig.MIN_SPLITABLE_MASS
 
+    val maySplit: Boolean
+        get() = mMass > WorldConfig.MIN_SPLITABLE_MASS * 1.2f
+
     val mCompass: Compass = Compass(this, mGlobalConfig)
 
     override fun toString(): String {

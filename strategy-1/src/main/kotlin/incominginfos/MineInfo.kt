@@ -3,11 +3,13 @@ package incominginfos
 import org.json.JSONArray
 import utils.Vertex
 import WorldConfig
-import data.FoodPoint
-import strategy.FindFoodStrategyV2
+import data.MovementVector
+import data.StepPoint
 import utils.Compass
+import utils.GameEngine
 import utils.Logger
-import utils.Square
+import kotlin.math.pow
+import kotlin.math.sqrt
 
 class MineInfo(stateJson: JSONArray, val globalConfig: WorldConfig, val mLogger: Logger) {
     val mFragmentsState: Array<MineFragmentInfo>
@@ -115,7 +117,7 @@ class MineInfo(stateJson: JSONArray, val globalConfig: WorldConfig, val mLogger:
         return mFragmentsState.sortedBy { it.mVertex.distance(target) }[0]
     }
 
-//    fun getBestMovementPoint(): FoodPoint {
+//    fun getBestMovementPoint(): StepPoint {
 //
 //        mLogger.writeLog("Looking for best escape sector")
 //        val currentCompass = Compass(getMinorFragment(), globalConfig, true)
@@ -124,15 +126,15 @@ class MineInfo(stateJson: JSONArray, val globalConfig: WorldConfig, val mLogger:
 //            currentCompass.mergeCompass(fr.mCompass, 1f)
 //        }
 //
-//        val sector = currentCompass.mRumbBorders.maxBy { it.areaScore } ?: return FoodPoint.DEFAULT
+//        val sector = currentCompass.mRumbBorders.maxBy { it.areaScore } ?: return StepPoint.DEFAULT
 //        mLogger.writeLog("Sector $sector")
 //
 //        if (sector.areaScore == Compass.DEFAULT_AREA_SCORE * mFragmentsState.size)
-//            return FoodPoint.DEFAULT
+//            return StepPoint.DEFAULT
 //        return currentCompass.getSectorFoodPoint(sector)
 //    }
 
-    fun getBestMovementPoint(knownVertex: FoodPoint?): FoodPoint {
+    fun getBestMovementPoint(knownVertex: StepPoint?): StepPoint {
 
         mLogger.writeLog("Looking for best sector. Known target = $knownVertex")
         knownVertex?.let { fp ->
@@ -145,22 +147,44 @@ class MineInfo(stateJson: JSONArray, val globalConfig: WorldConfig, val mLogger:
 
         if (mFragmentsState.any { it -> it.mCompass.hasDarkAreas() }) {
             fragmentsList = mFragmentsState.sortedByDescending { fr -> fr.mCompass.getDangerSectorsCount() }
+
         }
 
         fragmentsList.forEach { fr ->
             fr.mCompass.mRumbBorders.filter { rumb -> rumb.areaScore > Compass.DEFAULT_AREA_SCORE }.sortedByDescending { it.areaScore }.forEach { rumb ->
                 val fp = fr.mCompass.getSectorFoodPoint(rumb)
                 mLogger.writeLog("BS: $fp")
-                if (mFragmentsState.none { state -> state.mCompass.isVertexInDangerArea(fp.target) } || rumb.areaScore >= Compass.ESCAPE_SECTOR_SCORE) {
+                if (mFragmentsState.none { state -> state.mCompass.isVertexInDangerArea(fp.target) } || rumb.lastEscapePoint) {
+
+                    if (mFragmentsState.size > 1 && mFragmentsState.all { it.mTTF < 3 }) {
+                        fp.movementTarget = fp.target
+                        return fp
+                    }
+
+                    if (rumb.lastEscapePoint && mFragmentsState.size == 1) {
+                        if (fr.canSplit)
+                            fp.useSplit = true
+                        else
+                            fp.useEjections = true
+                    }
+
+                    val movementTarget = getMovementPointForTarget(fr, fp.target)
+
+                    if (mFragmentsState.none { state -> state.mCompass.isVertexInDangerArea(movementTarget) }) {
+                        fp.useSplit = fr.maySplit && mFragmentsState.none { it.mCompass.hasBlackAreas() }
+                        fp.movementTarget = movementTarget
+                    } else {
+                        fp.movementTarget = fp.target
+                    }
+
                     return fp
                 }
             }
         }
 
 
-        return FoodPoint.DEFAULT
+        return StepPoint.DEFAULT
     }
-
 
     fun reconfigureCompass(foodPoints: ArrayList<Vertex>) {
         mFragmentsState.forEach { it.reconfigureCompass(foodPoints) }
@@ -178,6 +202,41 @@ class MineInfo(stateJson: JSONArray, val globalConfig: WorldConfig, val mLogger:
         return 3
     }
 
+    fun getMovementPointForTarget(fragment: MineFragmentInfo, target: Vertex): Vertex {
+
+        mLogger.writeLog("${GameEngine.DEBUG_TAG} $fragment")
+        val sVector = MovementVector(fragment.mSX, fragment.mSY)
+
+        //for one fragment
+
+        mLogger.writeLog("${GameEngine.DEBUG_TAG} $sVector ${fragment.mVertex} $target")
+
+        val inertionK = globalConfig.InertionFactor / fragment.mMass
+        mLogger.writeLog("${GameEngine.DEBUG_TAG} inertion = $inertionK")
+        val maxSpeed = globalConfig.SpeedFactor / sqrt(fragment.mMass)
+
+        mLogger.writeLog("${GameEngine.DEBUG_TAG} maxSpeed = $maxSpeed")
+        val vectorTarget = fragment.mVertex.getMovementVector(target).minus(sVector)
+        mLogger.writeLog("${GameEngine.DEBUG_TAG} vector target = $vectorTarget")
+        if (vectorTarget == MovementVector(0f, 0f)) {
+            //no move
+            return target
+        }
+
+        var NX = ((vectorTarget.SX - sVector.SX) / inertionK + sVector.SX) / maxSpeed
+        var NY = ((vectorTarget.SY - sVector.SY) / inertionK + sVector.SY) / maxSpeed
+
+        mLogger.writeLog("${GameEngine.DEBUG_TAG} NX=$NX NY=$NY")
+
+        val factor = 1 / sqrt(NX.pow(2) + NY.pow(2)) * fragment.mVertex.distance(target)
+        mLogger.writeLog("${GameEngine.DEBUG_TAG} factor $factor")
+        mLogger.writeLog("${GameEngine.DEBUG_TAG} Ktarget = ${vectorTarget.K} KN = ${MovementVector(NX, NY).K}")
+
+        NX *= factor //
+        NY *= factor
+
+        return GameEngine.vectorEdgeCrossPoint(fragment.mVertex, MovementVector(NX, NY), globalConfig.GameWidth.toFloat(), globalConfig.GameHeight.toFloat())
+    }
 }
 
 //{\"Mine\":[{\"Id\":\"1\",\"M\":40,\"R\":12.649110640673518,\"SX\":0,\"SY\":0,\"TTF\":32,\"X\":474,\"Y\":178}]

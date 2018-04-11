@@ -1,7 +1,7 @@
 package strategy
 
 import WorldConfig
-import data.FoodPoint
+import data.StepPoint
 import data.ParseResult
 import incominginfos.MineInfo
 import incominginfos.WorldObjectsInfo
@@ -11,15 +11,19 @@ import utils.Vertex
 
 class FindFoodStrategyV2(val mGlobalConfig: WorldConfig, val mLogger: Logger) : IStrategy {
 
-    private var mKnownWay: FoodPoint? = null
+    private var mKnownWay: StepPoint? = null
     private var mGamerStateCache: MineInfo? = null
 
     override fun apply(gameEngine: GameEngine, cache: ParseResult?): StrategyResult {
         mLogger.writeLog("Try to apply food search\n")
 
-        analyzePlate(gameEngine)
-
         try {
+            if (mKnownWay != null && isDestinationAchieved(gameEngine.worldParseResult.worldObjectsInfo) || isGamerStateChanged(gameEngine.worldParseResult.mineInfo)) {
+                mKnownWay = null
+            }
+
+            mKnownWay = gameEngine.worldParseResult.mineInfo.getBestMovementPoint(mKnownWay)
+
             mKnownWay?.let { bestWay ->
 
                 if (bestWay.target == Vertex.DEFAULT) {
@@ -39,14 +43,8 @@ class FindFoodStrategyV2(val mGlobalConfig: WorldConfig, val mLogger: Logger) : 
                     }
                 }
 
-                if (shouldSplit(me, bestWay)) {
-                    mLogger.writeLog("$DEBUG_TAG movementTarget $mKnownWay and split for FOOD: $mKnownWay")
-                    return StrategyResult(1, bestWay.target, eject = bestWay.useEjections, split = true, debugMessage = "Debug : get food with split")
-                } else {
-                    val movementTarget = gameEngine.getMovementPointForTarget(bestWay.fragmentId, bestWay.target)
-                    mLogger.writeLog("$DEBUG_TAG movementTarget $movementTarget  for FOOD: $mKnownWay")
-                    return StrategyResult(1, movementTarget, eject = bestWay.useEjections, debugMessage = "Eat food on $movementTarget")
-                }
+                mLogger.writeLog("$DEBUG_TAG movementTarget $bestWay.target  for FOOD: $mKnownWay")
+                return StrategyResult(1, bestWay.movementTarget, eject = bestWay.useEjections, split = bestWay.useSplit, debugMessage = "FindFoodV2 goes to ${bestWay.movementTarget} for point ${bestWay.target} ")
             }
         } catch (e: Exception) {
             mLogger.writeLog("Fault on apply food $e")
@@ -60,25 +58,6 @@ class FindFoodStrategyV2(val mGlobalConfig: WorldConfig, val mLogger: Logger) : 
     override fun stopStrategy() {
         mKnownWay = null
         mGamerStateCache = null
-    }
-
-    private fun shouldSplit(me: MineInfo, way: FoodPoint): Boolean {
-        var shouldSplit = me.getMainFragment().mMass > WorldConfig.MIN_SPLITABLE_MASS * 1.2f
-        shouldSplit = shouldSplit && me.mFragmentsState.none { fragment -> fragment.mCompass.isVertexInDangerArea(way.target) }
-        return shouldSplit
-    }
-
-    private fun analyzePlate(gameEngine: GameEngine) {
-
-        try {
-            if (mKnownWay != null && isDestinationAchieved(gameEngine.worldParseResult.worldObjectsInfo) || isGamerStateChanged(gameEngine.worldParseResult.mineInfo)) {
-                mKnownWay = null
-            }
-
-            mKnownWay = gameEngine.worldParseResult.mineInfo.getBestMovementPoint(mKnownWay)
-        } catch (e: Exception) {
-            mLogger.writeLog("Fault on analyze plate $e")
-        }
     }
 
     private fun isDestinationAchieved(worldInfo: WorldObjectsInfo): Boolean {
