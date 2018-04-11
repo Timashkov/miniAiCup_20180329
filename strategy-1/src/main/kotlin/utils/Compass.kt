@@ -57,7 +57,7 @@ class Compass(private val mFragment: MineFragmentInfo, private val mGlobalConfig
         val distance = me.mVertex.distance(enemy.mVertex)
         if (distance < enemy.mRadius) {
             if (enemy.mMass >= me.mMass * WorldConfig.EAT_MASS_FACTOR)
-                setWholeCompassPoints(BLACK_SECTOR_SCORE)
+                setWholeCompassPoints(BLACK_SECTOR_SCORE, enemy.mVertex.getMovementVector(me.mVertex))
             return
         }
 
@@ -112,8 +112,13 @@ class Compass(private val mFragment: MineFragmentInfo, private val mGlobalConfig
         }
     }
 
-    private fun setWholeCompassPoints(points: Int) {
+    private fun setWholeCompassPoints(points: Int, escapeVector: MovementVector?) {
         mRumbBorders.forEach { it.areaScore = points }
+        escapeVector?.let { vec->
+            val directAngle = (atan2(vec.SY, vec.SX) * 180f / PI).toFloat()
+            val directMovementIndex = getRumbIndexByAngle(directAngle)
+            mRumbBorders[directMovementIndex].areaScore = PREFERRED_SECTOR_SCORE * 1000
+        }
     }
 
     private fun markRumbsByDirectAndShifting(directMovementIndex: Int, indexDelta: Int, points: Int) {
@@ -354,6 +359,15 @@ class Compass(private val mFragment: MineFragmentInfo, private val mGlobalConfig
             return Vertex(mCenterVertex.X + mFragment.mRadius * 4, (mCenterVertex.X + mFragment.mRadius * 4) * K + b)
         }
     }
+
+    fun getMaxSectorScore(): Int {
+        var score = 0
+        mRumbBorders.forEach { if (it.areaScore > score) score = it.areaScore }
+        return score
+    }
+
+    fun getDangerSectorsCount(): Int = mRumbBorders.filter { it.areaScore <= BURST_SECTOR_SCORE }.size
+
     //TODO: set area factor by enemies with calc of distance
 
     companion object {

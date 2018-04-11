@@ -4,6 +4,7 @@ import org.json.JSONArray
 import utils.Vertex
 import WorldConfig
 import data.FoodPoint
+import strategy.FindFoodStrategyV2
 import utils.Compass
 import utils.Logger
 import utils.Square
@@ -131,18 +132,31 @@ class MineInfo(stateJson: JSONArray, val globalConfig: WorldConfig, val mLogger:
 //        return currentCompass.getSectorFoodPoint(sector)
 //    }
 
-    fun getBestMovementPoint(): FoodPoint {
-        mLogger.writeLog("Looking for best sector")
+    fun getBestMovementPoint(knownVertex: FoodPoint?): FoodPoint {
 
-        mFragmentsState.sortedBy { fr -> fr.mCompass.mRumbBorders.maxBy { rumb-> rumb.areaScore } !! }.forEach { fr ->
-            fr.mCompass.mRumbBorders.filter { rumb -> rumb.areaScore > Compass.DEFAULT_AREA_SCORE }.forEach { rumb ->
+        mLogger.writeLog("Looking for best sector. Known target = $knownVertex")
+        knownVertex?.let { fp ->
+            if (mFragmentsState.none { it.mCompass.isVertexInBlackArea(fp.target) } && mFragmentsState.none { it.mVertex == fp.target }) {
+                return knownVertex
+            }
+        }
+
+        var fragmentsList = mFragmentsState.sortedByDescending { fr -> fr.mCompass.getMaxSectorScore() }
+
+        if (mFragmentsState.any { it -> it.mCompass.hasDarkAreas() }) {
+            fragmentsList = mFragmentsState.sortedByDescending { fr -> fr.mCompass.getDangerSectorsCount() }
+        }
+
+        fragmentsList.forEach { fr ->
+            fr.mCompass.mRumbBorders.filter { rumb -> rumb.areaScore > Compass.DEFAULT_AREA_SCORE }.sortedByDescending { it.areaScore }.forEach { rumb ->
                 val fp = fr.mCompass.getSectorFoodPoint(rumb)
                 mLogger.writeLog("BS: $fp")
-                if (mFragmentsState.none { state -> state.mCompass.isVertexInDangerArea(fp.target) }){
+                if (mFragmentsState.none { state -> state.mCompass.isVertexInDangerArea(fp.target) }) {
                     return fp
                 }
             }
         }
+
 
         return FoodPoint.DEFAULT
     }

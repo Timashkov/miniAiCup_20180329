@@ -40,11 +40,11 @@ class FindFoodStrategyV2(val mGlobalConfig: WorldConfig, val mLogger: Logger) : 
                     }
 
                     if (shouldSplit(me, bestWay)) {
-                        mLogger.writeLog("${FindFoodStrategy.DEBUG_TAG} movementTarget $mKnownWay and split for FOOD: $mKnownWay")
+                        mLogger.writeLog("$DEBUG_TAG movementTarget $mKnownWay and split for FOOD: $mKnownWay")
                         return StrategyResult(1, bestWay.target, split = true, debugMessage = "Debug : get food with split")
                     } else {
                         val movementTarget = gameEngine.getMovementPointForTarget(bestWay.fragmentId, bestWay.target)
-                        mLogger.writeLog("${FindFoodStrategy.DEBUG_TAG} movementTarget $movementTarget  for FOOD: $mKnownWay")
+                        mLogger.writeLog("$DEBUG_TAG movementTarget $movementTarget  for FOOD: $mKnownWay")
                         return StrategyResult(1, movementTarget)
                     }
                 }
@@ -52,7 +52,7 @@ class FindFoodStrategyV2(val mGlobalConfig: WorldConfig, val mLogger: Logger) : 
                 mLogger.writeLog("Fault on apply food $e")
             }
 
-            mLogger.writeLog("${FindFoodStrategy.DEBUG_TAG} Find food is not applied")
+            mLogger.writeLog("$DEBUG_TAG Find food is not applied")
             return StrategyResult(-1, Vertex(0.0f, 0.0f), debugMessage = "FindFood: Not applied")
         }
     }
@@ -75,19 +75,7 @@ class FindFoodStrategyV2(val mGlobalConfig: WorldConfig, val mLogger: Logger) : 
                 mKnownWay = null
             }
 
-            if (mKnownWay != null && gameEngine.worldParseResult.mineInfo.mFragmentsState.any { it.mCompass.isVertexInBlackArea(mKnownWay!!.target) }) {
-                mLogger.writeLog("${FindFoodStrategy.DEBUG_TAG} fragment in black area")
-                mKnownWay = null
-            }
-
-            if (mKnownWay != null && gameEngine.worldParseResult.mineInfo.mFragmentsState.any { it.mVertex == mKnownWay!!.target }) {
-                mLogger.writeLog("${FindFoodStrategy.DEBUG_TAG} one fragment on the point now")
-                mKnownWay = null
-            }
-
-            if (mKnownWay == null) {
-                mKnownWay = gameEngine.worldParseResult.mineInfo.getBestMovementPoint()
-            }
+            mKnownWay = gameEngine.worldParseResult.mineInfo.getBestMovementPoint(mKnownWay)
         } catch (e: Exception) {
             mLogger.writeLog("Fault on analyze plate $e")
         }
@@ -113,10 +101,14 @@ class FindFoodStrategyV2(val mGlobalConfig: WorldConfig, val mLogger: Logger) : 
     private fun isGamerStateChanged(gamerInfo: MineInfo): Boolean {
         mGamerStateCache?.let { cached ->
             if (cached.mFragmentsState.size != gamerInfo.mFragmentsState.size) {
-                mLogger.writeLog("${FindFoodStrategy.DEBUG_TAG} state changed - fragments count")
+                mLogger.writeLog("$DEBUG_TAG state changed - fragments count")
                 return true
             }
         }
         return false
+    }
+
+    companion object {
+        val DEBUG_TAG = "FIND_FOOD_v2"
     }
 }
