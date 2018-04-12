@@ -61,11 +61,6 @@ class Compass(private val mFragment: MineFragmentInfo, private val mGlobalConfig
             return
         }
 
-        if (distance > 16 * me.mRadius) {
-            // too far
-            return
-        }
-
         val vec = me.mVertex.getMovementVector(enemy.mVertex)
         val directAngle = (atan2(vec.SY, vec.SX) * 180f / PI).toFloat()
         val directMovementIndex = getRumbIndexByAngle(directAngle)
@@ -97,14 +92,6 @@ class Compass(private val mFragment: MineFragmentInfo, private val mGlobalConfig
                 }
             }
         }
-    }
-
-    fun setColorsByFood(food: FoodInfo): Boolean {
-        return setColorsByFoodInternal(mCenterVertex, food.mVertex)
-    }
-
-    fun setColorsByEjection(ejection: EjectionInfo): Boolean {
-        return setColorsByFoodInternal(mCenterVertex, ejection.mVertex)
     }
 
     fun mergeCompass(compass: Compass, factor: Float) {
@@ -186,20 +173,6 @@ class Compass(private val mFragment: MineFragmentInfo, private val mGlobalConfig
         val shiftedRumbIndex = getRumbIndexByAngle(shiftedAngle + directAngle)
         val indexDelta = shiftedRumbIndex - directMovementIndex
         markRumbsByDirectAndShifting(directMovementIndex, indexDelta, BURST_SECTOR_SCORE)
-        return false
-    }
-
-    private fun setColorsByFoodInternal(myPosition: Vertex, foodPosition: Vertex): Boolean {
-
-        val vec = myPosition.getMovementVector(foodPosition)
-        val directAngle = (atan2(vec.SY, vec.SX) * 180f / PI).toFloat()
-        val directMovementIndex = getRumbIndexByAngle(directAngle)
-
-        if (mRumbBorders[directMovementIndex].areaScore != BLACK_SECTOR_SCORE) {
-//            mRumbBorders[directMovementIndex].canEat.add(StepPoint(foodPosition, arrayListOf(foodPosition), mFragment.mId))
-//            mRumbBorders[directMovementIndex].areaScore++
-            return true
-        }
         return false
     }
 

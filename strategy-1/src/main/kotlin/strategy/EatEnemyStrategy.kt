@@ -50,6 +50,8 @@ class EatEnemyStrategy(val mGlobalConfig: WorldConfig, val mLogger: Logger) : IS
 
 
         // Stage 2 search for small fragments < 2.5
+        //TODO: делится самый большой или все сразу ?
+        //TODO: проверить на направление
 
         if (me.canSplit) {
             val nearLowerEnemies = enemies.filter {

@@ -1,4 +1,0 @@
-package strategy
-
-class FussionStartegy {
-}

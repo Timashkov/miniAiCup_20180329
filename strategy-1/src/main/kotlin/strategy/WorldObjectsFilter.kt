@@ -3,7 +3,10 @@ package strategy
 import utils.Logger
 import WorldConfig
 import data.ParseResult
+import incominginfos.EnemyInfo
 import utils.Vertex
+import java.util.*
+import kotlin.math.sqrt
 
 class WorldObjectsFilter(private val mGlobalConfig: WorldConfig, val mLogger: Logger) {
 
@@ -11,8 +14,9 @@ class WorldObjectsFilter(private val mGlobalConfig: WorldConfig, val mLogger: Lo
     // потенциальной опасности
 
     //TODO: проверить сумму всех фрагментов одного игрока рядом, если она приводит к поеданию - валим!!
+    val historicalEnemies: ArrayList<EnemyInfo> = ArrayList()
 
-    fun onFilter(parseResult: ParseResult): ParseResult {
+    fun onFilter(parseResult: ParseResult, tickNum: Int): ParseResult {
 
         val pr = removeUnreachableFood(parseResult)
 
@@ -30,6 +34,44 @@ class WorldObjectsFilter(private val mGlobalConfig: WorldConfig, val mLogger: Lo
             }
         }
 
+        if (historicalEnemies.isNotEmpty()) {
+            enemies.forEach{ ei->
+                historicalEnemies.forEach {he->
+                    if (he.mId == ei.mId ){
+                        val info = EnemyInfo(ei.mVertex.plus(ei.mVertex.minus(he.mVertex)), ei.mId, ei.mMass, ei.mRadius)
+
+                        pr.mineInfo.mFragmentsState.forEach { fragment ->
+                            enemies.filter {
+                                fragment.canBeEatenByEnemy(info.mMass) &&
+                                        info.mVertex.distance(fragment.mVertex) < (info.mRadius * 5f + fragment.mRadius)
+                            }.forEach { enemy ->
+                                mLogger.writeLog("Processed fantom enemy: $enemy")
+                                fragment.mCompass.setColorsByEnemies(fragment, enemy)
+                            }
+                        }
+                    }
+                }
+            }
+
+            enemies.forEach { ei ->
+                historicalEnemies.removeIf { it.mId == ei.mId || (!ei.mId.contains(".") && it.mId.startsWith(ei.mId)) }
+            }
+
+            historicalEnemies.removeIf { it.lastSeenTick > 10 }
+            historicalEnemies.forEach { he ->
+                pr.mineInfo.mFragmentsState.forEach { fragment ->
+                    if (he.mVertex.distance(fragment.mVertex) - mGlobalConfig.SpeedFactor / sqrt(fragment.mMass) < (he.mRadius * 5f + fragment.mRadius)) {
+                        mLogger.writeLog("Processed historical enemy: $he")
+                        fragment.mCompass.setColorsByEnemies(fragment, he)
+                    } else {
+                        he.lastSeenTick = 10
+                    }
+                    he.lastSeenTick++
+                }
+            }
+        }
+        historicalEnemies.addAll(enemies)
+
         val viruses = pr.worldObjectsInfo.mViruses
         if (viruses.isNotEmpty() && pr.mineInfo.mFragmentsState.size < mGlobalConfig.MaxFragsCnt) {
             mLogger.writeLog("Viruses total : ${viruses.size}")
@@ -45,7 +87,7 @@ class WorldObjectsFilter(private val mGlobalConfig: WorldConfig, val mLogger: Lo
         if (food.isNotEmpty()) {
             mLogger.writeLog("Food total : ${food.size}")
             pr.worldObjectsInfo.mFood.filter { f ->
-                pr.mineInfo.mFragmentsState.none { fragment -> !fragment.mCompass.setColorsByFood(f) }
+                pr.mineInfo.mFragmentsState.none { fragment -> !fragment.mCompass.isVertexInBlackArea(f.mVertex) }
             }
         }
 
@@ -53,7 +95,7 @@ class WorldObjectsFilter(private val mGlobalConfig: WorldConfig, val mLogger: Lo
         if (ejections.isNotEmpty()) {
             mLogger.writeLog("Ejections total : ${ejections.size}")
             pr.worldObjectsInfo.mEjection.filter { ejection ->
-                pr.mineInfo.mFragmentsState.none { fragment -> !fragment.mCompass.setColorsByEjection(ejection) }
+                pr.mineInfo.mFragmentsState.none { fragment -> !fragment.mCompass.isVertexInBlackArea(ejection.mVertex) }
             }
         }
 
