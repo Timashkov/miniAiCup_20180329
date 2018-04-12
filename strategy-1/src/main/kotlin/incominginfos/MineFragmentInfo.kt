@@ -6,7 +6,7 @@ import utils.Compass
 import utils.Vertex
 import WorldConfig
 
-class MineFragmentInfo(fragmentJson: JSONObject, mGlobalConfig: WorldConfig) {
+class MineFragmentInfo(val fragmentJson: JSONObject, val mGlobalConfig: WorldConfig) {
     val mVertex = Vertex(fragmentJson.getFloat("X"), fragmentJson.getFloat("Y"))
     val mId: String = fragmentJson.getString("Id")
     val mMass: Float = fragmentJson.getFloat("M")
@@ -25,7 +25,7 @@ class MineFragmentInfo(fragmentJson: JSONObject, mGlobalConfig: WorldConfig) {
         get() = mMass > WorldConfig.MIN_SPLITABLE_MASS
 
     val maySplit: Boolean
-        get() = mMass > WorldConfig.MIN_SPLITABLE_MASS * 1.2f
+        get() = mMass > WorldConfig.MIN_SPLITABLE_MASS * (1 + 4f * mGlobalConfig.Viscosity) / (6 * mGlobalConfig.Viscosity)
 
     val mCompass: Compass = Compass(this, mGlobalConfig)
 
@@ -38,7 +38,7 @@ class MineFragmentInfo(fragmentJson: JSONObject, mGlobalConfig: WorldConfig) {
     }
 
     fun canBurst(it: VirusInfo): Boolean {
-        return mRadius > it.mRadius * 1.2 && mMass > WorldConfig.MIN_SPLITABLE_MASS
+        return mRadius > it.mRadius && mMass > WorldConfig.MIN_SPLITABLE_MASS
     }
 
     fun reconfigureCompass(foodPoints: ArrayList<Vertex>) {

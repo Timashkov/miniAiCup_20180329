@@ -217,7 +217,7 @@ class MineInfo(stateJson: JSONArray, val globalConfig: WorldConfig, val mLogger:
 
                 if (mFragmentsState.none { state -> state.mCompass.isVertexInDangerArea(fp.target) }) {
 
-                    if (mFragmentsState.none { state -> state.mCompass.isVertexInDangerArea(fp.movementTarget) }) {
+                    if (mFragmentsState.none { state -> state.mCompass.isVertexInAreaWithEnemy(fp.movementTarget) }) {
                         fp.useSplit = fr.maySplit && mFragmentsState.none { it.mCompass.hasBlackAreas() }
                     }
                     return fp

@@ -25,8 +25,7 @@ class WorldObjectsFilter(private val mGlobalConfig: WorldConfig, val mLogger: Lo
             mLogger.writeLog("Enemies total : ${enemies.size}")
             pr.mineInfo.mFragmentsState.forEach { fragment ->
                 enemies.filter {
-                    fragment.canBeEatenByEnemy(it.mMass) &&
-                            it.mVertex.distance(fragment.mVertex) < (it.mRadius * 5f + fragment.mRadius)
+                    it.mVertex.distance(fragment.mVertex) < (it.mRadius * 5f + fragment.mRadius)
                 }.forEach { enemy ->
                     mLogger.writeLog("Processed enemy: $enemy")
                     fragment.mCompass.setColorsByEnemies(fragment, enemy)
@@ -35,15 +34,14 @@ class WorldObjectsFilter(private val mGlobalConfig: WorldConfig, val mLogger: Lo
         }
 
         if (historicalEnemies.isNotEmpty()) {
-            enemies.forEach{ ei->
-                historicalEnemies.forEach {he->
-                    if (he.mId == ei.mId ){
+            enemies.forEach { ei ->
+                historicalEnemies.forEach { he ->
+                    if (he.mId == ei.mId) {
                         val info = EnemyInfo(ei.mVertex.plus(ei.mVertex.minus(he.mVertex)), ei.mId, ei.mMass, ei.mRadius)
 
                         pr.mineInfo.mFragmentsState.forEach { fragment ->
                             enemies.filter {
-                                fragment.canBeEatenByEnemy(info.mMass) &&
-                                        info.mVertex.distance(fragment.mVertex) < (info.mRadius * 5f + fragment.mRadius)
+                                info.mVertex.distance(fragment.mVertex) < (info.mRadius * 5f + fragment.mRadius)
                             }.forEach { enemy ->
                                 mLogger.writeLog("Processed fantom enemy: $enemy")
                                 fragment.mCompass.setColorsByEnemies(fragment, enemy)

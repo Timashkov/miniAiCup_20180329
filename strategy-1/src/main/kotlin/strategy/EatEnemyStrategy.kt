@@ -1,10 +1,14 @@
 package strategy
 
 import WorldConfig
+import data.MovementVector
 import data.ParseResult
 import utils.GameEngine
 import utils.Logger
 import utils.Vertex
+import kotlin.math.PI
+import kotlin.math.abs
+import kotlin.math.atan2
 
 class EatEnemyStrategy(val mGlobalConfig: WorldConfig, val mLogger: Logger) : IStrategy {
 
@@ -39,7 +43,8 @@ class EatEnemyStrategy(val mGlobalConfig: WorldConfig, val mLogger: Logger) : IS
                 val cachedEnemy = cache.worldObjectsInfo.mEnemies.firstOrNull { it.mId == chosenEnemy.mId }
                 cachedEnemy?.let { enemy ->
                     mLogger.writeLog("Cached Enemy : $enemy")
-                    targetVertex = targetVertex.plus(targetVertex.minus(enemy.mVertex))
+                    val diff = targetVertex.minus(enemy.mVertex)
+                    targetVertex = targetVertex.plus(diff).plus(diff)
                 }
             }
 
@@ -55,24 +60,35 @@ class EatEnemyStrategy(val mGlobalConfig: WorldConfig, val mLogger: Logger) : IS
 
         if (me.canSplit) {
             val nearLowerEnemies = enemies.filter {
-                me.getMinorFragment().canEatEnemyBySplit(it.mMass) && (me.mFragmentsState.none { fragment -> fragment.mCompass.isVertexInDangerArea(it.mVertex) })
+                me.getMainFragment().canEatEnemyBySplit(it.mMass) && (me.mFragmentsState.none { fragment -> fragment.mCompass.isVertexInDangerArea(it.mVertex) })
             }.sortedBy { me.getCoordinates().distance(it.mVertex) }
             if (nearLowerEnemies.isNotEmpty()) {
                 val chosenEnemy = nearLowerEnemies[0]
                 var targetVertex = chosenEnemy.mVertex
+                var split = false
                 cachedParseResult?.let { cache ->
                     val cachedEnemy = cache.worldObjectsInfo.mEnemies.firstOrNull { it.mId == chosenEnemy.mId }
                     cachedEnemy?.let { enemy ->
                         mLogger.writeLog("Cached Enemy : $enemy")
-                        targetVertex = targetVertex.plus(targetVertex.minus(enemy.mVertex))
+                        val diff = targetVertex.minus(enemy.mVertex)
+                        targetVertex = targetVertex.plus(diff).plus(diff)
+
+                        val vecToTarget = MovementVector(targetVertex.X - enemy.mVertex.X, targetVertex.Y - enemy.mVertex.Y)
+                        val angleToTarget = (atan2(vecToTarget.SY, vecToTarget.SX) * 180f / PI).toFloat()
+                        val currentAngle = (atan2(me.getMainFragment().mSY, me.getMainFragment().mSX) * 180f / PI).toFloat()
+                        if (abs(angleToTarget - currentAngle) <= 5f)
+                            split = true
                     }
                 }
 
-                val res = StrategyResult(10, gameEngine.getMovementPointForTarget(me.getMainFragment().mId, chosenEnemy.mVertex), split = true, debugMessage = "Try to eat ${chosenEnemy.mId}")
+                val res = StrategyResult(10, gameEngine.getMovementPointForTarget(me.getMainFragment().mId, chosenEnemy.mVertex), split = split, debugMessage = "Try to eat ${chosenEnemy.mId}")
                 mLogger.writeLog("Enemy 2 strat: $res")
                 return res
             }
+
+
         }
+
 
         ////
 
