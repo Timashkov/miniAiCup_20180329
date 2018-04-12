@@ -10,7 +10,7 @@ import data.StepPoint
 // 1/32 of circle
 class Compass(private val mFragment: MineFragmentInfo, private val mGlobalConfig: WorldConfig, private val plain: Boolean = false) {
 
-    data class Rumb(val majorBorder: Float, var areaScore: Int = DEFAULT_AREA_SCORE, var canEat: ArrayList<StepPoint> = ArrayList(), var canEatEnemy: ArrayList<Vertex> = ArrayList(), var canBeEatenByEnemy: ArrayList<Vertex> = ArrayList(), var lastEscapePoint : Boolean = false)
+    data class Rumb(val majorBorder: Float, var areaScore: Int = DEFAULT_AREA_SCORE, var canEat: ArrayList<StepPoint> = ArrayList(), var canEatEnemy: ArrayList<EnemyInfo> = ArrayList(), var canBeEatenByEnemy: ArrayList<EnemyInfo> = ArrayList(), var lastEscapePoint: Boolean = false)
 
     val mRumbBorders: Array<Rumb>
     val mCenterVertex = mFragment.mVertex
@@ -21,8 +21,6 @@ class Compass(private val mFragment: MineFragmentInfo, private val mGlobalConfig
             rs.add(Rumb(11.25f * i, if (plain) 0 else DEFAULT_AREA_SCORE))
         }
         mRumbBorders = rs.toTypedArray()
-
-
     }
 
     fun getRumbIndexByVector(mv: MovementVector): Int {
@@ -56,8 +54,10 @@ class Compass(private val mFragment: MineFragmentInfo, private val mGlobalConfig
     fun setColorsByEnemies(me: MineFragmentInfo, enemy: EnemyInfo) {
         val distance = me.mVertex.distance(enemy.mVertex)
         if (distance < enemy.mRadius) {
-            if (enemy.mMass >= me.mMass * WorldConfig.EAT_MASS_FACTOR)
+            if (enemy.mMass >= me.mMass * WorldConfig.EAT_MASS_FACTOR - 2 * mGlobalConfig.FoodMass) {
                 setWholeCompassPoints(BLACK_SECTOR_SCORE, enemy.mVertex.getMovementVector(me.mVertex))
+                mRumbBorders.forEach { it.canBeEatenByEnemy.add(enemy) }
+            }
             return
         }
 
@@ -70,7 +70,7 @@ class Compass(private val mFragment: MineFragmentInfo, private val mGlobalConfig
         val directAngle = (atan2(vec.SY, vec.SX) * 180f / PI).toFloat()
         val directMovementIndex = getRumbIndexByAngle(directAngle)
 
-        if (enemy.mMass >= me.mMass * WorldConfig.EAT_MASS_FACTOR) {
+        if (enemy.mMass >= me.mMass * WorldConfig.EAT_MASS_FACTOR - 2 * mGlobalConfig.FoodMass) {
 
             val shiftedAngle = (asin(enemy.mRadius / me.mVertex.distance(enemy.mVertex)) * 180f / PI).toFloat()
 
@@ -84,9 +84,18 @@ class Compass(private val mFragment: MineFragmentInfo, private val mGlobalConfig
             val shiftedRumbIndex = getRumbIndexByAngle(searchingAngle)
             val indexDelta = aign * (shiftedRumbIndex - directMovementIndex)
 
-            markRumbsByDirectAndShifting(directMovementIndex, indexDelta, BLACK_SECTOR_SCORE)
+            for (i in indexDelta * -1..indexDelta) {
+                mRumbBorders[getShiftedIndex(directMovementIndex, i)].areaScore = BLACK_SECTOR_SCORE
+                mRumbBorders[getShiftedIndex(directMovementIndex, i)].canBeEatenByEnemy.add(enemy)
+            }
+
         } else if (enemy.mMass * WorldConfig.EAT_MASS_FACTOR <= me.mMass) {
-            markRumbsByDirectAndShifting(directMovementIndex, 1, PREFERRED_SECTOR_SCORE)
+            for (i in -1..1) {
+                if (mRumbBorders[getShiftedIndex(directMovementIndex, i)].areaScore != BLACK_SECTOR_SCORE) {
+                    mRumbBorders[getShiftedIndex(directMovementIndex, i)].areaScore = PREFERRED_SECTOR_SCORE
+                    mRumbBorders[getShiftedIndex(directMovementIndex, i)].canEatEnemy.add(enemy)
+                }
+            }
         }
     }
 
@@ -114,7 +123,7 @@ class Compass(private val mFragment: MineFragmentInfo, private val mGlobalConfig
 
     private fun setWholeCompassPoints(points: Int, escapeVector: MovementVector?) {
         mRumbBorders.forEach { it.areaScore = points }
-        escapeVector?.let { vec->
+        escapeVector?.let { vec ->
             val directAngle = (atan2(vec.SY, vec.SX) * 180f / PI).toFloat()
             val directMovementIndex = getRumbIndexByAngle(directAngle)
             mRumbBorders[directMovementIndex].lastEscapePoint = true
@@ -317,8 +326,11 @@ class Compass(private val mFragment: MineFragmentInfo, private val mGlobalConfig
 
         sectorsSet.forEach { startIndex, count ->
             val factor = count / 2
+            var gg = 0
+            if (factor > 2)
+                gg = factor % 2 * (-2)
 
-            val directMovementIndex = getShiftedIndex(startIndex, factor)
+            val directMovementIndex = getShiftedIndex(startIndex, factor + gg)
             if (count % 2 == 1) {
                 mRumbBorders[directMovementIndex].areaScore *= 2f.pow(factor).toInt()
             }

@@ -8,6 +8,7 @@ import incominginfos.WorldObjectsInfo
 import utils.GameEngine
 import utils.Logger
 import utils.Vertex
+import kotlin.math.abs
 
 class FindFoodStrategyV2(val mGlobalConfig: WorldConfig, val mLogger: Logger) : IStrategy {
 
@@ -32,16 +33,6 @@ class FindFoodStrategyV2(val mGlobalConfig: WorldConfig, val mLogger: Logger) : 
 
                 val me = gameEngine.worldParseResult.mineInfo
                 mGamerStateCache = me
-                val viruses = gameEngine.worldParseResult.worldObjectsInfo.mViruses
-
-                if (me.mFragmentsState.size == 1 && me.getMainFragment().canSplit && gameEngine.currentTick < 1000) {
-                    val nearestViruses = viruses.filter {
-                        it.mVertex.distance(me.getCoordinates()) <= me.getMainFragment().mRadius * 2f
-                    }.sortedBy { it.mVertex.distance(me.getMainFragment().mVertex) }
-                    if (nearestViruses.isNotEmpty() && nearestViruses[0].mVertex.distance(me.getMainFragment().mVertex) < bestWay.target.distance(me.getMainFragment().mVertex)) {
-                        return StrategyResult(2, nearestViruses[0].mVertex)
-                    }
-                }
 
                 mLogger.writeLog("$DEBUG_TAG movementTarget $bestWay.target  for FOOD: $mKnownWay")
                 return StrategyResult(1, bestWay.movementTarget, eject = bestWay.useEjections, split = bestWay.useSplit, debugMessage = "FindFoodV2 goes to ${bestWay.movementTarget} for point ${bestWay.target} ")
@@ -79,7 +70,7 @@ class FindFoodStrategyV2(val mGlobalConfig: WorldConfig, val mLogger: Logger) : 
 
     private fun isGamerStateChanged(gamerInfo: MineInfo): Boolean {
         mGamerStateCache?.let { cached ->
-            if (cached.mFragmentsState.size != gamerInfo.mFragmentsState.size) {
+            if (cached.mFragmentsState.size != gamerInfo.mFragmentsState.size || abs(cached.totalMass - gamerInfo.totalMass) > gamerInfo.totalMass * 0.2f) {
                 mLogger.writeLog("$DEBUG_TAG state changed - fragments count")
                 return true
             }
