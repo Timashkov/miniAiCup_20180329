@@ -24,9 +24,7 @@ class WorldObjectsFilter(private val mGlobalConfig: WorldConfig, val mLogger: Lo
         if (enemies.isNotEmpty()) {
             mLogger.writeLog("Enemies total : ${enemies.size}")
             pr.mineInfo.mFragmentsState.forEach { fragment ->
-                enemies.filter {
-                    it.mVertex.distance(fragment.mVertex) < (it.mRadius * 5f + fragment.mRadius)
-                }.forEach { enemy ->
+                enemies.forEach { enemy ->
                     mLogger.writeLog("Processed enemy: $enemy")
                     fragment.mCompass.setColorsByEnemies(fragment, enemy)
                 }
@@ -40,10 +38,8 @@ class WorldObjectsFilter(private val mGlobalConfig: WorldConfig, val mLogger: Lo
                         val info = EnemyInfo(ei.mVertex.plus(ei.mVertex.minus(he.mVertex)), ei.mId, ei.mMass, ei.mRadius)
 
                         pr.mineInfo.mFragmentsState.forEach { fragment ->
-                            if (info.mVertex.distance(fragment.mVertex) < (info.mRadius * 5f + fragment.mRadius)) {
                                 mLogger.writeLog("Processed fantom enemy: $info")
                                 fragment.mCompass.setColorsByEnemies(fragment, info)
-                            }
                         }
                     }
                 }

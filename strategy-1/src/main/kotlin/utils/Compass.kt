@@ -65,7 +65,7 @@ class Compass(private val mFragment: MineFragmentInfo, private val mGlobalConfig
         val directAngle = (atan2(vec.SY, vec.SX) * 180f / PI).toFloat()
         val directMovementIndex = getRumbIndexByAngle(directAngle)
 
-        if (enemy.mMass >= me.mMass * WorldConfig.EAT_MASS_FACTOR - 2 * mGlobalConfig.FoodMass) {
+        if (me.canBeEatenByEnemy(enemy.mMass)) {
 
             val shiftedAngle = (asin(enemy.mRadius / me.mVertex.distance(enemy.mVertex)) * 180f / PI).toFloat()
 
@@ -80,14 +80,16 @@ class Compass(private val mFragment: MineFragmentInfo, private val mGlobalConfig
             val indexDelta = aign * (shiftedRumbIndex - directMovementIndex)
 
             for (i in indexDelta * -1..indexDelta) {
-                mRumbBorders[getShiftedIndex(directMovementIndex, i)].areaScore = BLACK_SECTOR_SCORE
+                if ((me.mRadius + enemy.mRadius * 5f > me.mVertex.distance(enemy.mVertex)))
+                    mRumbBorders[getShiftedIndex(directMovementIndex, i)].areaScore = BLACK_SECTOR_SCORE
                 mRumbBorders[getShiftedIndex(directMovementIndex, i)].enemies.add(enemy)
             }
 
-        } else if (enemy.mMass * WorldConfig.EAT_MASS_FACTOR <= me.mMass) {
+        } else if (me.canEatEnemyByMass(enemy.mMass)) {
             for (i in -1..1) {
                 if (mRumbBorders[getShiftedIndex(directMovementIndex, i)].areaScore != BLACK_SECTOR_SCORE) {
-                    mRumbBorders[getShiftedIndex(directMovementIndex, i)].areaScore = PREFERRED_SECTOR_SCORE
+                    if ((me.mRadius + enemy.mRadius * 5f > me.mVertex.distance(enemy.mVertex)))
+                        mRumbBorders[getShiftedIndex(directMovementIndex, i)].areaScore = PREFERRED_SECTOR_SCORE
                     mRumbBorders[getShiftedIndex(directMovementIndex, i)].enemies.add(enemy)
                 }
             }
@@ -149,7 +151,7 @@ class Compass(private val mFragment: MineFragmentInfo, private val mGlobalConfig
         val directMovementIndex = getRumbIndexByAngle(directAngle)
         if (mRumbBorders[directMovementIndex].areaScore in arrayOf(BURST_SECTOR_SCORE, BLACK_SECTOR_SCORE))
             return true
-        if( mRumbBorders.any { rb -> rb.enemies.any { en -> en.mVertex.distance(mFragment.mVertex) < mFragment.mRadius + en.mRadius && mFragment.canBeEatenByEnemy(en.mMass, massFactor) } }){
+        if (mRumbBorders.any { rb -> rb.enemies.any { en -> en.mVertex.distance(mFragment.mVertex) < mFragment.mRadius + en.mRadius && mFragment.canBeEatenByEnemy(en.mMass, massFactor) } }) {
             return true
         }
 //        mRumbBorders.any { rb -> rb..any { en -> en.mVertex.distance(mFragment.mVertex) < mFragment.mRadius + en.mRadius && mFragment.canBurst(virus) } }){

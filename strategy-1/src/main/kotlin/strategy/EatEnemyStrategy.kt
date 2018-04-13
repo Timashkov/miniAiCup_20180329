@@ -64,7 +64,7 @@ class EatEnemyStrategy(val mGlobalConfig: WorldConfig, val mLogger: Logger) : IS
                 me.getNearestFragment(it.mVertex).canEatEnemyBySplit(it.mMass)
                         && me.getNearestFragment(it.mVertex) == me.getMainFragment()
                         && me.mFragmentsState.none { fragment -> fragment.mCompass.isVertexInDangerArea(it.mVertex, 0.5f) }
-                        && me.getNearestFragment(it.mVertex).mCompass.mRumbBorders.none { rumb -> rumb.enemies.any { enemyInfo -> enemyInfo.mMass / 1.2f + 2 < me.getNearestFragment(it.mVertex).mMass / 2f } }
+                        && me.getNearestFragment(it.mVertex).mCompass.mRumbBorders.none { rumb -> rumb.enemies.any { enemyInfo -> (enemyInfo.mMass + 2) / 1.2f  < me.getNearestFragment(it.mVertex).mMass / 2f } }
             }.sortedBy { me.getCoordinates().distance(it.mVertex) }
             if (nearLowerEnemies.isNotEmpty()) {
                 val chosenEnemy = nearLowerEnemies[0]
