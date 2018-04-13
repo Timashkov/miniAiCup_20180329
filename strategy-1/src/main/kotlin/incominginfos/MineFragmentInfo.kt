@@ -19,13 +19,13 @@ class MineFragmentInfo(val fragmentJson: JSONObject, val mGlobalConfig: WorldCon
 
     fun canEatEnemyBySplit(enemyMass: Float): Boolean = enemyMass * WorldConfig.EAT_MASS_FACTOR * 2 < mMass
 
-    fun canBeEatenByEnemy(enemyMass: Float): Boolean = enemyMass > mMass * WorldConfig.EAT_MASS_FACTOR - MAGIC_MASS4EAT
+    fun canBeEatenByEnemy(enemyMass: Float, massFactor: Float = 1f): Boolean = enemyMass > mMass * WorldConfig.EAT_MASS_FACTOR * massFactor - MAGIC_MASS4EAT
 
     val canSplit: Boolean
         get() = mMass > WorldConfig.MIN_SPLITABLE_MASS
 
     val maySplit: Boolean
-        get() = mMass > WorldConfig.MIN_SPLITABLE_MASS * (1 + 4f * mGlobalConfig.Viscosity) / (6 * mGlobalConfig.Viscosity)
+        get() = mMass > WorldConfig.MIN_SPLITABLE_MASS * (1.1f + 16f * mGlobalConfig.Viscosity) / (18f * mGlobalConfig.Viscosity)
 
     val mCompass: Compass = Compass(this, mGlobalConfig)
 

@@ -32,8 +32,8 @@ class EatEnemyStrategy(val mGlobalConfig: WorldConfig, val mLogger: Logger) : IS
 
         // Stage 1 - search for 1.25
         val nearEnemies = enemies.filter {
-            me.getMinorFragment().canEatEnemyByMass(it.mMass)
-                    && (!me.getMinorFragment().canEatEnemyBySplit(it.mMass) || !me.getMinorFragment().canSplit)
+            me.getNearestFragment(it.mVertex).canEatEnemyByMass(it.mMass)
+                    && (!me.getNearestFragment(it.mVertex).canEatEnemyBySplit(it.mMass) || me.getNearestFragment(it.mVertex) != me.getMainFragment() || !me.getNearestFragment(it.mVertex).canSplit)
                     && (me.mFragmentsState.none { fragment -> (fragment.mCompass.isVertexInDangerArea(it.mVertex)) })
         }.sortedBy { me.getCoordinates().distance(it.mVertex) }
         if (nearEnemies.isNotEmpty()) {
@@ -45,6 +45,7 @@ class EatEnemyStrategy(val mGlobalConfig: WorldConfig, val mLogger: Logger) : IS
                     mLogger.writeLog("Cached Enemy : $enemy")
                     val diff = targetVertex.minus(enemy.mVertex)
                     targetVertex = targetVertex.plus(diff).plus(diff)
+                    mLogger.writeLog("Target vert : $targetVertex")
                 }
             }
 
@@ -60,7 +61,10 @@ class EatEnemyStrategy(val mGlobalConfig: WorldConfig, val mLogger: Logger) : IS
 
         if (me.canSplit) {
             val nearLowerEnemies = enemies.filter {
-                me.getMainFragment().canEatEnemyBySplit(it.mMass) && (me.mFragmentsState.none { fragment -> fragment.mCompass.isVertexInDangerArea(it.mVertex) })
+                me.getNearestFragment(it.mVertex).canEatEnemyBySplit(it.mMass)
+                        && me.getNearestFragment(it.mVertex) == me.getMainFragment()
+                        && me.mFragmentsState.none { fragment -> fragment.mCompass.isVertexInDangerArea(it.mVertex, 0.5f) }
+                        && me.getNearestFragment(it.mVertex).mCompass.mRumbBorders.none { rumb -> rumb.enemies.any { enemyInfo -> enemyInfo.mMass / 1.2f + 2 < me.getNearestFragment(it.mVertex).mMass / 2f } }
             }.sortedBy { me.getCoordinates().distance(it.mVertex) }
             if (nearLowerEnemies.isNotEmpty()) {
                 val chosenEnemy = nearLowerEnemies[0]
@@ -76,7 +80,7 @@ class EatEnemyStrategy(val mGlobalConfig: WorldConfig, val mLogger: Logger) : IS
                         val vecToTarget = MovementVector(targetVertex.X - enemy.mVertex.X, targetVertex.Y - enemy.mVertex.Y)
                         val angleToTarget = (atan2(vecToTarget.SY, vecToTarget.SX) * 180f / PI).toFloat()
                         val currentAngle = (atan2(me.getMainFragment().mSY, me.getMainFragment().mSX) * 180f / PI).toFloat()
-                        if (abs(angleToTarget - currentAngle) <= 5f)
+                        if (abs(angleToTarget - currentAngle) <= 15f)
                             split = true
                     }
                 }

@@ -16,10 +16,11 @@ class FindFoodStrategyV2(val mGlobalConfig: WorldConfig, val mLogger: Logger) : 
     private var mGamerStateCache: MineInfo? = null
 
     override fun apply(gameEngine: GameEngine, cache: ParseResult?): StrategyResult {
-        mLogger.writeLog("Try to apply food search\n")
+        mLogger.writeLog("\nTry to apply food search, known $mKnownWay")
 
         try {
-            if (mKnownWay != null && isDestinationAchieved(gameEngine.worldParseResult.worldObjectsInfo) || isGamerStateChanged(gameEngine.worldParseResult.mineInfo)) {
+
+            if (isDestinationAchieved(gameEngine.worldParseResult.worldObjectsInfo) || isGamerStateChanged(gameEngine.worldParseResult.mineInfo) ) {
                 mKnownWay = null
             }
 
@@ -55,15 +56,13 @@ class FindFoodStrategyV2(val mGlobalConfig: WorldConfig, val mLogger: Logger) : 
         //если съели целевую точку, а ее соседки остались - то надо доесть
 
         mKnownWay?.let { targetWay ->
-            var c = 0
             targetWay.foodPoints.forEach { fp ->
                 if (worldInfo.mFood.map { it.mVertex }.any { it.equals(fp) }) {
                     mLogger.writeLog("FP: $fp")
-                    c++
+                    mKnownWay?.target = fp
+                    return false
                 }
             }
-            if (c > 0)
-                return false
         }
         return true
     }

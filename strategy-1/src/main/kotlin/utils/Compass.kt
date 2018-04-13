@@ -131,7 +131,9 @@ class Compass(private val mFragment: MineFragmentInfo, private val mGlobalConfig
         val vec = mCenterVertex.getMovementVector(target)
         val directAngle = (atan2(vec.SY, vec.SX) * 180f / PI).toFloat()
         val directMovementIndex = getRumbIndexByAngle(directAngle)
-        return mRumbBorders[directMovementIndex].areaScore == BLACK_SECTOR_SCORE
+        if (mRumbBorders[directMovementIndex].areaScore == BLACK_SECTOR_SCORE)
+            return true
+        return mRumbBorders.any { rb -> rb.enemies.any { en -> en.mVertex.distance(mFragment.mVertex) < mFragment.mRadius + en.mRadius && mFragment.canBeEatenByEnemy(en.mMass) } }
     }
 
     fun isVertexInBurstArea(target: Vertex): Boolean {
@@ -141,11 +143,17 @@ class Compass(private val mFragment: MineFragmentInfo, private val mGlobalConfig
         return mRumbBorders[directMovementIndex].areaScore == BURST_SECTOR_SCORE
     }
 
-    fun isVertexInDangerArea(target: Vertex): Boolean {
+    fun isVertexInDangerArea(target: Vertex, massFactor: Float = 1f): Boolean {
         val vec = mCenterVertex.getMovementVector(target)
         val directAngle = (atan2(vec.SY, vec.SX) * 180f / PI).toFloat()
         val directMovementIndex = getRumbIndexByAngle(directAngle)
-        return mRumbBorders[directMovementIndex].areaScore in arrayOf(BURST_SECTOR_SCORE, BLACK_SECTOR_SCORE)
+        if (mRumbBorders[directMovementIndex].areaScore in arrayOf(BURST_SECTOR_SCORE, BLACK_SECTOR_SCORE))
+            return true
+        if( mRumbBorders.any { rb -> rb.enemies.any { en -> en.mVertex.distance(mFragment.mVertex) < mFragment.mRadius + en.mRadius && mFragment.canBeEatenByEnemy(en.mMass, massFactor) } }){
+            return true
+        }
+//        mRumbBorders.any { rb -> rb..any { en -> en.mVertex.distance(mFragment.mVertex) < mFragment.mRadius + en.mRadius && mFragment.canBurst(virus) } }){
+        return false
     }
 
     fun isVertexInAreaWithEnemy(target: Vertex): Boolean {

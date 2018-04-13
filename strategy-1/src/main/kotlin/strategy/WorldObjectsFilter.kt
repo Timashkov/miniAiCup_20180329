@@ -40,11 +40,9 @@ class WorldObjectsFilter(private val mGlobalConfig: WorldConfig, val mLogger: Lo
                         val info = EnemyInfo(ei.mVertex.plus(ei.mVertex.minus(he.mVertex)), ei.mId, ei.mMass, ei.mRadius)
 
                         pr.mineInfo.mFragmentsState.forEach { fragment ->
-                            enemies.filter {
-                                info.mVertex.distance(fragment.mVertex) < (info.mRadius * 5f + fragment.mRadius)
-                            }.forEach { enemy ->
-                                mLogger.writeLog("Processed fantom enemy: $enemy")
-                                fragment.mCompass.setColorsByEnemies(fragment, enemy)
+                            if (info.mVertex.distance(fragment.mVertex) < (info.mRadius * 5f + fragment.mRadius)) {
+                                mLogger.writeLog("Processed fantom enemy: $info")
+                                fragment.mCompass.setColorsByEnemies(fragment, info)
                             }
                         }
                     }
@@ -55,14 +53,14 @@ class WorldObjectsFilter(private val mGlobalConfig: WorldConfig, val mLogger: Lo
                 historicalEnemies.removeIf { it.mId == ei.mId || (!ei.mId.contains(".") && it.mId.startsWith(ei.mId)) }
             }
 
-            historicalEnemies.removeIf { it.lastSeenTick > 10 }
+            historicalEnemies.removeIf { it.lastSeenTick > 50 }
             historicalEnemies.forEach { he ->
                 pr.mineInfo.mFragmentsState.forEach { fragment ->
                     if (he.mVertex.distance(fragment.mVertex) - mGlobalConfig.SpeedFactor / sqrt(fragment.mMass) < (he.mRadius * 5f + fragment.mRadius)) {
                         mLogger.writeLog("Processed historical enemy: $he")
                         fragment.mCompass.setColorsByEnemies(fragment, he)
                     } else {
-                        he.lastSeenTick = 10
+                        he.lastSeenTick = 50
                     }
                     he.lastSeenTick++
                 }
@@ -103,22 +101,24 @@ class WorldObjectsFilter(private val mGlobalConfig: WorldConfig, val mLogger: Lo
         if (ejections.isNotEmpty())
             foodPoints.addAll(ejections.map { it.mVertex })
 
-        if (pr.worldObjectsInfo.mEnemies.isNotEmpty())
-            pr.mineInfo.mFragmentsState.forEach { fragment ->
-                val borderDistance = fragment.mRadius * 6f
-                if (fragment.mVertex.X < borderDistance) {
-                    fragment.mCompass.setColorByEdge(Vertex(0f, fragment.mVertex.Y))
-                }
-                if (fragment.mVertex.Y < borderDistance) {
-                    fragment.mCompass.setColorByEdge(Vertex(fragment.mVertex.X, 0f))
-                }
-                if (fragment.mVertex.X > mGlobalConfig.GameWidth - borderDistance) {
-                    fragment.mCompass.setColorByEdge(Vertex(mGlobalConfig.GameWidth.toFloat(), fragment.mVertex.Y))
-                }
-                if (fragment.mVertex.Y > mGlobalConfig.GameHeight - borderDistance) {
-                    fragment.mCompass.setColorByEdge(Vertex(fragment.mVertex.X, mGlobalConfig.GameWidth.toFloat()))
-                }
+        val borderFactor =
+                if (pr.worldObjectsInfo.mEnemies.isNotEmpty()) 6f else 1.2f
+
+        pr.mineInfo.mFragmentsState.forEach { fragment ->
+            val borderDistance = fragment.mRadius * borderFactor
+            if (fragment.mVertex.X < borderDistance) {
+                fragment.mCompass.setColorByEdge(Vertex(0f, fragment.mVertex.Y))
             }
+            if (fragment.mVertex.Y < borderDistance) {
+                fragment.mCompass.setColorByEdge(Vertex(fragment.mVertex.X, 0f))
+            }
+            if (fragment.mVertex.X > mGlobalConfig.GameWidth - borderDistance) {
+                fragment.mCompass.setColorByEdge(Vertex(mGlobalConfig.GameWidth.toFloat(), fragment.mVertex.Y))
+            }
+            if (fragment.mVertex.Y > mGlobalConfig.GameHeight - borderDistance) {
+                fragment.mCompass.setColorByEdge(Vertex(fragment.mVertex.X, mGlobalConfig.GameWidth.toFloat()))
+            }
+        }
 
         pr.mineInfo.reconfigureCompass(foodPoints)
         return pr

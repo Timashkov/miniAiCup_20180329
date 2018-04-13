@@ -158,7 +158,8 @@ class MineInfo(stateJson: JSONArray, val globalConfig: WorldConfig, val mLogger:
         mLogger.writeLog("Looking for best sector. Known target = $knownVertex")
         knownVertex?.let { fp ->
             val knownFragment = mFragmentsState.firstOrNull { it.mId == fp.fragmentId }
-            knownFragment?.let {
+            knownFragment?.let { targetFragment ->
+
 
                 if (mFragmentsState.none { it.mCompass.isVertexInBlackArea(fp.target) } && mFragmentsState.none { it.mVertex == fp.target }) {
                     if (mFragmentsState.size > 1 && mFragmentsState.all { it.mTTF < 2 })
