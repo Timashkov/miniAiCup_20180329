@@ -179,7 +179,7 @@ class Compass(private val mFragment: MineFragmentInfo, private val mGlobalConfig
         val vec = mCenterVertex.getMovementVector(virus.mVertex)
         val directAngle = (atan2(vec.SY, vec.SX) * 180f / PI).toFloat()
         val directMovementIndex = getRumbIndexByAngle(directAngle)
-        val shiftedAngle = (asin(virus.mRadius / mCenterVertex.distance(virus.mVertex)) * 180f / PI).toFloat()
+        val shiftedAngle = (asin((virus.mRadius * 2f / 3f + mFragment.mRadius) / mCenterVertex.distance(virus.mVertex)) * 180f / PI).toFloat()
         val shiftedRumbIndex = getRumbIndexByAngle(shiftedAngle + directAngle)
         val indexDelta = shiftedRumbIndex - directMovementIndex
         markRumbsByDirectAndShifting(directMovementIndex, indexDelta, BURST_SECTOR_SCORE)
@@ -245,6 +245,15 @@ class Compass(private val mFragment: MineFragmentInfo, private val mGlobalConfig
                 return
             }
         }
+    }
+
+    fun setColorByVertex(vertex: Vertex, color: Int) {
+
+        val vec = mCenterVertex.getMovementVector(vertex)
+        val directAngle = (atan2(vec.SY, vec.SX) * 180f / PI).toFloat()
+        val directMovementIndex = getRumbIndexByAngle(directAngle)
+        if (mRumbBorders[directMovementIndex].areaScore > -1)
+            mRumbBorders[directMovementIndex].areaScore = color
     }
 
     fun reconfigure(foodPoints: ArrayList<Vertex>) {
@@ -336,8 +345,8 @@ class Compass(private val mFragment: MineFragmentInfo, private val mGlobalConfig
                 var power = 0
                 val shifting = count / 2
                 var gg = 0
-                if (shifting > 2 && shifting % 3 < count)
-                    gg = shifting % 3
+                if (shifting > 2 && shifting % 5 < count)
+                    gg = shifting % 5
 
                 val directMovementIndex = getShiftedIndex(startIndex, shifting + gg)
                 for (i in shifting + 1 downTo 1) {

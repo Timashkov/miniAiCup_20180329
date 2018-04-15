@@ -4,6 +4,7 @@ import utils.Logger
 import WorldConfig
 import data.ParseResult
 import incominginfos.EnemyInfo
+import utils.Compass
 import utils.Vertex
 import java.util.*
 import kotlin.math.sqrt
@@ -38,8 +39,8 @@ class WorldObjectsFilter(private val mGlobalConfig: WorldConfig, val mLogger: Lo
                         val info = EnemyInfo(ei.mVertex.plus(ei.mVertex.minus(he.mVertex)), ei.mId, ei.mMass, ei.mRadius)
 
                         pr.mineInfo.mFragmentsState.forEach { fragment ->
-                                mLogger.writeLog("Processed fantom enemy: $info")
-                                fragment.mCompass.setColorsByEnemies(fragment, info)
+                            mLogger.writeLog("Processed fantom enemy: $info")
+                            fragment.mCompass.setColorsByEnemies(fragment, info)
                         }
                     }
                 }
@@ -116,6 +117,13 @@ class WorldObjectsFilter(private val mGlobalConfig: WorldConfig, val mLogger: Lo
             }
             if (fragment.mVertex.distance(mGlobalConfig.rbCorner) < cornerDistance) {
                 fragment.mCompass.setColorByCorner(mGlobalConfig.rbCorner)
+            }
+        }
+        if (pr.mineInfo.mFragmentsState.any { it.mCompass.hasBlackAreas() }) {
+            pr.mineInfo.mFragmentsState.forEach { frag ->
+                val points: Array<Vertex> = arrayOf(Vertex(0f, frag.mVertex.Y), Vertex(frag.mVertex.X, 0f), Vertex(mGlobalConfig.GameWidth - frag.mVertex.X, frag.mVertex.Y), Vertex(frag.mVertex.X, mGlobalConfig.GameHeight - frag.mVertex.Y))
+                val nearest = points.sortedByDescending { it.distance(frag.mVertex) }[0]
+                frag.mCompass.setColorByVertex(nearest, Compass.CORNER_SECTOR_SCORE)
             }
         }
 
