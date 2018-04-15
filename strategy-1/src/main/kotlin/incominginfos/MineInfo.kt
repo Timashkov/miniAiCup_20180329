@@ -177,59 +177,68 @@ class MineInfo(stateJson: JSONArray, val globalConfig: WorldConfig, val mLogger:
             fragmentsList = mFragmentsState.sortedByDescending { fr -> fr.mCompass.getDangerSectorsCount() }
 
         }
+        val alreadyProcessed: ArrayList<MineFragmentInfo> = ArrayList()
 
         fragmentsList.forEach { fr ->
-            fr.mCompass.mRumbBorders.filter { rumb -> rumb.areaScore > Compass.DEFAULT_AREA_SCORE || rumb.lastEscapePoint || (rumb.areaScore == Compass.DEFAULT_AREA_SCORE && fr.mCompass.hasBlackAreas()) }.sortedByDescending { it.areaScore }.forEach { rumb ->
+            fr.mCompass.mRumbBorders.filter { rumb ->
+                rumb.areaScore > Compass.DEFAULT_AREA_SCORE ||
+                        rumb.lastEscapePoint ||
+                        (rumb.areaScore == Compass.DEFAULT_AREA_SCORE && fr.mCompass.hasBlackAreas())
+            }.sortedByDescending { it.areaScore }.forEach { rumb ->
                 val fp = fr.mCompass.getSectorFoodPoint(rumb)
-                mLogger.writeLog("BS: $fp")
-                fp.movementTarget = getMovementPointForTarget(fr, fp.target)
+                if (fp != StepPoint.DEFAULT) {
 
-                if (rumb.lastEscapePoint) {
-                    if (rumb.lastEscapePoint && mFragmentsState.size == 1) {
-                        if (fr.canSplit && fr.mCompass.getRumbIndexByVector(MovementVector(fr.mSX, fr.mSY)) == fr.mCompass.mRumbBorders.indexOf(rumb))
-                            fp.useSplit = true
-                        else
-                            fp.useEjections = true
+                    mLogger.writeLog("BS: $fp")
+                    fp.movementTarget = getMovementPointForTarget(fr, fp.target)
+
+                    if (rumb.lastEscapePoint) {
+                        if (rumb.lastEscapePoint && mFragmentsState.size == 1) {
+                            if (fr.canSplit && fr.mCompass.getRumbIndexByVector(MovementVector(fr.mSX, fr.mSY)) == fr.mCompass.mRumbBorders.indexOf(rumb))
+                                fp.useSplit = true
+                            else
+                                fp.useEjections = true
+                        }
+                        return fp
                     }
-                    return fp
-                }
 
-                //TODO: central
+                    //TODO: central
 
-                if (mFragmentsState.size > 1 && mFragmentsState.all { it.mTTF < 2 }) {
+                    if (mFragmentsState.size > 1 && mFragmentsState.all { it.mTTF < 2 }) {
 //                    val enemies: ArrayList<EnemyInfo> = ArrayList()
 //                    mFragmentsState.forEach { it-> it.mCompass.mRumbBorders.forEach { r -> enemies.addAll(r.canBeEatenByEnemy) } }
 //
-                    var X = 0.0f
-                    var Y = 0.0f
-                    mFragmentsState.forEach {
-                        X += it.mVertex.X
-                        Y += it.mVertex.Y
+                        var X = 0.0f
+                        var Y = 0.0f
+                        mFragmentsState.forEach {
+                            X += it.mVertex.X
+                            Y += it.mVertex.Y
+                        }
+                        X /= mFragmentsState.size
+                        Y /= mFragmentsState.size
+                        val center = Vertex(X, Y)
+                        if (mFragmentsState.none { !(it in alreadyProcessed) && it.mCompass.isVertexInDangerArea(center) }) {
+                            fp.target = center
+                            fp.movementTarget = center
+                            return fp
+                        }
                     }
-                    X /= mFragmentsState.size
-                    Y /= mFragmentsState.size
-                    val center = Vertex(X, Y)
-                    if (mFragmentsState.none { it.mCompass.isVertexInDangerArea(center) }) {
-                        fp.target = center
-                        fp.movementTarget = center
+
+                    if (mFragmentsState.none { state -> state.mCompass.isVertexInDangerArea(fp.target) }) {
+
+                        if (mFragmentsState.none { state -> state.mCompass.isVertexInAreaWithEnemy(fp.movementTarget) }) {
+                            fp.useSplit = fr.maySplit && mFragmentsState.none { it.mCompass.hasBlackAreas() } && !getMainFragment().mCompass.isVertexInAreaWithEnemy(getMainFragment().mVertex.plus(Vertex(getMainFragment().mSX, getMainFragment().mSY)))
+                        }
                         return fp
                     }
                 }
-
-                if (mFragmentsState.none { state -> state.mCompass.isVertexInDangerArea(fp.target) }) {
-
-                    if (mFragmentsState.none { state -> state.mCompass.isVertexInAreaWithEnemy(fp.movementTarget) }) {
-                        fp.useSplit = fr.maySplit && mFragmentsState.none { it.mCompass.hasBlackAreas() } && !getMainFragment().mCompass.isVertexInAreaWithEnemy(getMainFragment().mVertex.plus(Vertex(getMainFragment().mSX, getMainFragment().mSY)))
-                    }
-                    return fp
-                }
             }
+            alreadyProcessed.add(fr)
         }
 
         fragmentsList.forEach { fr ->
             if (fr.mCompass.hasBlackAreas() && fr.mCompass.mRumbBorders.none { it.areaScore > 0 }) {
                 val escape = fr.mCompass.mRumbBorders.filter { rumb ->
-                    rumb.areaScore >= Compass.EDGE_SECTOR_SCORE
+                    rumb.areaScore >= Compass.CORNER_SECTOR_SCORE
                 }[0]
                 val fp = fr.mCompass.getSectorFoodPoint(escape)
                 mLogger.writeLog("BS: $fp")
