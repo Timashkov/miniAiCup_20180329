@@ -97,22 +97,25 @@ class WorldObjectsFilter(private val mGlobalConfig: WorldConfig, val mLogger: Lo
         if (ejections.isNotEmpty())
             foodPoints.addAll(ejections.map { it.mVertex })
 
-        val borderFactor =
-                if (pr.worldObjectsInfo.mEnemies.isNotEmpty()) 6f else 1.2f
+        val cornerFactor =
+                if (pr.worldObjectsInfo.mEnemies.isNotEmpty()) 5f else 1.5f
 
         pr.mineInfo.mFragmentsState.forEach { fragment ->
-            val borderDistance = fragment.mRadius * borderFactor
-            if (fragment.mVertex.X < borderDistance) {
-                fragment.mCompass.setColorByEdge(Vertex(0f, fragment.mVertex.Y))
+            val cornerDistance = fragment.mRadius * cornerFactor
+
+
+
+            if (fragment.mVertex.distance(mGlobalConfig.ltCorner) < cornerDistance) {
+                fragment.mCompass.setColorByCorner(mGlobalConfig.ltCorner)
             }
-            if (fragment.mVertex.Y < borderDistance) {
-                fragment.mCompass.setColorByEdge(Vertex(fragment.mVertex.X, 0f))
+            if (fragment.mVertex.distance(mGlobalConfig.lbCorner) < cornerDistance) {
+                fragment.mCompass.setColorByCorner(mGlobalConfig.lbCorner)
             }
-            if (fragment.mVertex.X > mGlobalConfig.GameWidth - borderDistance) {
-                fragment.mCompass.setColorByEdge(Vertex(mGlobalConfig.GameWidth.toFloat(), fragment.mVertex.Y))
+            if (fragment.mVertex.distance(mGlobalConfig.rtCorner) < cornerDistance) {
+                fragment.mCompass.setColorByCorner(mGlobalConfig.rtCorner)
             }
-            if (fragment.mVertex.Y > mGlobalConfig.GameHeight - borderDistance) {
-                fragment.mCompass.setColorByEdge(Vertex(fragment.mVertex.X, mGlobalConfig.GameWidth.toFloat()))
+            if (fragment.mVertex.distance(mGlobalConfig.rbCorner) < cornerDistance) {
+                fragment.mCompass.setColorByCorner(mGlobalConfig.rbCorner)
             }
         }
 
