@@ -67,7 +67,7 @@ class Compass(private val mFragment: MineFragmentInfo, private val mGlobalConfig
 
         if (me.canBeEatenByEnemy(enemy.mMass)) {
 
-            val shiftedAngle = (asin(enemy.mRadius / me.mVertex.distance(enemy.mVertex)) * 180f / PI).toFloat()
+            val shiftedAngle = (asin((enemy.mRadius + me.mRadius) / me.mVertex.distance(enemy.mVertex)) * 180f / PI).toFloat()
 
             var searchingAngle = shiftedAngle + directAngle
             var aign = 1
@@ -88,8 +88,8 @@ class Compass(private val mFragment: MineFragmentInfo, private val mGlobalConfig
         } else if (me.canEatEnemyByMass(enemy.mMass)) {
             for (i in -1..1) {
                 if (mRumbBorders[getShiftedIndex(directMovementIndex, i)].areaScore != BLACK_SECTOR_SCORE) {
-                    if ((me.mRadius + enemy.mRadius * 5f > me.mVertex.distance(enemy.mVertex)))
-                        mRumbBorders[getShiftedIndex(directMovementIndex, i)].areaScore = PREFERRED_SECTOR_SCORE
+//                    if ((me.mRadius + enemy.mRadius * 5f > me.mVertex.distance(enemy.mVertex)))// мой радиус больше!!!
+                    mRumbBorders[getShiftedIndex(directMovementIndex, i)].areaScore = PREFERRED_SECTOR_SCORE
                     mRumbBorders[getShiftedIndex(directMovementIndex, i)].enemies.add(enemy)
                 }
             }
@@ -218,13 +218,33 @@ class Compass(private val mFragment: MineFragmentInfo, private val mGlobalConfig
         }
     }
 
-    fun setColorByEdge(edgeVertex: Vertex) {
-        val vec = mCenterVertex.getMovementVector(edgeVertex)
-        val directAngle = (atan2(vec.SY, vec.SX) * 180f / PI).toFloat()
-        val directMovementIndex = getRumbIndexByAngle(directAngle)
-        val shiftingDelta = 4
-
-        markRumbsByDirectAndShifting(directMovementIndex, shiftingDelta, EDGE_SECTOR_SCORE)
+    fun setColorByCorner(cornerVertex: Vertex) {
+        when (cornerVertex) {
+            mGlobalConfig.ltCorner -> {
+                for (i in 0..8) {
+                    mRumbBorders[i].areaScore = CORNER_SECTOR_SCORE
+                }
+                return
+            }
+            mGlobalConfig.lbCorner -> {
+                for (i in 24..31) {
+                    mRumbBorders[i].areaScore = CORNER_SECTOR_SCORE
+                }
+                return
+            }
+            mGlobalConfig.rbCorner -> {
+                for (i in 16..24) {
+                    mRumbBorders[i].areaScore = CORNER_SECTOR_SCORE
+                }
+                return
+            }
+            mGlobalConfig.rtCorner -> {
+                for (i in 8..16) {
+                    mRumbBorders[i].areaScore = CORNER_SECTOR_SCORE
+                }
+                return
+            }
+        }
     }
 
     fun reconfigure(foodPoints: ArrayList<Vertex>) {
@@ -303,27 +323,49 @@ class Compass(private val mFragment: MineFragmentInfo, private val mGlobalConfig
             } else
                 sectorsSet[first] = count
         }
-        if (sectorsSet.any { it -> it.value == 32 }) {
-            return
-        }
+//        if (sectorsSet.any { it -> it.value == 32 }) {
+//            return
+//        }
+
+
+        val powerMax = getDangerSectorsCount()
+
 
         sectorsSet.forEach { startIndex, count ->
-            val factor = count / 2
-            var gg = 0
-            if (factor > 2)
-                gg = factor % 2 * (-2)
+            if (getDangerSectorsCount() < 16) {
+                var power = 0
+                val shifting = count / 2
+                var gg = 0
+                if (shifting > 2 && shifting % 3 < count)
+                    gg = shifting % 3
 
-            val directMovementIndex = getShiftedIndex(startIndex, factor + gg)
-            if (count % 2 == 1) {
-                mRumbBorders[directMovementIndex].areaScore *= 2f.pow(factor).toInt()
-            }
+                val directMovementIndex = getShiftedIndex(startIndex, shifting + gg)
+                for (i in shifting + 1 downTo 1) {
+                    if (mRumbBorders[getShiftedIndex(directMovementIndex, i - 1)].areaScore > 0)
+                        mRumbBorders[getShiftedIndex(directMovementIndex, i - 1)].areaScore *= 2f.pow(power).toInt()
+                    if (mRumbBorders[getShiftedIndex(directMovementIndex, -i)].areaScore > 0)
+                        mRumbBorders[getShiftedIndex(directMovementIndex, -i)].areaScore *= 2f.pow(power).toInt()
+                    if (power < powerMax)
+                        power++
+                }
 
-            for (i in 1..factor) {
-                mRumbBorders[getShiftedIndex(directMovementIndex, i - 1)].areaScore *= 2f.pow(factor - i).toInt()
-                mRumbBorders[getShiftedIndex(directMovementIndex, -i)].areaScore *= 2f.pow(factor - i).toInt()
+            } else {
+                val shifting = count / 2
+                var gg = 0
+                if (shifting > 2)
+                    gg = shifting % 2 * (-2)
+
+                val directMovementIndex = getShiftedIndex(startIndex, shifting + gg)
+                if (count % 2 == 1) {
+                    mRumbBorders[directMovementIndex].areaScore *= 2f.pow(powerMax - 1).toInt()
+                }
+
+                for (i in 1..shifting) {
+                    mRumbBorders[getShiftedIndex(directMovementIndex, i - 1)].areaScore *= 2f.pow(powerMax - 1 - i).toInt()
+                    mRumbBorders[getShiftedIndex(directMovementIndex, -i)].areaScore *= 2f.pow(powerMax - 1 - i).toInt()
+                }
             }
         }
-        // best koeff = 2^(sectorscount/2)
     }
 
     fun getSectorFoodPoint(sector: Rumb): StepPoint {
@@ -361,7 +403,7 @@ class Compass(private val mFragment: MineFragmentInfo, private val mGlobalConfig
         return score
     }
 
-    fun getDangerSectorsCount(): Int = mRumbBorders.filter { it.areaScore <= BURST_SECTOR_SCORE }.size
+    fun getDangerSectorsCount(): Int = mRumbBorders.filter { it.areaScore <= 0 }.size
 
     //TODO: set area factor by enemies with calc of distance
 
@@ -369,7 +411,7 @@ class Compass(private val mFragment: MineFragmentInfo, private val mGlobalConfig
         val BLACK_SECTOR_SCORE = -100 // can be eaten here
         val BURST_SECTOR_SCORE = -50
         val PREFERRED_SECTOR_SCORE = 5 //
-        val EDGE_SECTOR_SCORE = -10 //
+        val CORNER_SECTOR_SCORE = -10 //
         val DEFAULT_AREA_SCORE = 1
     }
 
