@@ -16,6 +16,13 @@ class WorldConfig(configJson: JSONObject) {
 
     fun getDimensions(): Vertex = Vertex(GameWidth.toFloat(), GameHeight.toFloat())
     fun getCenter(): Vertex = Vertex(GameWidth * 0.5f, GameHeight * 0.5f)
+    fun outOfMap(vertex: Vertex): Boolean {
+        if (vertex.X < 0 || vertex.X > GameWidth)
+            return true
+        if (vertex.Y < 0 || vertex.Y > GameHeight)
+            return true
+        return false
+    }
 
     val ltCorner: Vertex
         get() = Vertex(0f, 0f)
