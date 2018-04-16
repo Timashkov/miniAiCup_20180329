@@ -182,20 +182,20 @@ class MineInfo(stateJson: JSONArray, val globalConfig: WorldConfig, val mLogger:
                         return fp
                     }
 
-                    if (mFragmentsState.size > 1 && mFragmentsState.all { it.mTTF < 2 }) {
+                    if (mFragmentsState.size > 1 && mFragmentsState.all { it.mTTF < 2 } && mFragmentsState.any { it.mCompass.hasBlackAreas() }) {
 //                    val enemies: ArrayList<EnemyInfo> = ArrayList()
 //                    mFragmentsState.forEach { it-> it.mCompass.mRumbBorders.forEach { r -> enemies.addAll(r.canBeEatenByEnemy) } }
 //
-                        var X = 0.0f
-                        var Y = 0.0f
+                        var x = 0.0f
+                        var y = 0.0f
                         mFragmentsState.forEach {
-                            X += it.mVertex.X
-                            Y += it.mVertex.Y
+                            x += it.mVertex.X
+                            y += it.mVertex.Y
                         }
-                        X /= mFragmentsState.size
-                        Y /= mFragmentsState.size
-                        val center = Vertex(X, Y)
-                        if (mFragmentsState.none { !(it in alreadyProcessed) && it.mCompass.isVertexInDangerArea(center) }) {
+                        x /= mFragmentsState.size
+                        y /= mFragmentsState.size
+                        val center = Vertex(x, y)
+                        if (mFragmentsState.none { it !in alreadyProcessed && it.mCompass.isVertexInDangerArea(center) }) {
                             fp.target = center
                             fp.movementTarget = center
                             return fp

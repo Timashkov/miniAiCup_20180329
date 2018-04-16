@@ -25,7 +25,7 @@ class MineFragmentInfo(val fragmentJson: JSONObject, val mGlobalConfig: WorldCon
         get() = mMass > WorldConfig.MIN_SPLITABLE_MASS
 
     val maySplit: Boolean
-        get() = mMass > WorldConfig.MIN_SPLITABLE_MASS * (1.1f + 4f * mGlobalConfig.Viscosity) / (6f * mGlobalConfig.Viscosity)
+        get() = mMass > WorldConfig.MIN_SPLITABLE_MASS * (1f + 4f * mGlobalConfig.Viscosity) / (6f * mGlobalConfig.Viscosity)
 
     val mCompass: Compass = Compass(this, mGlobalConfig)
 
