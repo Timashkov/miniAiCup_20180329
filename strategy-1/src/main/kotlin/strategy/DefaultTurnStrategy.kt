@@ -22,8 +22,9 @@ class DefaultTurnStrategy(val mGlobalConfig: WorldConfig, val mLogger: Logger) :
         val me = gameEngine.worldParseResult.mineInfo
         if (currentSquareIndex == -1) {
             currentSquareIndex = getSquareByDirectionAndPosition(me)
+            currentCornerIndex = getNearestCornerIndex(currentSquareIndex, me)
         }
-        var corner = getNearestCorner(currentSquareIndex, me)
+        var corner = squares[currentSquareIndex].corners[currentCornerIndex]
 
         if (abs(corner.X - me.getCoordinates().X) < me.getFragmentConfig(0).mRadius &&
                 abs(corner.Y - me.getCoordinates().Y) < me.getFragmentConfig(0).mRadius)
@@ -34,7 +35,7 @@ class DefaultTurnStrategy(val mGlobalConfig: WorldConfig, val mLogger: Logger) :
         return StrategyResult(0, fixedVertex, debugMessage = "DEFAULT: Go TO $corner")
     }
 
-    private fun getNearestCorner(squareIndex: Int, me: MineInfo): Vertex {
+    private fun getNearestCornerIndex(squareIndex: Int, me: MineInfo): Int {
         val dir = me.getDirection()
         val myV = me.getCoordinates()
         val verts = squares[squareIndex].corners.sortedBy{it.distance(myV)}
@@ -54,9 +55,9 @@ class DefaultTurnStrategy(val mGlobalConfig: WorldConfig, val mLogger: Logger) :
                 // else TOP LEFT
             }
             if (dirToV == dir)
-                return it
+                return verts.indexOf(it)
         }
-        return verts[2]
+        return 2
     }
 
     private fun getNextCorner(): Vertex {
