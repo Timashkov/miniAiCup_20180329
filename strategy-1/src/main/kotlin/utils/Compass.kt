@@ -353,39 +353,43 @@ class Compass(private val mFragment: MineFragmentInfo, private val mGlobalConfig
         val powerMax = getDangerSectorsCount()
 
         sectorsSet.forEach { startIndex, count ->
-            if (getDangerSectorsCount() < 16) {
-                var power = 0
-                val shifting = count / 2
-                var gg = 0
-                if (shifting > 2 && shifting % 3 < count)
-                    gg = shifting % 3
-
-                val directMovementIndex = getShiftedIndex(startIndex, shifting + gg)
-                for (i in shifting + 1 downTo 1) {
-                    if (mRumbBorders[getShiftedIndex(directMovementIndex, i - 1)].areaScore > 0)
-                        mRumbBorders[getShiftedIndex(directMovementIndex, i - 1)].areaScore *= 2f.pow(power).toInt()
-                    if (mRumbBorders[getShiftedIndex(directMovementIndex, -i)].areaScore > 0)
-                        mRumbBorders[getShiftedIndex(directMovementIndex, -i)].areaScore *= 2f.pow(power).toInt()
-                    if (power < powerMax)
-                        power++
-                }
-
-            } else {
-                val shifting = count / 2
-                var gg = 0
-                if (shifting > 2)
-                    gg = shifting % 2 * (-2)
-
-                val directMovementIndex = getShiftedIndex(startIndex, shifting + gg)
-                if (count % 2 == 1) {
-                    mRumbBorders[directMovementIndex].areaScore *= 2f.pow(powerMax - 1).toInt()
-                }
-
-                for (i in 1..shifting) {
-                    mRumbBorders[getShiftedIndex(directMovementIndex, i - 1)].areaScore *= 2f.pow(powerMax - 1 - i).toInt()
-                    mRumbBorders[getShiftedIndex(directMovementIndex, -i)].areaScore *= 2f.pow(powerMax - 1 - i).toInt()
-                }
+            var power = 0
+            if (getDangerSectorsCount() > 16) {
+                power = powerMax - 8
             }
+            val shifting = count / 2
+            var gg = 0
+            if (shifting > 2 && shifting % 3 < count)
+                gg = shifting % 3
+
+            val directMovementIndex = getShiftedIndex(startIndex, shifting + gg)
+            for (i in shifting + 1 downTo 1) {
+                if (mRumbBorders[getShiftedIndex(directMovementIndex, i - 1)].areaScore > 0 && startIndex + count >= directMovementIndex + i - 1) {
+                    mRumbBorders[getShiftedIndex(directMovementIndex, i - 1)].areaScore *= 2f.pow(power).toInt()
+                }
+                if (mRumbBorders[getShiftedIndex(directMovementIndex, -i)].areaScore > 0 && startIndex <= directMovementIndex - i) {
+                    mRumbBorders[getShiftedIndex(directMovementIndex, -i)].areaScore *= 2f.pow(power).toInt()
+                }
+                if (power < powerMax)
+                    power++
+            }
+
+//            else {
+//                val shifting = count / 2
+//                var gg = 0
+//                if (shifting > 2)
+//                    gg = shifting % 2
+//
+//                val directMovementIndex = getShiftedIndex(startIndex, shifting + gg)
+//                if (count % 2 == 1) {
+//                    mRumbBorders[directMovementIndex].areaScore *= 2f.pow(powerMax - 1).toInt()
+//                }
+//
+//                for (i in 1..shifting) {
+//                    mRumbBorders[getShiftedIndex(directMovementIndex, i - 1)].areaScore *= 2f.pow(powerMax - 1 - i).toInt()
+//                    mRumbBorders[getShiftedIndex(directMovementIndex, -i)].areaScore *= 2f.pow(powerMax - 1 - i).toInt()
+//                }
+//            }
         }
     }
 

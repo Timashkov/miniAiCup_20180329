@@ -5,6 +5,7 @@ import WorldConfig
 import data.ParseResult
 import incominginfos.EnemyInfo
 import utils.Compass
+import utils.Square
 import utils.Vertex
 import java.util.*
 import kotlin.math.sqrt
@@ -123,7 +124,9 @@ class WorldObjectsFilter(private val mGlobalConfig: WorldConfig, val mLogger: Lo
             pr.mineInfo.mFragmentsState.forEach { frag ->
                 val points: Array<Vertex> = arrayOf(Vertex(0f, frag.mVertex.Y), Vertex(frag.mVertex.X, 0f), Vertex(mGlobalConfig.GameWidth - frag.mVertex.X, frag.mVertex.Y), Vertex(frag.mVertex.X, mGlobalConfig.GameHeight - frag.mVertex.Y))
                 val nearest = points.sortedBy { it.distance(frag.mVertex) }[0]
-                frag.mCompass.setColorByVertex(nearest, Compass.CORNER_SECTOR_SCORE)
+                val square = Square(mGlobalConfig.getCenter(), mGlobalConfig.GameWidth / 2f)
+                if (!square.isInSquare(nearest))
+                    frag.mCompass.setColorByVertex(nearest, Compass.CORNER_SECTOR_SCORE)
             }
         }
 
