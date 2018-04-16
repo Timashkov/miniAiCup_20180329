@@ -3,15 +3,12 @@ package strategy
 import incominginfos.MineInfo
 import WorldConfig
 import data.ParseResult
-import utils.GameEngine
-import utils.Logger
-import utils.Vertex
-import utils.Square
+import utils.*
 import kotlin.math.abs
 
 class DefaultTurnStrategy(val mGlobalConfig: WorldConfig, val mLogger: Logger) : IStrategy {
 
-    val squares: ArrayList<Square> = ArrayList()
+    val squares: ArrayList<Polygon> = ArrayList()
 
     init {
         initSquares(mGlobalConfig)
@@ -26,7 +23,8 @@ class DefaultTurnStrategy(val mGlobalConfig: WorldConfig, val mLogger: Logger) :
         if (currentSquareIndex == -1) {
             currentSquareIndex = getSquareByDirectionAndPosition(me)
         }
-        var corner = squares[currentSquareIndex].corners[currentCornerIndex]
+        var corner = getNearestCorner(currentSquareIndex, me)
+
         if (abs(corner.X - me.getCoordinates().X) < me.getFragmentConfig(0).mRadius &&
                 abs(corner.Y - me.getCoordinates().Y) < me.getFragmentConfig(0).mRadius)
             corner = getNextCorner()
@@ -34,6 +32,31 @@ class DefaultTurnStrategy(val mGlobalConfig: WorldConfig, val mLogger: Logger) :
         val fixedVertex = gameEngine.getMovementPointForTarget(me.getMainFragment().mId, corner)
         mLogger.writeLog("DEFAULT_TURN $fixedVertex \n")
         return StrategyResult(0, fixedVertex, debugMessage = "DEFAULT: Go TO $corner")
+    }
+
+    private fun getNearestCorner(squareIndex: Int, me: MineInfo): Vertex {
+        val dir = me.getDirection()
+        val myV = me.getCoordinates()
+        val verts = squares[squareIndex].corners.sortedBy{it.distance(myV)}
+
+        verts.forEach { it->
+            val Sx = it.X - myV.X
+            val Sy = it.Y - myV.Y
+            var dirToV = MineInfo.Direction.TOP_LEFT
+            if (Sx > 0) {
+                if (Sy > 0)
+                    dirToV = MineInfo.Direction.BOTTOM_RIGHT
+                else
+                    dirToV = MineInfo.Direction.TOP_RIGHT
+            } else {
+                if (Sy > 0)
+                    dirToV = MineInfo.Direction.BOTTOM_LEFT
+                // else TOP LEFT
+            }
+            if (dirToV == dir)
+                return it
+        }
+        return verts[2]
     }
 
     private fun getNextCorner(): Vertex {
@@ -46,18 +69,20 @@ class DefaultTurnStrategy(val mGlobalConfig: WorldConfig, val mLogger: Logger) :
     }
 
     private fun getSquareByDirectionAndPosition(mineInfo: MineInfo): Int {
-        val isInCenterSquare = Square(mCenter, mGlobalConfig.GameWidth / 8.0f).isInSquare(mineInfo.getCoordinates())
+        //FIXME:Currentpos!!!!
+        val currentPos = mineInfo.getCoordinates()
+
 
         when (mineInfo.getDirection()) {
             MineInfo.Direction.TOP_LEFT -> {
-                return if (isInCenterSquare)
+                return if (currentPos.Y < mGlobalConfig.GameHeight * 9f / 8f)
                     0
                 else
                     3
             }
-            MineInfo.Direction.TOP_RIGHT -> return if (isInCenterSquare) 1 else 2
-            MineInfo.Direction.BOTTOM_RIGHT -> return if (isInCenterSquare) 2 else 1
-            MineInfo.Direction.BOTTOM_LEFT -> return if (isInCenterSquare) 3 else 0
+            MineInfo.Direction.TOP_RIGHT -> return if (currentPos.Y < mGlobalConfig.GameHeight * 9f / 8f) 1 else 2
+            MineInfo.Direction.BOTTOM_RIGHT -> return if (currentPos.Y > mGlobalConfig.GameHeight * 7f / 8f) 2 else 1
+            MineInfo.Direction.BOTTOM_LEFT -> return if (currentPos.Y > mGlobalConfig.GameHeight * 7f / 8f) 3 else 0
             else -> {
                 //в квадрате ?
                 val square = squares.firstOrNull { it.isInSquare(mineInfo.getCoordinates()) }
@@ -96,9 +121,9 @@ class DefaultTurnStrategy(val mGlobalConfig: WorldConfig, val mLogger: Logger) :
     }
 
     private fun initSquares(globalConfig: WorldConfig) {
-        squares.add(Square(Vertex(globalConfig.GameWidth / 4f, globalConfig.GameHeight / 4f), globalConfig.GameWidth / 8.0f))
-        squares.add(Square(Vertex(globalConfig.GameWidth / 4f * 3f, globalConfig.GameHeight / 4f), globalConfig.GameWidth / 8.0f))
-        squares.add(Square(Vertex(globalConfig.GameWidth / 4f * 3f, globalConfig.GameHeight / 4f * 3f), globalConfig.GameWidth / 8.0f))
-        squares.add(Square(Vertex(globalConfig.GameWidth / 4f, globalConfig.GameHeight / 4f * 3f), globalConfig.GameWidth / 8.0f))
+        squares.add(Polygon(Vertex(globalConfig.GameWidth / 4f, globalConfig.GameHeight / 4f), globalConfig.GameWidth / 8.0f, mGlobalConfig.getCenter()))
+        squares.add(Polygon(Vertex(globalConfig.GameWidth / 4f * 3f, globalConfig.GameHeight / 4f), globalConfig.GameWidth / 8.0f, mGlobalConfig.getCenter()))
+        squares.add(Polygon(Vertex(globalConfig.GameWidth / 4f * 3f, globalConfig.GameHeight / 4f * 3f), globalConfig.GameWidth / 8.0f, mGlobalConfig.getCenter()))
+        squares.add(Polygon(Vertex(globalConfig.GameWidth / 4f, globalConfig.GameHeight / 4f * 3f), globalConfig.GameWidth / 8.0f, mGlobalConfig.getCenter()))
     }
 }
