@@ -122,7 +122,7 @@ class WorldObjectsFilter(private val mGlobalConfig: WorldConfig, val mLogger: Lo
         if (pr.mineInfo.mFragmentsState.any { it.mCompass.hasBlackAreas() }) {
             pr.mineInfo.mFragmentsState.forEach { frag ->
                 val points: Array<Vertex> = arrayOf(Vertex(0f, frag.mVertex.Y), Vertex(frag.mVertex.X, 0f), Vertex(mGlobalConfig.GameWidth - frag.mVertex.X, frag.mVertex.Y), Vertex(frag.mVertex.X, mGlobalConfig.GameHeight - frag.mVertex.Y))
-                val nearest = points.sortedByDescending { it.distance(frag.mVertex) }[0]
+                val nearest = points.sortedBy { it.distance(frag.mVertex) }[0]
                 frag.mCompass.setColorByVertex(nearest, Compass.CORNER_SECTOR_SCORE)
             }
         }
