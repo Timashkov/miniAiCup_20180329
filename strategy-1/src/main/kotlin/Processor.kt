@@ -35,7 +35,6 @@ class Processor(configJson: JSONObject) {
 
     // TODO: склеивать состояния компаса за последние n tick
     // TODO: при разнице масс фрагментов более чем на 10 % сначала полное объединение, потом уже разделение ( делит только один за один ход, то при необъодимости разделить 2 - придется потратить пару ходов )
-    // TODO: защита через стрельбу ( стреляем вперед, получаем ускорение )
     // TODO: атака разделением - посчитать время и дистанцию отстрела
 
 
@@ -53,12 +52,14 @@ class Processor(configJson: JSONObject) {
                 var strategyResult = mEatEnemyStrategy.apply(gameEngine, mCachedParseResult)
                 mLogger.writeLog("$strategyResult")
                 if (strategyResult.achievementScore > 0) {
+                    mDefaultStrategy.stopStrategy()
                     mLogger.writeLog("APPLY eat enemy: $strategyResult\n")
                     return strategyResult.toJSONCommand()
                 }
 
                 strategyResult = mFindFoodV2.apply(gameEngine, mCachedParseResult)
                 if (strategyResult.achievementScore > -1){
+                    mDefaultStrategy.stopStrategy()
                     mLogger.writeLog("APPLY FF2: $strategyResult\n")
                     return strategyResult.toJSONCommand()
                 }
