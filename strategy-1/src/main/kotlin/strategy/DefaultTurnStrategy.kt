@@ -4,11 +4,14 @@ import incominginfos.MineInfo
 import WorldConfig
 import data.ParseResult
 import utils.*
+import java.util.*
 import kotlin.math.abs
 
 class DefaultTurnStrategy(val mGlobalConfig: WorldConfig, val mLogger: Logger) : IStrategy {
 
     val squares: ArrayList<Polygon> = ArrayList()
+
+    val mPhantomFood: ArrayList<Vertex> = ArrayList()
 
     init {
         initSquares(mGlobalConfig)
@@ -20,6 +23,14 @@ class DefaultTurnStrategy(val mGlobalConfig: WorldConfig, val mLogger: Logger) :
 
     override fun apply(gameEngine: GameEngine, cachedParseResult: ParseResult?): StrategyResult {
         val me = gameEngine.worldParseResult.mineInfo
+
+        if (mPhantomFood.isNotEmpty()) {
+            mLogger.writeLog("PhantomFood: ${Arrays.toString(mPhantomFood.toTypedArray())}")
+            val target = mPhantomFood.sortedBy { it -> it.distance(me.getCoordinates()) }[0]
+            val fixed = gameEngine.getMovementPointForTarget(me.getMainFragment().mId, target)
+            return StrategyResult(0, fixed, debugMessage = "DEFAULT: Go TO phantom food $target")
+        }
+
         if (currentSquareIndex == -1) {
             currentSquareIndex = getSquareByDirectionAndPosition(me)
             currentCornerIndex = getNearestCornerIndex(currentSquareIndex, me)
@@ -38,9 +49,9 @@ class DefaultTurnStrategy(val mGlobalConfig: WorldConfig, val mLogger: Logger) :
     private fun getNearestCornerIndex(squareIndex: Int, me: MineInfo): Int {
         val dir = me.getDirection()
         val myV = me.getCoordinates()
-        val verts = squares[squareIndex].corners.sortedBy{it.distance(myV)}
+        val verts = squares[squareIndex].corners.sortedBy { it.distance(myV) }
 
-        verts.forEach { it->
+        verts.forEach { it ->
             val Sx = it.X - myV.X
             val Sy = it.Y - myV.Y
             var dirToV = MineInfo.Direction.TOP_LEFT
@@ -70,9 +81,7 @@ class DefaultTurnStrategy(val mGlobalConfig: WorldConfig, val mLogger: Logger) :
     }
 
     private fun getSquareByDirectionAndPosition(mineInfo: MineInfo): Int {
-        //FIXME:Currentpos!!!!
         val currentPos = mineInfo.getCoordinates()
-
 
         when (mineInfo.getDirection()) {
             MineInfo.Direction.TOP_LEFT -> {
@@ -85,14 +94,7 @@ class DefaultTurnStrategy(val mGlobalConfig: WorldConfig, val mLogger: Logger) :
             MineInfo.Direction.BOTTOM_RIGHT -> return if (currentPos.Y > mGlobalConfig.GameHeight * 7f / 8f) 2 else 1
             MineInfo.Direction.BOTTOM_LEFT -> return if (currentPos.Y > mGlobalConfig.GameHeight * 7f / 8f) 3 else 0
             else -> {
-                //в квадрате ?
-                val square = squares.firstOrNull { it.isInSquare(mineInfo.getCoordinates()) }
-                if (square != null) {
-                    return squares.indexOf(square)
-                } else {
-                    // не в квадрате
-                    return getQuart(mineInfo.getCoordinates(), mCenter) - 1
-                }
+                return getQuart(mineInfo.getCoordinates(), mCenter) - 1
             }
         }
     }
@@ -126,5 +128,20 @@ class DefaultTurnStrategy(val mGlobalConfig: WorldConfig, val mLogger: Logger) :
         squares.add(Polygon(Vertex(globalConfig.GameWidth / 4f * 3f, globalConfig.GameHeight / 4f), globalConfig.GameWidth / 8.0f, mGlobalConfig.getCenter()))
         squares.add(Polygon(Vertex(globalConfig.GameWidth / 4f * 3f, globalConfig.GameHeight / 4f * 3f), globalConfig.GameWidth / 8.0f, mGlobalConfig.getCenter()))
         squares.add(Polygon(Vertex(globalConfig.GameWidth / 4f, globalConfig.GameHeight / 4f * 3f), globalConfig.GameWidth / 8.0f, mGlobalConfig.getCenter()))
+    }
+
+    fun addPhantomFood(phantomFood: ArrayList<Vertex>, me: MineInfo) {
+        phantomFood.forEach { it -> mPhantomFood.add(it) }
+        while (mPhantomFood.size > 100) {
+            mPhantomFood.removeAt(0)
+        }
+
+        if (mPhantomFood.isNotEmpty()) {
+            mLogger.writeLog("PhantomFood: ${Arrays.toString(mPhantomFood.toTypedArray())}")
+            mPhantomFood.removeIf { food ->
+                me.mFragmentsState.any { frag -> frag.mVertex.distance(food) < frag.mRadius * WorldConfig.FOW_RADIUS_FACTOR }
+            }
+            mLogger.writeLog("PhantomFood Filtered: ${Arrays.toString(mPhantomFood.toTypedArray())}")
+        }
     }
 }

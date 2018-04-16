@@ -17,6 +17,9 @@ class Processor(configJson: JSONObject) {
     private var mCachedParseResult: ParseResult? = null
     private val mFindFoodV2 = FindFoodStrategyV2(mWorldConfig, mLogger)
 
+    init{
+        mLogger.writeLog(configJson.toString())
+    }
     enum class ACTIONS {
         MINE, HUNT, PURSUITE, ESCAPE
     }
@@ -25,7 +28,7 @@ class Processor(configJson: JSONObject) {
 
     // Tick Process
     fun onTick(tickData: JSONObject): JSONObject {
-        mLogger.writeLog("\nTICK $mCurrentTick")
+        mLogger.writeLog("\nT$mCurrentTick")
         mLogger.writeLog("INCOMING $tickData")
         val parsed = parseIncoming(tickData)
         val out = analyzeData(parsed, mCurrentTick)
@@ -39,7 +42,7 @@ class Processor(configJson: JSONObject) {
 
 
     fun parseIncoming(tickData: JSONObject): ParseResult =
-            ParseResult(MineInfo(tickData.getJSONArray("Mine"), mWorldConfig, mLogger), WorldObjectsInfo(tickData.getJSONArray("Objects"), mWorldConfig, mLogger))
+            ParseResult(MineInfo(tickData.getJSONArray("Mine"), mWorldConfig, mLogger), WorldObjectsInfo(tickData.getJSONArray("Objects"), mWorldConfig, mLogger), ArrayList())
 
     fun analyzeData(parseResult: ParseResult, currentTickCount: Int): JSONObject {
         if (parseResult.mineInfo.isNotEmpty()) {
@@ -49,6 +52,7 @@ class Processor(configJson: JSONObject) {
                 val gameEngine = GameEngine(mWorldConfig, data, currentTickCount, mLogger)
                 mLogger.writeLog("GE Parsed. Start check strategies")
 
+                mDefaultStrategy.addPhantomFood(parseResult.phantomFood, gameEngine.worldParseResult.mineInfo)
                 var strategyResult = mEatEnemyStrategy.apply(gameEngine, mCachedParseResult)
                 mLogger.writeLog("$strategyResult")
                 if (strategyResult.achievementScore > 0) {

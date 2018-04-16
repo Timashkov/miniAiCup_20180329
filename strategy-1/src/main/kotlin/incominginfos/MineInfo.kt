@@ -132,18 +132,29 @@ class MineInfo(stateJson: JSONArray, val globalConfig: WorldConfig, val mLogger:
                 }
 */
 
-    fun getBestMovementPoint(knownVertex: StepPoint?): StepPoint {
+    fun getBestMovementPoint(knownVertex: StepPoint?, cachedState: MineInfo?): StepPoint {
 
         mLogger.writeLog("Looking for best sector. Known target = $knownVertex")
         knownVertex?.let { fp ->
             val knownFragment = mFragmentsState.firstOrNull { it.mId == fp.fragmentId }
             knownFragment?.let { targetFragment ->
 
-                if (fp.foodPoints.size == 1 && globalConfig.outOfMap(fp.foodPoints[0]))
+                mLogger.writeLog("Known vertex is not null")
+                if (cachedState != null) {
+                    val cachedFragment = cachedState.mFragmentsState.firstOrNull { it.mId == fp.fragmentId }
+                    if (cachedFragment != null && cachedFragment.mVertex.distance(fp.target) > knownFragment.mVertex.distance(fp.target) * 2f) {
+                        mLogger.writeLog("distance is less than x2")
+                        return@let
+                    }
+                }
+
+                if (fp.foodPoints.size == 1 && globalConfig.outOfMap(fp.foodPoints[0])){
+                    mLogger.writeLog("food point out of map")
                     return@let
+                }
 
                 if (mFragmentsState.none { it.mCompass.isVertexInBlackArea(fp.target) } && mFragmentsState.none { it.mVertex == fp.target }) {
-                    if (mFragmentsState.size > 1 && mFragmentsState.all { it.mTTF < 2 })
+                    if (mFragmentsState.size > 1 && mFragmentsState.all { it.mTTF < 2 } && mFragmentsState.any { it.mCompass.hasBlackAreas() })
                         return knownVertex
 
                     knownVertex.movementTarget = getMovementPointForTarget(knownFragment, knownVertex.target)
@@ -273,11 +284,11 @@ class MineInfo(stateJson: JSONArray, val globalConfig: WorldConfig, val mLogger:
         var NY = ((vectorTarget.SY - sVector.SY) / inertionK + sVector.SY) / maxSpeed
 
         //FIX: border
-        if (fragment.mRadius == fragment.mVertex.Y && NY < 0
-                || fragment.mRadius == globalConfig.GameHeight - fragment.mVertex.Y && NY > 0)
+        if (fragment.mRadius + 0.2f >= fragment.mVertex.Y && NY < 0
+                || fragment.mRadius + 0.2f >= globalConfig.GameHeight - fragment.mVertex.Y && NY > 0)
             NY = 0f
-        if (fragment.mRadius == fragment.mVertex.X && NX < 0
-                || fragment.mRadius == globalConfig.GameWidth - fragment.mVertex.X && NX > 0)
+        if (fragment.mRadius + 0.2f >= fragment.mVertex.X && NX < 0
+                || fragment.mRadius + 0.2f >= globalConfig.GameWidth - fragment.mVertex.X && NX > 0)
             NX = 0f
 
         mLogger.writeLog("${GameEngine.DEBUG_TAG} NX=$NX NY=$NY")

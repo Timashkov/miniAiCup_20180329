@@ -53,8 +53,8 @@ class Compass(private val mFragment: MineFragmentInfo, private val mGlobalConfig
 
     fun setColorsByEnemies(me: MineFragmentInfo, enemy: EnemyInfo) {
         val distance = me.mVertex.distance(enemy.mVertex)
-        if (distance < enemy.mRadius) {
-            if (enemy.mMass >= me.mMass * WorldConfig.EAT_MASS_FACTOR - 2 * mGlobalConfig.FoodMass) {
+        if (distance < enemy.mRadius + me.mRadius) {
+            if (enemy.mMass >= me.mMass * WorldConfig.EAT_MASS_FACTOR) {
                 setWholeCompassPoints(BLACK_SECTOR_SCORE, enemy.mVertex.getMovementVector(me.mVertex))
                 mRumbBorders.forEach { it.enemies.add(enemy) }
             }
@@ -364,10 +364,10 @@ class Compass(private val mFragment: MineFragmentInfo, private val mGlobalConfig
 
             val directMovementIndex = getShiftedIndex(startIndex, shifting + gg)
             for (i in shifting + 1 downTo 1) {
-                if (mRumbBorders[getShiftedIndex(directMovementIndex, i - 1)].areaScore > 0 && startIndex + count >= directMovementIndex + i - 1) {
+                if (mRumbBorders[getShiftedIndex(directMovementIndex, i - 1)].areaScore > 0 && count >= shifting + gg + i - 1) {
                     mRumbBorders[getShiftedIndex(directMovementIndex, i - 1)].areaScore *= 2f.pow(power).toInt()
                 }
-                if (mRumbBorders[getShiftedIndex(directMovementIndex, -i)].areaScore > 0 && startIndex <= directMovementIndex - i) {
+                if (mRumbBorders[getShiftedIndex(directMovementIndex, -i)].areaScore > 0 && 0 <= shifting + gg - i) {
                     mRumbBorders[getShiftedIndex(directMovementIndex, -i)].areaScore *= 2f.pow(power).toInt()
                 }
                 if (power < powerMax)

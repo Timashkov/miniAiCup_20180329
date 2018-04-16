@@ -2,6 +2,7 @@ package strategy
 
 import utils.Logger
 import WorldConfig
+import WorldConfig.Companion.FOW_RADIUS_FACTOR
 import data.ParseResult
 import incominginfos.EnemyInfo
 import utils.Compass
@@ -70,26 +71,41 @@ class WorldObjectsFilter(private val mGlobalConfig: WorldConfig, val mLogger: Lo
         if (viruses.isNotEmpty() && pr.mineInfo.mFragmentsState.size < mGlobalConfig.MaxFragsCnt) {
             mLogger.writeLog("Viruses total : ${viruses.size}")
             pr.mineInfo.mFragmentsState.forEach { fragment ->
-                viruses.filter { fragment.canBurst(it) }.forEach { virus ->
+                viruses.filter { fragment.canBurst(it) && fragment.mVertex.distance(it.mVertex) < fragment.mRadius * FOW_RADIUS_FACTOR }.forEach { virus ->
                     mLogger.writeLog("Processed virus: $virus")
                     fragment.mCompass.setColorsByVirus(virus)
                 }
             }
         }
 
+
         val food = pr.worldObjectsInfo.mFood
         if (food.isNotEmpty()) {
             mLogger.writeLog("Food total : ${food.size}")
-            pr.worldObjectsInfo.mFood.filter { f ->
-                pr.mineInfo.mFragmentsState.none { fragment -> !fragment.mCompass.isVertexInBlackArea(f.mVertex) }
+
+            pr.worldObjectsInfo.mFood.forEach { food ->
+                val tempV = food.mVertex.minus(mGlobalConfig.getCenter())
+                pr.phantomFood.add(Vertex(tempV.X + mGlobalConfig.getCenter().X, -tempV.Y + mGlobalConfig.getCenter().Y))
+                pr.phantomFood.add(Vertex(-tempV.X + mGlobalConfig.getCenter().X, -tempV.Y + mGlobalConfig.getCenter().Y))
+                pr.phantomFood.add(Vertex(-tempV.X + mGlobalConfig.getCenter().X, tempV.Y + mGlobalConfig.getCenter().Y))
             }
+
+            pr.worldObjectsInfo.mFood = pr.worldObjectsInfo.mFood.filter { f ->
+                pr.mineInfo.mFragmentsState.none { fragment -> !fragment.mCompass.isVertexInBlackArea(f.mVertex) }
+                        && pr.worldObjectsInfo.mEnemies.none { en -> en.mVertex.distance(f.mVertex) < pr.mineInfo.getNearestFragment(f.mVertex).mVertex.distance((f.mVertex)) * 2f / 3f }
+            }
+        }
+
+        while (pr.phantomFood.size > 50) {
+            pr.phantomFood.removeAt(0)
         }
 
         val ejections = pr.worldObjectsInfo.mEjection.filter { it.pId != 1 }
         if (ejections.isNotEmpty()) {
             mLogger.writeLog("Ejections total : ${ejections.size}")
-            pr.worldObjectsInfo.mEjection.filter { ejection ->
-                pr.mineInfo.mFragmentsState.none { fragment -> !fragment.mCompass.isVertexInBlackArea(ejection.mVertex) }
+            pr.worldObjectsInfo.mEjection = pr.worldObjectsInfo.mEjection.filter { e ->
+                pr.mineInfo.mFragmentsState.none { fragment -> !fragment.mCompass.isVertexInBlackArea(e.mVertex) }
+                        && pr.worldObjectsInfo.mEnemies.none { en -> en.mVertex.distance(e.mVertex) < pr.mineInfo.getNearestFragment(e.mVertex).mVertex.distance((e.mVertex)) * 2f / 3f }
             }
         }
 
@@ -100,12 +116,10 @@ class WorldObjectsFilter(private val mGlobalConfig: WorldConfig, val mLogger: Lo
             foodPoints.addAll(ejections.map { it.mVertex })
 
         val cornerFactor =
-                if (pr.worldObjectsInfo.mEnemies.isNotEmpty()) 5f else 1.5f
+                if (pr.worldObjectsInfo.mEnemies.isNotEmpty()) sqrt(mGlobalConfig.GameHeight / 4f) else 1.5f
 
         pr.mineInfo.mFragmentsState.forEach { fragment ->
-            val cornerDistance = fragment.mRadius * cornerFactor
-
-
+            val cornerDistance = if (cornerFactor > 1.5f) cornerFactor else fragment.mRadius * cornerFactor
 
             if (fragment.mVertex.distance(mGlobalConfig.ltCorner) < cornerDistance) {
                 fragment.mCompass.setColorByCorner(mGlobalConfig.ltCorner)
@@ -122,10 +136,10 @@ class WorldObjectsFilter(private val mGlobalConfig: WorldConfig, val mLogger: Lo
         }
         if (pr.mineInfo.mFragmentsState.any { it.mCompass.hasBlackAreas() }) {
             pr.mineInfo.mFragmentsState.forEach { frag ->
-                val points: Array<Vertex> = arrayOf(Vertex(0f, frag.mVertex.Y), Vertex(frag.mVertex.X, 0f), Vertex(mGlobalConfig.GameWidth - frag.mVertex.X, frag.mVertex.Y), Vertex(frag.mVertex.X, mGlobalConfig.GameHeight - frag.mVertex.Y))
+                val points: Array<Vertex> = arrayOf(Vertex(0f, frag.mVertex.Y), Vertex(mGlobalConfig.GameWidth.toFloat(), frag.mVertex.Y), Vertex(frag.mVertex.X, 0f), Vertex(frag.mVertex.X, mGlobalConfig.GameHeight.toFloat()))
                 val nearest = points.sortedBy { it.distance(frag.mVertex) }[0]
-                val square = Square(mGlobalConfig.getCenter(), mGlobalConfig.GameWidth / 2f)
-                if (!square.isInSquare(nearest))
+                val square = Square(mGlobalConfig.getCenter(), mGlobalConfig.GameWidth / 4f)
+                if (!square.isInSquare(frag.mVertex))
                     frag.mCompass.setColorByVertex(nearest, Compass.CORNER_SECTOR_SCORE)
             }
         }

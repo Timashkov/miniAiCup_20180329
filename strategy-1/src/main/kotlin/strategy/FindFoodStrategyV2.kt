@@ -24,7 +24,7 @@ class FindFoodStrategyV2(val mGlobalConfig: WorldConfig, val mLogger: Logger) : 
                 mKnownWay = null
             }
 
-            mKnownWay = gameEngine.worldParseResult.mineInfo.getBestMovementPoint(mKnownWay)
+            mKnownWay = gameEngine.worldParseResult.mineInfo.getBestMovementPoint(mKnownWay, mGamerStateCache)
 
             mKnownWay?.let { bestWay ->
 

@@ -33,6 +33,14 @@ class GameEngine(private val globalConfig: WorldConfig, val worldParseResult: Pa
         var NX = ((vectorTarget.SX - sVector.SX) / inertionK + sVector.SX) / maxSpeed
         var NY = ((vectorTarget.SY - sVector.SY) / inertionK + sVector.SY) / maxSpeed
 
+        //FIX: border
+        if (fragment.mRadius + 0.2f >= fragment.mVertex.Y && NY < 0
+                || fragment.mRadius + 0.2f >= globalConfig.GameHeight - fragment.mVertex.Y && NY > 0)
+            NY = 0f
+        if (fragment.mRadius + 0.2f >= fragment.mVertex.X && NX < 0
+                || fragment.mRadius + 0.2f >= globalConfig.GameWidth - fragment.mVertex.X && NX > 0)
+            NX = 0f
+
         mLogger.writeLog("$DEBUG_TAG NX=$NX NY=$NY")
 
         val factor = 1 / sqrt(NX.pow(2) + NY.pow(2)) * fragment.mVertex.distance(target)
