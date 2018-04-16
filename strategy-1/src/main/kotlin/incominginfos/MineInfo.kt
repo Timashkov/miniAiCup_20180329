@@ -120,28 +120,7 @@ class MineInfo(stateJson: JSONArray, val globalConfig: WorldConfig, val mLogger:
         return mFragmentsState.sortedBy { it.mVertex.distance(target) }[0]
     }
 
-//    fun getBestMovementPoint(): StepPoint {
-//
-//        mLogger.writeLog("Looking for best escape sector")
-//        val currentCompass = Compass(getMinorFragment(), globalConfig, true)
-//
-//        mFragmentsState.forEach { fr ->
-//            currentCompass.mergeCompass(fr.mCompass, 1f)
-//        }
-//
-//        val sector = currentCompass.mRumbBorders.maxBy { it.areaScore } ?: return StepPoint.DEFAULT
-//        mLogger.writeLog("Sector $sector")
-//
-//        if (sector.areaScore == Compass.DEFAULT_AREA_SCORE * mFragmentsState.size)
-//            return StepPoint.DEFAULT
-//        return currentCompass.getSectorFoodPoint(sector)
-//    }
-
-    /*
-
-    bestMP
-
-    val viruses = gameEngine.worldParseResult.worldObjectsInfo.mViruses
+/*    val viruses = gameEngine.worldParseResult.worldObjectsInfo.mViruses
 
                 if (me.mFragmentsState.size == 1 && me.getMainFragment().canSplit && gameEngine.currentTick < 1000) {
                     val nearestViruses = viruses.filter {
@@ -160,6 +139,8 @@ class MineInfo(stateJson: JSONArray, val globalConfig: WorldConfig, val mLogger:
             val knownFragment = mFragmentsState.firstOrNull { it.mId == fp.fragmentId }
             knownFragment?.let { targetFragment ->
 
+                if (fp.foodPoints.size == 1 && globalConfig.outOfMap(fp.foodPoints[0]))
+                    return@let
 
                 if (mFragmentsState.none { it.mCompass.isVertexInBlackArea(fp.target) } && mFragmentsState.none { it.mVertex == fp.target }) {
                     if (mFragmentsState.size > 1 && mFragmentsState.all { it.mTTF < 2 })
@@ -200,8 +181,6 @@ class MineInfo(stateJson: JSONArray, val globalConfig: WorldConfig, val mLogger:
                         }
                         return fp
                     }
-
-                    //TODO: central
 
                     if (mFragmentsState.size > 1 && mFragmentsState.all { it.mTTF < 2 }) {
 //                    val enemies: ArrayList<EnemyInfo> = ArrayList()
@@ -292,6 +271,14 @@ class MineInfo(stateJson: JSONArray, val globalConfig: WorldConfig, val mLogger:
 
         var NX = ((vectorTarget.SX - sVector.SX) / inertionK + sVector.SX) / maxSpeed
         var NY = ((vectorTarget.SY - sVector.SY) / inertionK + sVector.SY) / maxSpeed
+
+        //FIX: border
+        if (fragment.mRadius == fragment.mVertex.Y && NY < 0
+                || fragment.mRadius == globalConfig.GameHeight - fragment.mVertex.Y && NY > 0)
+            NY = 0f
+        if (fragment.mRadius == fragment.mVertex.X && NX < 0
+                || fragment.mRadius == globalConfig.GameWidth - fragment.mVertex.X && NX > 0)
+            NX = 0f
 
         mLogger.writeLog("${GameEngine.DEBUG_TAG} NX=$NX NY=$NY")
 

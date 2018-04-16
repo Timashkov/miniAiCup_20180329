@@ -84,7 +84,7 @@ class WorldObjectsFilter(private val mGlobalConfig: WorldConfig, val mLogger: Lo
             }
         }
 
-        val ejections = pr.worldObjectsInfo.mEjection
+        val ejections = pr.worldObjectsInfo.mEjection.filter { it.pId != 1 }
         if (ejections.isNotEmpty()) {
             mLogger.writeLog("Ejections total : ${ejections.size}")
             pr.worldObjectsInfo.mEjection.filter { ejection ->

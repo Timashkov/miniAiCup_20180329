@@ -79,14 +79,27 @@ class Compass(private val mFragment: MineFragmentInfo, private val mGlobalConfig
             val shiftedRumbIndex = getRumbIndexByAngle(searchingAngle)
             val indexDelta = aign * (shiftedRumbIndex - directMovementIndex)
 
-            for (i in indexDelta * -1..indexDelta) {
+            for (i in -indexDelta..indexDelta) {
                 if ((me.mRadius + enemy.mRadius * 5f > me.mVertex.distance(enemy.mVertex)))
                     mRumbBorders[getShiftedIndex(directMovementIndex, i)].areaScore = BLACK_SECTOR_SCORE
                 mRumbBorders[getShiftedIndex(directMovementIndex, i)].enemies.add(enemy)
             }
 
         } else if (me.canEatEnemyByMass(enemy.mMass)) {
-            for (i in -1..1) {
+
+            val shiftedAngle = (asin((enemy.mRadius) / me.mVertex.distance(enemy.mVertex)) * 180f / PI).toFloat()
+
+            var searchingAngle = shiftedAngle + directAngle
+            var aign = 1
+            if (searchingAngle > 180f) {
+                aign = -1
+                searchingAngle = directAngle - shiftedAngle
+            }
+
+            val shiftedRumbIndex = getRumbIndexByAngle(searchingAngle)
+            val indexDelta = aign * (shiftedRumbIndex - directMovementIndex)
+
+            for (i in -indexDelta..indexDelta) {
                 if (mRumbBorders[getShiftedIndex(directMovementIndex, i)].areaScore != BLACK_SECTOR_SCORE) {
 //                    if ((me.mRadius + enemy.mRadius * 5f > me.mVertex.distance(enemy.mVertex)))// мой радиус больше!!!
                     mRumbBorders[getShiftedIndex(directMovementIndex, i)].areaScore = PREFERRED_SECTOR_SCORE
@@ -115,7 +128,11 @@ class Compass(private val mFragment: MineFragmentInfo, private val mGlobalConfig
         escapeVector?.let { vec ->
             val directAngle = (atan2(vec.SY, vec.SX) * 180f / PI).toFloat()
             val directMovementIndex = getRumbIndexByAngle(directAngle)
-            mRumbBorders[directMovementIndex].lastEscapePoint = true
+
+            for (i in -3..3) {
+                mRumbBorders[getShiftedIndex(directMovementIndex, i)].lastEscapePoint = true
+                mRumbBorders[getShiftedIndex(directMovementIndex, i)].areaScore = 2
+            }
         }
     }
 
@@ -332,21 +349,16 @@ class Compass(private val mFragment: MineFragmentInfo, private val mGlobalConfig
             } else
                 sectorsSet[first] = count
         }
-//        if (sectorsSet.any { it -> it.value == 32 }) {
-//            return
-//        }
-
 
         val powerMax = getDangerSectorsCount()
-
 
         sectorsSet.forEach { startIndex, count ->
             if (getDangerSectorsCount() < 16) {
                 var power = 0
                 val shifting = count / 2
                 var gg = 0
-                if (shifting > 2 && shifting % 5 < count)
-                    gg = shifting % 5
+                if (shifting > 2 && shifting % 3 < count)
+                    gg = shifting % 3
 
                 val directMovementIndex = getShiftedIndex(startIndex, shifting + gg)
                 for (i in shifting + 1 downTo 1) {
@@ -412,7 +424,7 @@ class Compass(private val mFragment: MineFragmentInfo, private val mGlobalConfig
         return score
     }
 
-    fun getDangerSectorsCount(): Int = mRumbBorders.filter { it.areaScore <= 0 }.size
+    fun getDangerSectorsCount(): Int = mRumbBorders.filter { it.areaScore <= -50 }.size
 
     //TODO: set area factor by enemies with calc of distance
 
