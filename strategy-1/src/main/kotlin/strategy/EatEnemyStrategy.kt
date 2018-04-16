@@ -49,9 +49,18 @@ class EatEnemyStrategy(val mGlobalConfig: WorldConfig, val mLogger: Logger) : IS
     }
 
     private fun searchForEnemies(gameEngine: GameEngine, cachedParseResult: ParseResult?): StrategyResult {
-//TODO: review
-        val enemies = gameEngine.worldParseResult.worldObjectsInfo.mEnemies
+
+//        val enemies = gameEngine.worldParseResult.worldObjectsInfo.mEnemies
         val me = gameEngine.worldParseResult.mineInfo
+        val enemies: ArrayList<EnemyInfo> = ArrayList()
+        me.mFragmentsState.forEach { frag ->
+            frag.mCompass.mRumbBorders.forEach { rumb ->
+                rumb.enemies.forEach { en ->
+                    if (!enemies.contains(en))
+                        enemies.add(en)
+                }
+            }
+        }
 
         // Stage 1 - search for 1.25
         val nearEnemies = enemies.filter {
@@ -73,7 +82,7 @@ class EatEnemyStrategy(val mGlobalConfig: WorldConfig, val mLogger: Logger) : IS
             }
 
             var movementPoint = targetVertex
-            if (me.mFragmentsState.filter { fr-> fr.canEatEnemyByMass(chosenEnemy.mMass) }.size > 1)
+            if (me.mFragmentsState.filter { fr -> fr.canEatEnemyByMass(chosenEnemy.mMass) }.size > 1)
                 movementPoint = gameEngine.getMovementPointForTarget(me.getMainFragment().mId, targetVertex)
 
             val res = StrategyResult(10, movementPoint, debugMessage = "Try to eat ${chosenEnemy.mId}")
@@ -123,7 +132,7 @@ class EatEnemyStrategy(val mGlobalConfig: WorldConfig, val mLogger: Logger) : IS
                         val vecToTarget = MovementVector(targetVertex.X - enemy.mVertex.X, targetVertex.Y - enemy.mVertex.Y)
                         val angleToTarget = (atan2(vecToTarget.SY, vecToTarget.SX) * 180f / PI).toFloat()
                         val currentAngle = (atan2(me.getMainFragment().mSY, me.getMainFragment().mSX) * 180f / PI).toFloat()
-                        if (abs(angleToTarget - currentAngle) <= 15f){
+                        if (abs(angleToTarget - currentAngle) <= 15f) {
                             split = true
                             mCachedEnemy = chosenEnemy// cache in case of split
                             mStartSplitTick = gameEngine.currentTick
