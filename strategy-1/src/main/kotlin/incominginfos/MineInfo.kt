@@ -216,7 +216,7 @@ class MineInfo(stateJson: JSONArray, val globalConfig: WorldConfig, val mLogger:
                     if (mFragmentsState.none { state -> state !in alreadyProcessed && state.mCompass.isVertexInDangerArea(fp.target) }) {
 
                         if (mFragmentsState.none { state -> state.mCompass.isVertexInAreaWithEnemy(fp.movementTarget) }) {
-                            fp.useSplit = fr.maySplit && mFragmentsState.none { it.mCompass.hasBlackAreas() } && !getMainFragment().mCompass.isVertexInAreaWithEnemy(getMainFragment().mVertex.plus(Vertex(getMainFragment().mSX, getMainFragment().mSY)))
+                            fp.useSplit = fr.maySplit && mFragmentsState.none { it.mCompass.hasBlackAreas() } && mFragmentsState.none { frag -> frag.mCompass.mRumbBorders.any { rumb -> rumb.enemies.any { en -> en.mVertex.distance(frag.mVertex) < frag.mRadius * WorldConfig.FOW_RADIUS_FACTOR / 2 } } } && !getMainFragment().mCompass.isVertexInAreaWithEnemy(getMainFragment().mVertex.plus(Vertex(getMainFragment().mSX, getMainFragment().mSY)))
                         }
                         return fp
                     }

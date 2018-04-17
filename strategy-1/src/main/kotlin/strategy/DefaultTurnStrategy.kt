@@ -68,7 +68,7 @@ class DefaultTurnStrategy(val mGlobalConfig: WorldConfig, val mLogger: Logger) :
             if (dirToV == dir)
                 return verts.indexOf(it)
         }
-        return 2
+        return 0
     }
 
     private fun getNextCorner(): Vertex {

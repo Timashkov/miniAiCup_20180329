@@ -13,11 +13,11 @@ class IncomingInfoTest {
     fun setUp() {
 
 
-        val json = JSONObject(
-                ""
-        )
-        mConfig = WorldConfig(json)
-        mProcessor = Processor(json)
+//        val json = JSONObject(
+//                ""
+//        )
+//        mConfig = WorldConfig(json)
+//        mProcessor = Processor(json)
 
     }
 
@@ -28,18 +28,18 @@ class IncomingInfoTest {
     @org.junit.Test
     fun testProcessor() {
 
-        var tickData = JSONObject(
-                ""
-        )
-        var parsed = mProcessor.parseIncoming(tickData)
-        mProcessor.analyzeData(parsed, 7588)
-
-
-        tickData = JSONObject(
-                ""
-        )
-        parsed = mProcessor.parseIncoming(tickData)
-        mProcessor.analyzeData(parsed, 7589)
+//        var tickData = JSONObject(
+//                ""
+//        )
+//        var parsed = mProcessor.parseIncoming(tickData)
+//        mProcessor.analyzeData(parsed, 7588)
+//
+//
+//        tickData = JSONObject(
+//                ""
+//        )
+//        parsed = mProcessor.parseIncoming(tickData)
+//        mProcessor.analyzeData(parsed, 7589)
     }
 
 }

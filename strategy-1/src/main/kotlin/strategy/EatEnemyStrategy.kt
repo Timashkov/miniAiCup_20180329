@@ -77,6 +77,12 @@ class EatEnemyStrategy(val mGlobalConfig: WorldConfig, val mLogger: Logger) : IS
                     mLogger.writeLog("Cached Enemy : $enemy")
                     val diff = targetVertex.minus(enemy.mVertex)
                     targetVertex = targetVertex.plus(Vertex(diff.X * 4f, diff.Y * 4f))
+                    if (me.getCoordinates().distance(chosenEnemy.mVertex) > me.getCoordinates().distance(enemy.mVertex)) {
+                        //уходит от меня
+                        if (gameEngine.currentTick < 2000) {
+                            return StrategyResult(-1, Vertex.DEFAULT, debugMessage = "Don't pursuit on first game stage")
+                        }
+                    }
                     mLogger.writeLog("Target vert : $targetVertex")
                 }
             }
@@ -95,16 +101,16 @@ class EatEnemyStrategy(val mGlobalConfig: WorldConfig, val mLogger: Logger) : IS
         //TODO: делится самый большой или все сразу ?
         //TODO: проверить на направление
 
-        enemies.forEach {
-            var bool = me.getNearestFragment(it.mVertex).canEatEnemyBySplit(it.mMass)
-            bool = bool && me.getNearestFragment(it.mVertex) == me.getMainFragment()
-            bool = bool && me.mFragmentsState.none { fragment -> fragment.mCompass.isVertexInDangerArea(it.mVertex, 0.5f) }
-            bool = bool && me.getNearestFragment(it.mVertex).mCompass.mRumbBorders.none { rumb ->
-                rumb.enemies.any { enemyInfo ->
-                    me.getNearestFragment(it.mVertex).canBeEatenByEnemy(enemyInfo.mMass + 2 * mGlobalConfig.FoodMass)
-                }
-            }
-        }
+//        enemies.forEach {
+//            var bool = me.getNearestFragment(it.mVertex).canEatEnemyBySplit(it.mMass)
+//            bool = bool && me.getNearestFragment(it.mVertex) == me.getMainFragment()
+//            bool = bool && me.mFragmentsState.none { fragment -> fragment.mCompass.isVertexInDangerArea(it.mVertex, 0.5f) }
+//            bool = bool && me.getNearestFragment(it.mVertex).mCompass.mRumbBorders.none { rumb ->
+//                rumb.enemies.any { enemyInfo ->
+//                    me.getNearestFragment(it.mVertex).canBeEatenByEnemy(enemyInfo.mMass + 2 * mGlobalConfig.FoodMass)
+//                }
+//            }
+//        }
 
         if (me.canSplit) {
             val nearLowerEnemies = enemies.filter {
@@ -125,6 +131,18 @@ class EatEnemyStrategy(val mGlobalConfig: WorldConfig, val mLogger: Logger) : IS
                 cachedParseResult?.let { cache ->
                     val cachedEnemy = cache.worldObjectsInfo.mEnemies.firstOrNull { it.mId == chosenEnemy.mId }
                     cachedEnemy?.let { enemy ->
+
+                        if (me.getCoordinates().distance(chosenEnemy.mVertex) > me.getCoordinates().distance(enemy.mVertex)) {
+                            //уходит от меня
+                            if (gameEngine.currentTick < 3000) {
+                                return StrategyResult(-1, Vertex.DEFAULT, debugMessage = "Don't pursuit on first game stage")
+                            }
+                        }
+
+                        if (me.getCoordinates().distance(chosenEnemy.mVertex) > me.getMainFragment().mRadius*3){
+                            return StrategyResult(-1, Vertex.DEFAULT, debugMessage = "Can be ineffective")
+                        }
+
                         mLogger.writeLog("Cached Enemy : $enemy")
                         val diff = targetVertex.minus(enemy.mVertex)
                         targetVertex = targetVertex.plus(Vertex(diff.X * 4f, diff.Y * 4f))
