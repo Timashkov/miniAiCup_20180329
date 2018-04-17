@@ -79,7 +79,7 @@ class EatEnemyStrategy(val mGlobalConfig: WorldConfig, val mLogger: Logger) : IS
                     targetVertex = targetVertex.plus(Vertex(diff.X * 4f, diff.Y * 4f))
                     if (me.getCoordinates().distance(chosenEnemy.mVertex) > me.getCoordinates().distance(enemy.mVertex)) {
                         //уходит от меня
-                        if (gameEngine.currentTick < 2000) {
+                        if (gameEngine.currentTick < 2000 && me.getCoordinates().distance(chosenEnemy.mVertex) > me.getMainFragment().mRadius * 3) {
                             return StrategyResult(-1, Vertex.DEFAULT, debugMessage = "Don't pursuit on first game stage")
                         }
                     }
@@ -139,7 +139,7 @@ class EatEnemyStrategy(val mGlobalConfig: WorldConfig, val mLogger: Logger) : IS
                             }
                         }
 
-                        if (me.getCoordinates().distance(chosenEnemy.mVertex) > me.getMainFragment().mRadius*3){
+                        if (me.getCoordinates().distance(chosenEnemy.mVertex) > me.getMainFragment().mRadius * 3) {
                             return StrategyResult(-1, Vertex.DEFAULT, debugMessage = "Can be ineffective")
                         }
 
