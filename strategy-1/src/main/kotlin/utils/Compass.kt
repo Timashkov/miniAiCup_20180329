@@ -364,6 +364,7 @@ class Compass(private val mFragment: MineFragmentInfo, private val mGlobalConfig
         val powerMax = getDangerSectorsCount()
 
         val maxSectorIndex = sectorsSet.maxBy { it.value }?.key
+
         sectorsSet.forEach { startIndex, count ->
             var power = 0
             if (getDangerSectorsCount() > 16) {
@@ -377,7 +378,7 @@ class Compass(private val mFragment: MineFragmentInfo, private val mGlobalConfig
             val directMovementIndex = getShiftedIndex(startIndex, shifting + gg)
             for (i in shifting + 1 downTo 1) {
                 var magic = 0
-                if (startIndex == maxSectorIndex && i == 1 )
+                if (startIndex == maxSectorIndex && i == 1 && count < 32)
                     magic = 2
 
                 if (mRumbBorders[getShiftedIndex(directMovementIndex, i - 1)].areaScore > 0 && count >= shifting + gg + i - 1) {
