@@ -87,7 +87,13 @@ class Compass(private val mFragment: MineFragmentInfo, private val mGlobalConfig
 
         } else if (me.canEatEnemyByMass(enemy.mMass)) {
 
-            val shiftedAngle = (asin((enemy.mRadius) / me.mVertex.distance(enemy.mVertex)) * 180f / PI).toFloat()
+            if (distance < enemy.mRadius) {
+                setWholeCompassPoints(PREFERRED_SECTOR_SCORE, enemy.mVertex.getMovementVector(me.mVertex))
+                mRumbBorders.forEach { it.enemies.add(enemy) }
+                return
+            }
+
+            val shiftedAngle = (asin((enemy.mRadius) / distance) * 180f / PI).toFloat()
 
             var searchingAngle = shiftedAngle + directAngle
             var aign = 1
@@ -129,9 +135,11 @@ class Compass(private val mFragment: MineFragmentInfo, private val mGlobalConfig
             val directAngle = (atan2(vec.SY, vec.SX) * 180f / PI).toFloat()
             val directMovementIndex = getRumbIndexByAngle(directAngle)
 
-            for (i in -3..3) {
-                mRumbBorders[getShiftedIndex(directMovementIndex, i)].lastEscapePoint = true
-                mRumbBorders[getShiftedIndex(directMovementIndex, i)].areaScore = 2
+            if (points == BLACK_SECTOR_SCORE) {
+                for (i in -3..3) {
+                    mRumbBorders[getShiftedIndex(directMovementIndex, i)].lastEscapePoint = true
+                    mRumbBorders[getShiftedIndex(directMovementIndex, i)].areaScore = 2
+                }
             }
         }
     }
