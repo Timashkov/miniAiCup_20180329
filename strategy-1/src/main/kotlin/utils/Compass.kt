@@ -262,28 +262,28 @@ class Compass(private val mFragment: MineFragmentInfo, private val mGlobalConfig
         when (cornerVertex) {
             mGlobalConfig.ltCorner -> {
                 for (i in 0..8) {
-                    if (abs(mRumbBorders[i].areaScore) <= CORNER_SECTOR_SCORE)
+                    if (abs(mRumbBorders[i].areaScore) <= abs(CORNER_SECTOR_SCORE))
                         mRumbBorders[i].areaScore = CORNER_SECTOR_SCORE
                 }
                 return
             }
             mGlobalConfig.lbCorner -> {
                 for (i in 24..31) {
-                    if (abs(mRumbBorders[i].areaScore) <= CORNER_SECTOR_SCORE)
+                    if (abs(mRumbBorders[i].areaScore) <= abs(CORNER_SECTOR_SCORE))
                         mRumbBorders[i].areaScore = CORNER_SECTOR_SCORE
                 }
                 return
             }
             mGlobalConfig.rbCorner -> {
                 for (i in 16..24) {
-                    if (abs(mRumbBorders[i].areaScore) <= CORNER_SECTOR_SCORE)
+                    if (abs(mRumbBorders[i].areaScore) <= abs(CORNER_SECTOR_SCORE))
                         mRumbBorders[i].areaScore = CORNER_SECTOR_SCORE
                 }
                 return
             }
             mGlobalConfig.rtCorner -> {
                 for (i in 8..16) {
-                    if (abs(mRumbBorders[i].areaScore) <= CORNER_SECTOR_SCORE)
+                    if (abs(mRumbBorders[i].areaScore) <= abs(CORNER_SECTOR_SCORE))
                         mRumbBorders[i].areaScore = CORNER_SECTOR_SCORE
                 }
                 return

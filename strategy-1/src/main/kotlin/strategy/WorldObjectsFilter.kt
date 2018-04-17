@@ -119,7 +119,7 @@ class WorldObjectsFilter(private val mGlobalConfig: WorldConfig, val mLogger: Lo
             foodPoints.addAll(ejections.map { it.mVertex })
 
         val cornerFactor =
-                if (pr.worldObjectsInfo.mEnemies.isNotEmpty()) mGlobalConfig.GameHeight / 4f * 1.44f else 1.5f
+                if (pr.worldObjectsInfo.mEnemies.isNotEmpty()) mGlobalConfig.GameHeight / 4f * 1.5f else 1.5f
 
         pr.mineInfo.mFragmentsState.forEach { fragment ->
             val cornerDistance = if (cornerFactor > 1.5f) cornerFactor else fragment.mRadius * cornerFactor
