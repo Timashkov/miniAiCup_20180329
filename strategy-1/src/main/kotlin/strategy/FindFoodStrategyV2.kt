@@ -62,10 +62,6 @@ class FindFoodStrategyV2(val mGlobalConfig: WorldConfig, val mLogger: Logger) : 
                     mKnownWay?.target = fp
                     return false
                 }
-                if (fp.distance(me.getFragmentById(targetWay.fragmentId).mVertex) > me.getFragmentById(targetWay.fragmentId).mRadius * WorldConfig.FOW_RADIUS_FACTOR) {
-                    // не добежали еще
-                    return false
-                }
             }
         }
         return true
