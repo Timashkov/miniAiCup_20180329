@@ -142,7 +142,7 @@ class MineInfo(stateJson: JSONArray, val globalConfig: WorldConfig, val mLogger:
                 mLogger.writeLog("Known vertex is not null")
                 if (cachedState != null) {
                     val cachedFragment = cachedState.mFragmentsState.firstOrNull { it.mId == fp.fragmentId }
-                    if (cachedFragment != null && cachedFragment.mVertex.distance(fp.target) > knownFragment.mVertex.distance(fp.target) * 2f) {
+                    if (cachedFragment != null && cachedFragment.mVertex.distance(fp.target) > knownFragment.mVertex.distance(fp.target) * 2f && knownFragment.mCompass.hasBlackAreas()) {
                         mLogger.writeLog("distance is less than x2")
                         return@let
                     }

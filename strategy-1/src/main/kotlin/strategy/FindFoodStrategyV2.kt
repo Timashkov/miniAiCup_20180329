@@ -20,7 +20,7 @@ class FindFoodStrategyV2(val mGlobalConfig: WorldConfig, val mLogger: Logger) : 
 
         try {
 
-            if (isDestinationAchieved(gameEngine.worldParseResult.worldObjectsInfo) || isGamerStateChanged(gameEngine.worldParseResult.mineInfo) ) {
+            if (isDestinationAchieved(gameEngine.worldParseResult.worldObjectsInfo, gameEngine.worldParseResult.mineInfo) || isGamerStateChanged(gameEngine.worldParseResult.mineInfo)) {
                 mKnownWay = null
             }
 
@@ -52,7 +52,7 @@ class FindFoodStrategyV2(val mGlobalConfig: WorldConfig, val mLogger: Logger) : 
         mGamerStateCache = null
     }
 
-    private fun isDestinationAchieved(worldInfo: WorldObjectsInfo): Boolean {
+    private fun isDestinationAchieved(worldInfo: WorldObjectsInfo, me: MineInfo): Boolean {
         //если съели целевую точку, а ее соседки остались - то надо доесть
 
         mKnownWay?.let { targetWay ->
@@ -60,6 +60,10 @@ class FindFoodStrategyV2(val mGlobalConfig: WorldConfig, val mLogger: Logger) : 
                 if (worldInfo.mFood.map { it.mVertex }.any { it.equals(fp) }) {
                     mLogger.writeLog("FP: $fp")
                     mKnownWay?.target = fp
+                    return false
+                }
+                if (fp.distance(me.getFragmentById(targetWay.fragmentId).mVertex) > me.getFragmentById(targetWay.fragmentId).mRadius * WorldConfig.FOW_RADIUS_FACTOR) {
+                    // не добежали еще
                     return false
                 }
             }

@@ -83,11 +83,14 @@ class WorldObjectsFilter(private val mGlobalConfig: WorldConfig, val mLogger: Lo
         if (food.isNotEmpty()) {
             mLogger.writeLog("Food total : ${food.size}")
 
-            pr.worldObjectsInfo.mFood.forEach { food ->
-                val tempV = food.mVertex.minus(mGlobalConfig.getCenter())
-                pr.phantomFood.add(Vertex(tempV.X + mGlobalConfig.getCenter().X, -tempV.Y + mGlobalConfig.getCenter().Y))
-                pr.phantomFood.add(Vertex(-tempV.X + mGlobalConfig.getCenter().X, -tempV.Y + mGlobalConfig.getCenter().Y))
-                pr.phantomFood.add(Vertex(-tempV.X + mGlobalConfig.getCenter().X, tempV.Y + mGlobalConfig.getCenter().Y))
+            if (pr.worldObjectsInfo.mFood.size > 2) {
+                // memorize in case of area contains at least 3 food objects
+                pr.worldObjectsInfo.mFood.forEach {
+                    val tempV = it.mVertex.minus(mGlobalConfig.getCenter())
+                    pr.phantomFood.add(Vertex(tempV.X + mGlobalConfig.getCenter().X, -tempV.Y + mGlobalConfig.getCenter().Y))
+                    pr.phantomFood.add(Vertex(-tempV.X + mGlobalConfig.getCenter().X, -tempV.Y + mGlobalConfig.getCenter().Y))
+                    pr.phantomFood.add(Vertex(-tempV.X + mGlobalConfig.getCenter().X, tempV.Y + mGlobalConfig.getCenter().Y))
+                }
             }
 
             pr.worldObjectsInfo.mFood = pr.worldObjectsInfo.mFood.filter { f ->
@@ -116,7 +119,7 @@ class WorldObjectsFilter(private val mGlobalConfig: WorldConfig, val mLogger: Lo
             foodPoints.addAll(ejections.map { it.mVertex })
 
         val cornerFactor =
-                if (pr.worldObjectsInfo.mEnemies.isNotEmpty()) sqrt(mGlobalConfig.GameHeight / 4f) else 1.5f
+                if (pr.worldObjectsInfo.mEnemies.isNotEmpty()) mGlobalConfig.GameHeight / 4f * 1.44f else 1.5f
 
         pr.mineInfo.mFragmentsState.forEach { fragment ->
             val cornerDistance = if (cornerFactor > 1.5f) cornerFactor else fragment.mRadius * cornerFactor
