@@ -163,15 +163,9 @@ class MineInfo(stateJson: JSONArray, val globalConfig: WorldConfig, val mLogger:
             }
         }
 
-        var fragmentsList = mFragmentsState.sortedByDescending { fr -> fr.mCompass.getMaxSectorScore() }
-
-        if (mFragmentsState.any { it -> it.mCompass.hasDarkAreas() }) {
-            fragmentsList = mFragmentsState.sortedByDescending { fr -> fr.mCompass.getDangerSectorsCount() }
-
-        }
-        val alreadyProcessed: ArrayList<MineFragmentInfo> = ArrayList()
-
-        fragmentsList.forEach { fr ->
+        // 1st stage - one fragment
+        if (mFragmentsState.size == 1) {
+            val fr = mFragmentsState[0]
             fr.mCompass.mRumbBorders.filter { rumb ->
                 rumb.areaScore > Compass.DEFAULT_AREA_SCORE ||
                         rumb.lastEscapePoint ||
@@ -180,11 +174,11 @@ class MineInfo(stateJson: JSONArray, val globalConfig: WorldConfig, val mLogger:
                 val fp = fr.mCompass.getSectorFoodPoint(rumb)
                 if (fp != StepPoint.DEFAULT) {
 
-                    mLogger.writeLog("BS: $fp")
+                    mLogger.writeLog("BS11: $fp")
                     fp.movementTarget = getMovementPointForTarget(fr, fp.target)
 
                     if (rumb.lastEscapePoint) {
-                        if (rumb.lastEscapePoint && mFragmentsState.size == 1) {
+                        if (rumb.lastEscapePoint) {
                             if (fr.canSplit && fr.mCompass.getRumbIndexByVector(MovementVector(fr.mSX, fr.mSY)) == fr.mCompass.mRumbBorders.indexOf(rumb))
                                 fp.useSplit = true
                             else
@@ -193,50 +187,133 @@ class MineInfo(stateJson: JSONArray, val globalConfig: WorldConfig, val mLogger:
                         return fp
                     }
 
-                    if (mFragmentsState.size > 1 && mFragmentsState.all { it.mTTF < 2 } && mFragmentsState.any { it.mCompass.hasBlackAreas() }) {
-//                    val enemies: ArrayList<EnemyInfo> = ArrayList()
-//                    mFragmentsState.forEach { it-> it.mCompass.mRumbBorders.forEach { r -> enemies.addAll(r.canBeEatenByEnemy) } }
-//
-                        var x = 0.0f
-                        var y = 0.0f
-                        mFragmentsState.forEach {
-                            x += it.mVertex.X
-                            y += it.mVertex.Y
-                        }
-                        x /= mFragmentsState.size
-                        y /= mFragmentsState.size
-                        val center = Vertex(x, y)
-                        if (mFragmentsState.none { it !in alreadyProcessed && it.mCompass.isVertexInDangerArea(center) }) {
-                            fp.target = center
-                            fp.movementTarget = center
-                            return fp
-                        }
-                    }
+                    if (!fr.mCompass.isVertexInDangerArea(fp.target)) {
 
-                    if (mFragmentsState.none { state -> state !in alreadyProcessed && state.mCompass.isVertexInDangerArea(fp.target) }) {
-
-                        if (mFragmentsState.none { state -> state.mCompass.isVertexInAreaWithEnemy(fp.movementTarget) }) {
-                            fp.useSplit = fr.maySplit && mFragmentsState.none { it.mCompass.hasBlackAreas() } && mFragmentsState.none { frag -> frag.mCompass.mRumbBorders.any { rumb -> rumb.enemies.any { en -> en.mVertex.distance(frag.mVertex) < frag.mRadius * WorldConfig.FOW_RADIUS_FACTOR / 2 } } } && !getMainFragment().mCompass.isVertexInAreaWithEnemy(getMainFragment().mVertex.plus(Vertex(getMainFragment().mSX, getMainFragment().mSY)))
+                        if (!fr.mCompass.isVertexInAreaWithEnemy(fp.movementTarget)) {
+                            fp.useSplit = fr.maySplit && !fr.mCompass.hasBlackAreas() && !fr.mCompass.mRumbBorders.any { rumb -> rumb.enemies.any { en -> en.mVertex.distance(fr.mVertex) < fr.mRadius * WorldConfig.FOW_RADIUS_FACTOR / 2 } } && !fr.mCompass.isVertexInAreaWithEnemy(getMainFragment().mVertex.plus(Vertex(getMainFragment().mSX, getMainFragment().mSY)))
                         }
                         return fp
                     }
                 }
             }
-            alreadyProcessed.add(fr)
-        }
 
-        fragmentsList.forEach { fr ->
             if (fr.mCompass.hasBlackAreas() && fr.mCompass.mRumbBorders.none { it.areaScore > 0 }) {
                 val escape = fr.mCompass.mRumbBorders.filter { rumb ->
                     rumb.areaScore >= Compass.CORNER_SECTOR_SCORE
                 }[0]
                 val fp = fr.mCompass.getSectorFoodPoint(escape)
-                mLogger.writeLog("BS: $fp")
+                mLogger.writeLog("BS12: $fp")
                 fp.movementTarget = getMovementPointForTarget(fr, fp.target)
                 if (fr.canSplit && fr.mCompass.getRumbIndexByVector(MovementVector(fr.mSX, fr.mSY)) == fr.mCompass.mRumbBorders.indexOf(escape))
                     fp.useSplit = true
                 else
                     fp.useEjections = true
+            }
+
+        } else {
+
+            val borderVertexes: HashMap<Vertex, Int> = HashMap()
+            for (i in 0..98) {
+                borderVertexes[Vertex((i * 10 + 5).toFloat(), 0f)] = 0
+                borderVertexes[Vertex(0f, (i * 10 + 5).toFloat())] = 0
+                borderVertexes[Vertex((i * 10 + 5).toFloat(), globalConfig.GameHeight.toFloat())] = 0
+                borderVertexes[Vertex(globalConfig.GameWidth.toFloat(), (i * 10 + 5).toFloat())] = 0
+            }
+
+            var score = 0
+            var target = Vertex.DEFAULT
+
+            borderVertexes.keys.forEach { keyVertex ->
+                mFragmentsState.forEach { frag ->
+                    borderVertexes[keyVertex] = borderVertexes[keyVertex]!! + frag.mCompass.getAreaScore(keyVertex)
+                }
+                if (borderVertexes[keyVertex]!! > score) {
+                    score = borderVertexes[keyVertex]!!
+                    target = keyVertex
+                }
+            }
+            if (target != Vertex.DEFAULT) {
+
+                val canEatVertexes: ArrayList<StepPoint> = ArrayList()
+                mFragmentsState.forEach { frag -> canEatVertexes.addAll(frag.mCompass.mRumbBorders[frag.mCompass.getRumbIndexByVector(frag.mVertex.getMovementVector(target))].canEat) }
+                val foods: ArrayList<Vertex> = ArrayList()
+                foods.addAll(canEatVertexes.flatMap { it -> it.foodPoints })
+                foods.add(target)
+
+                val fp = StepPoint(target, target, foods, getMainFragment().mId)
+                if (mFragmentsState.none { state -> state.mCompass.isVertexInDangerArea(target) }) {
+
+                    if (mFragmentsState.none { state -> state.mCompass.isVertexInAreaWithEnemy(fp.movementTarget) }) {
+                        fp.useSplit = getMainFragment().maySplit && mFragmentsState.none { it.mCompass.hasBlackAreas() } && mFragmentsState.none { frag -> frag.mCompass.mRumbBorders.any { rumb -> rumb.enemies.any { en -> en.mVertex.distance(frag.mVertex) < frag.mRadius * WorldConfig.FOW_RADIUS_FACTOR / 2 } } } && !getMainFragment().mCompass.isVertexInAreaWithEnemy(getMainFragment().mVertex.plus(Vertex(getMainFragment().mSX, getMainFragment().mSY)))
+                    }
+                    mLogger.writeLog("Going to border vertex : $fp")
+                    return fp
+                }
+            }
+
+            var fragmentsList = mFragmentsState.sortedByDescending { fr -> fr.mCompass.getMaxSectorScore() }
+
+            if (mFragmentsState.any { it -> it.mCompass.hasDarkAreas() }) {
+                fragmentsList = mFragmentsState.sortedByDescending { fr -> fr.mCompass.getDangerSectorsCount() }
+
+            }
+            val alreadyProcessed: ArrayList<MineFragmentInfo> = ArrayList()
+
+            fragmentsList.forEach { fr ->
+                fr.mCompass.mRumbBorders.filter { rumb ->
+                    rumb.areaScore > Compass.DEFAULT_AREA_SCORE ||
+                            rumb.lastEscapePoint ||
+                            (rumb.areaScore == Compass.DEFAULT_AREA_SCORE && fr.mCompass.hasBlackAreas())
+                }.sortedByDescending { it.areaScore }.forEach { rumb ->
+                    val fp = fr.mCompass.getSectorFoodPoint(rumb)
+                    if (fp != StepPoint.DEFAULT) {
+
+                        mLogger.writeLog("BS21: $fp")
+                        fp.movementTarget = getMovementPointForTarget(fr, fp.target)
+
+                        if (mFragmentsState.all { it.mTTF < 2 } && mFragmentsState.any { it.mCompass.hasBlackAreas() }) {
+
+                            var x = 0.0f
+                            var y = 0.0f
+                            mFragmentsState.forEach {
+                                x += it.mVertex.X
+                                y += it.mVertex.Y
+                            }
+                            x /= mFragmentsState.size
+                            y /= mFragmentsState.size
+                            val center = Vertex(x, y)
+                            if (mFragmentsState.none { it !in alreadyProcessed && it.mCompass.isVertexInDangerArea(center) }) {
+                                fp.target = center
+                                fp.movementTarget = center
+                                return fp
+                            }
+                        }
+
+                        if (mFragmentsState.none { state -> state !in alreadyProcessed && state.mCompass.isVertexInDangerArea(fp.target) }) {
+
+                            if (mFragmentsState.none { state -> state.mCompass.isVertexInAreaWithEnemy(fp.movementTarget) }) {
+                                fp.useSplit = fr.maySplit && mFragmentsState.none { it.mCompass.hasBlackAreas() } && mFragmentsState.none { frag -> frag.mCompass.mRumbBorders.any { rumb -> rumb.enemies.any { en -> en.mVertex.distance(frag.mVertex) < frag.mRadius * WorldConfig.FOW_RADIUS_FACTOR / 2 } } } && !getMainFragment().mCompass.isVertexInAreaWithEnemy(getMainFragment().mVertex.plus(Vertex(getMainFragment().mSX, getMainFragment().mSY)))
+                            }
+                            return fp
+                        }
+                    }
+                }
+                alreadyProcessed.add(fr)
+            }
+
+            fragmentsList.forEach { fr ->
+                if (fr.mCompass.hasBlackAreas() && fr.mCompass.mRumbBorders.none { it.areaScore > 0 }) {
+                    val escape = fr.mCompass.mRumbBorders.filter { rumb ->
+                        rumb.areaScore >= Compass.CORNER_SECTOR_SCORE
+                    }[0]
+                    val fp = fr.mCompass.getSectorFoodPoint(escape)
+                    mLogger.writeLog("BS22: $fp")
+                    fp.movementTarget = getMovementPointForTarget(fr, fp.target)
+                    if (fr.canSplit && fr.mCompass.getRumbIndexByVector(MovementVector(fr.mSX, fr.mSY)) == fr.mCompass.mRumbBorders.indexOf(escape))
+                        fp.useSplit = true
+                    else
+                        fp.useEjections = true
+                }
             }
         }
 
