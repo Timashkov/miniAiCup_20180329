@@ -198,8 +198,16 @@ class Compass(private val mFragment: MineFragmentInfo, private val mGlobalConfig
         val directAngle = (atan2(vec.SY, vec.SX) * 180f / PI).toFloat()
         val directMovementIndex = getRumbIndexByAngle(directAngle)
         val shiftedAngle = (asin((virus.mRadius * 2f / 3f + mFragment.mRadius) / virusDistance) * 180f / PI).toFloat()
-        val shiftedRumbIndex = getRumbIndexByAngle(shiftedAngle + directAngle)
-        val indexDelta = shiftedRumbIndex - directMovementIndex
+
+        var searchingAngle = shiftedAngle + directAngle
+        var aign = 1
+        if (searchingAngle > 180f) {
+            aign = -1
+            searchingAngle = directAngle - shiftedAngle
+        }
+
+        val shiftedRumbIndex = getRumbIndexByAngle(searchingAngle)
+        val indexDelta = aign * (shiftedRumbIndex - directMovementIndex)
 
         for (i in indexDelta * -1..indexDelta) {
             if (mRumbBorders[getShiftedIndex(directMovementIndex, i)].areaScore != BLACK_SECTOR_SCORE) {
@@ -363,8 +371,7 @@ class Compass(private val mFragment: MineFragmentInfo, private val mGlobalConfig
 
         val powerMax = getDangerSectorsCount()
 
-        val maxSectorIndex = sectorsSet.maxBy { it.value }?.key
-
+        var maxScore = 0
         sectorsSet.forEach { startIndex, count ->
             var power = 0
             if (getDangerSectorsCount() > 16) {
@@ -377,37 +384,38 @@ class Compass(private val mFragment: MineFragmentInfo, private val mGlobalConfig
 
             val directMovementIndex = getShiftedIndex(startIndex, shifting + gg)
             for (i in shifting + 1 downTo 1) {
-                var magic = 0
-                if (startIndex == maxSectorIndex && i == 1 && count < 32)
-                    magic = 2
 
                 if (mRumbBorders[getShiftedIndex(directMovementIndex, i - 1)].areaScore > 0 && count >= shifting + gg + i - 1) {
-                    mRumbBorders[getShiftedIndex(directMovementIndex, i - 1)].areaScore *= 2f.pow(power).toInt() + magic
+                    mRumbBorders[getShiftedIndex(directMovementIndex, i - 1)].areaScore *= 2f.pow(power).toInt()
+                    if (mRumbBorders[getShiftedIndex(directMovementIndex, i - 1)].areaScore > maxScore)
+                        maxScore = mRumbBorders[getShiftedIndex(directMovementIndex, i - 1)].areaScore
                 }
                 if (mRumbBorders[getShiftedIndex(directMovementIndex, -i)].areaScore > 0 && 0 <= shifting + gg - i) {
-                    mRumbBorders[getShiftedIndex(directMovementIndex, -i)].areaScore *= 2f.pow(power).toInt() + magic
+                    mRumbBorders[getShiftedIndex(directMovementIndex, -i)].areaScore *= 2f.pow(power).toInt()
+                    if (mRumbBorders[getShiftedIndex(directMovementIndex, -i)].areaScore > maxScore)
+                        maxScore = mRumbBorders[getShiftedIndex(directMovementIndex, -i)].areaScore
                 }
                 if (power < powerMax)
                     power++
             }
-
-//            else {
-//                val shifting = count / 2
-//                var gg = 0
-//                if (shifting > 2)
-//                    gg = shifting % 2
-//
-//                val directMovementIndex = getShiftedIndex(startIndex, shifting + gg)
-//                if (count % 2 == 1) {
-//                    mRumbBorders[directMovementIndex].areaScore *= 2f.pow(powerMax - 1).toInt()
-//                }
-//
-//                for (i in 1..shifting) {
-//                    mRumbBorders[getShiftedIndex(directMovementIndex, i - 1)].areaScore *= 2f.pow(powerMax - 1 - i).toInt()
-//                    mRumbBorders[getShiftedIndex(directMovementIndex, -i)].areaScore *= 2f.pow(powerMax - 1 - i).toInt()
-//                }
-//            }
         }
+
+        if (maxScore > 4) {
+            val maxSectors = mRumbBorders.filter { it.areaScore == maxScore }
+            if (maxSectors.size > 1) {
+                var minAngle = 360f
+                var index = -1
+                val currentAngle = (atan2(mFragment.mSY, mFragment.mSX) * 180f / PI).toFloat()
+                maxSectors.forEach {
+                    if (abs(it.majorBorder - currentAngle) < minAngle) {
+                        minAngle = abs(it.majorBorder - currentAngle)
+                        index = maxSectors.indexOf(it)
+                    }
+                }
+                maxSectors[index].areaScore += 10
+            }
+        }
+
     }
 
     fun getSectorFoodPoint(sector: Rumb): StepPoint {
