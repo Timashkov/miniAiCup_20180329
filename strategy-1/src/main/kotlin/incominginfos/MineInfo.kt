@@ -148,7 +148,7 @@ class MineInfo(stateJson: JSONArray, val globalConfig: WorldConfig, val mLogger:
                     }
                 }
 
-                if (fp.foodPoints.size == 1 && globalConfig.outOfMap(fp.foodPoints[0])){
+                if (fp.foodPoints.size == 1 && globalConfig.outOfMap(fp.foodPoints[0])) {
                     mLogger.writeLog("food point out of map")
                     return@let
                 }
@@ -213,7 +213,7 @@ class MineInfo(stateJson: JSONArray, val globalConfig: WorldConfig, val mLogger:
                         }
                     }
 
-                    if (mFragmentsState.none { state -> state.mCompass.isVertexInDangerArea(fp.target) }) {
+                    if (mFragmentsState.none { state -> state !in alreadyProcessed && state.mCompass.isVertexInDangerArea(fp.target) }) {
 
                         if (mFragmentsState.none { state -> state.mCompass.isVertexInAreaWithEnemy(fp.movementTarget) }) {
                             fp.useSplit = fr.maySplit && mFragmentsState.none { it.mCompass.hasBlackAreas() } && !getMainFragment().mCompass.isVertexInAreaWithEnemy(getMainFragment().mVertex.plus(Vertex(getMainFragment().mSX, getMainFragment().mSY)))
