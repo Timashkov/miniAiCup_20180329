@@ -24,7 +24,7 @@ class DefaultTurnStrategy(val mGlobalConfig: WorldConfig, val mLogger: Logger) :
     override fun apply(gameEngine: GameEngine, cachedParseResult: ParseResult?): StrategyResult {
         val me = gameEngine.worldParseResult.mineInfo
 
-        if (mPhantomFood.isNotEmpty()) {
+        if (mPhantomFood.size > 10) {
             mLogger.writeLog("PhantomFood: ${Arrays.toString(mPhantomFood.toTypedArray())}")
             val target = mPhantomFood.sortedBy { it -> it.distance(me.getCoordinates()) }[0]
             val fixed = gameEngine.getMovementPointForTarget(me.getMainFragment().mId, target)
