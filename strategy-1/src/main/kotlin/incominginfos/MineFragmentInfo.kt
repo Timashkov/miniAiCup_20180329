@@ -20,9 +20,9 @@ class MineFragmentInfo(val fragmentJson: JSONObject, val mGlobalConfig: WorldCon
 
     fun canEatEnemyByMass(enemyMass: Float): Boolean = enemyMass * WorldConfig.EAT_MASS_FACTOR < mMass
 
-    fun canEatEnemyBySplit(enemyMass: Float): Boolean = (enemyMass + 2 * mGlobalConfig.FoodMass) * WorldConfig.EAT_MASS_FACTOR * 2 < mMass
+    fun canEatEnemyBySplit(enemyMass: Float): Boolean = enemyMass * WorldConfig.EAT_MASS_FACTOR * 2 < mMass
 
-    fun canBeEatenByEnemy(enemyMass: Float, massFactor: Float = 1f): Boolean = (enemyMass + 2 * mGlobalConfig.FoodMass) > mMass * WorldConfig.EAT_MASS_FACTOR * massFactor - MAGIC_MASS4EAT
+    fun canBeEatenByEnemy(enemyMass: Float, massFactor: Float = 1f): Boolean = enemyMass > mMass * WorldConfig.EAT_MASS_FACTOR * massFactor
 
     val canSplit: Boolean
         get() = mMass > WorldConfig.MIN_SPLITABLE_MASS

@@ -28,7 +28,7 @@ class DefaultTurnStrategyV2(val mGlobalConfig: WorldConfig, val mLogger: Logger)
             yVecFactor = -1f
         }
 
-        if (me.getMainFragment().mSX < 0 && me.getCoordinates().distance(Vertex(0f, me.getCoordinates().Y)) < me.getMainFragment().mRadius * 5f && mKnownVertex.X <= 0 ) {
+        if (me.getMainFragment().mSX < 0 && me.getCoordinates().distance(Vertex(0f, me.getCoordinates().Y)) < me.getMainFragment().mRadius * 5f && mKnownVertex.X <= 0) {
             xVecFactor = -1f
         }
 
@@ -38,13 +38,21 @@ class DefaultTurnStrategyV2(val mGlobalConfig: WorldConfig, val mLogger: Logger)
 
         if (xVecFactor == -1f || yVecFactor == -1f) {
             val mv = MovementVector(xVecFactor * me.getMainFragment().mSX, yVecFactor * me.getMainFragment().mSY)
+            if (abs(mv.SX / mv.SY) > 4f) {
+                mv.SX /= 2f
+                mv.SY *= 2f
+            }
+            if (abs(mv.SX / mv.SY) < 0.25f) {
+                mv.SX *= 2f
+                mv.SY /= 2f
+            }
             mKnownVertex = GameEngine.vectorEdgeCrossPoint(me.getMainFragment().mVertex, mv, mGlobalConfig.GameWidth.toFloat(), mGlobalConfig.GameHeight.toFloat())
             return StrategyResult(0, mKnownVertex, debugMessage = "DEFAULT: mirrored $mKnownVertex")
         }
 
         if (me.getMainFragment().mSX == 0f && me.getMainFragment().mSY == 0f) {
             mKnownVertex = gameEngine.getMovementPointForTarget(me.getMainFragment().mId, mGlobalConfig.getCenter())
-        } else if (mKnownVertex == Vertex.DEFAULT){
+        } else if (mKnownVertex == Vertex.DEFAULT) {
             val mv = MovementVector(me.getMainFragment().mSX, me.getMainFragment().mSY)
             mKnownVertex = GameEngine.vectorEdgeCrossPoint(me.getMainFragment().mVertex, mv, mGlobalConfig.GameWidth.toFloat(), mGlobalConfig.GameHeight.toFloat())
         }
