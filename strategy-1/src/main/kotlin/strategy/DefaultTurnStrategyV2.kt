@@ -38,7 +38,18 @@ class DefaultTurnStrategyV2(val mGlobalConfig: WorldConfig, val mLogger: Logger)
         }
 
         if (xVecFactor == -1f || yVecFactor == -1f) {
-            val mv = MovementVector(xVecFactor * me.getMainFragment().mSX, yVecFactor * me.getMainFragment().mSY)
+            val vec = me.getCoordinates().getMovementVector(mKnownVertex)
+            var sx = xVecFactor * me.getMainFragment().mSX
+            var sy = yVecFactor * me.getMainFragment().mSY
+            if (vec.SX.sign != sx.sign && xVecFactor == 1f) {
+                sx *= -1f
+            }
+            if (vec.SY.sign != sy.sign && yVecFactor == 1f) {
+                sy *= -1f
+            }
+
+            val mv = MovementVector(sx, sy)
+
             if (abs(mv.SX) < 0.05)
                 mv.SX = 1f * mv.SX.sign
             if (abs(mv.SY) < 0.05)
@@ -57,7 +68,7 @@ class DefaultTurnStrategyV2(val mGlobalConfig: WorldConfig, val mLogger: Logger)
         }
 
         if (me.getMainFragment().mSX == 0f && me.getMainFragment().mSY == 0f) {
-            mKnownVertex = gameEngine.getMovementPointForTarget(me.getMainFragment().mId, mGlobalConfig.getCenter())
+            mKnownVertex = me.getMovementPointForTarget(me.getMainFragment(), mGlobalConfig.getCenter())
         } else if (mKnownVertex == Vertex.DEFAULT) {
             val mv = MovementVector(me.getMainFragment().mSX, me.getMainFragment().mSY)
             mKnownVertex = GameEngine.vectorEdgeCrossPoint(me.getMainFragment().mVertex, mv, mGlobalConfig.GameWidth.toFloat(), mGlobalConfig.GameHeight.toFloat())

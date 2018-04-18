@@ -85,7 +85,7 @@ class Compass(private val mFragment: MineFragmentInfo, private val mGlobalConfig
                 mRumbBorders[getShiftedIndex(directMovementIndex, i)].enemies.add(enemy)
             }
 
-        } else /*if (me.canEatEnemyByMass(enemy.mMass))*/ {
+        } else if (me.canEatEnemyByMass(enemy.mMass)) {
 
             if (distance < enemy.mRadius) {
                 setWholeCompassPoints(CORNER_SECTOR_SCORE, enemy.mVertex.getMovementVector(me.mVertex))
@@ -108,7 +108,7 @@ class Compass(private val mFragment: MineFragmentInfo, private val mGlobalConfig
             for (i in -indexDelta..indexDelta) {
                 if (mRumbBorders[getShiftedIndex(directMovementIndex, i)].areaScore != BLACK_SECTOR_SCORE) {
 //                    if ((me.mRadius + enemy.mRadius * 5f > me.mVertex.distance(enemy.mVertex)))// мой радиус больше!!!
-                    mRumbBorders[getShiftedIndex(directMovementIndex, i)].areaScore = CORNER_SECTOR_SCORE
+                    mRumbBorders[getShiftedIndex(directMovementIndex, i)].areaScore = PREFERRED_SECTOR_SCORE
                     mRumbBorders[getShiftedIndex(directMovementIndex, i)].enemies.add(enemy)
                 }
             }
@@ -152,6 +152,14 @@ class Compass(private val mFragment: MineFragmentInfo, private val mGlobalConfig
                 mRumbBorders[getShiftedIndex(directMovementIndex, i)].areaScore = points
             }
         }
+    }
+
+    fun isVertexOnTheRoad(target: Vertex, mv: MovementVector): Boolean {
+        val vecToTarget = mCenterVertex.getMovementVector(target)
+        val directAngle = (atan2(vecToTarget.SY, vecToTarget.SX) * 180f / PI).toFloat()
+        val shiftedAngle = (asin((mFragment.mRadius * 2f / 3f) / mFragment.mVertex.distance(target)) * 180f / PI).toFloat()
+        val currentMovementVectorAngle = (atan2(mv.SY, mv.SX) * 180f / PI).toFloat()
+        return (abs(currentMovementVectorAngle - directAngle) < abs(shiftedAngle))
     }
 
     fun isVertexInBlackArea(target: Vertex): Boolean {
@@ -369,7 +377,7 @@ class Compass(private val mFragment: MineFragmentInfo, private val mGlobalConfig
         }
 
         var powerMax = getDangerSectorsCount()
-        if ( powerMax == 0){
+        if (powerMax == 0) {
             powerMax = mRumbBorders.filter { it.areaScore <= -1 }.size
         }
 
@@ -410,6 +418,7 @@ class Compass(private val mFragment: MineFragmentInfo, private val mGlobalConfig
             return canEat.maxBy { it.target.distance(mCenterVertex) }!!
 
         val target = getVertexBySector(sector.majorBorder)
+
         return StepPoint(target, target, listOf(target), mFragment.mId, sector.areaScore.toFloat())
     }
 
@@ -427,9 +436,9 @@ class Compass(private val mFragment: MineFragmentInfo, private val mGlobalConfig
             return Vertex(mCenterVertex.X, mCenterVertex.Y - mFragment.mRadius * 4)
         }
         if (rumbBorder < -90 || rumbBorder > 90) {
-            return Vertex(mCenterVertex.X - mFragment.mRadius * 4, (mCenterVertex.X - mFragment.mRadius * 4) * K + b)
+            return GameEngine.vectorEdgeCrossPoint(mCenterVertex, mCenterVertex.getMovementVector(Vertex(mCenterVertex.X - mFragment.mRadius * 4, (mCenterVertex.X - mFragment.mRadius * 4) * K + b)), mGlobalConfig.GameWidth.toFloat(), mGlobalConfig.GameHeight.toFloat())
         } else {
-            return Vertex(mCenterVertex.X + mFragment.mRadius * 4, (mCenterVertex.X + mFragment.mRadius * 4) * K + b)
+            return GameEngine.vectorEdgeCrossPoint(mCenterVertex, mCenterVertex.getMovementVector(Vertex(mCenterVertex.X + mFragment.mRadius * 4, (mCenterVertex.X + mFragment.mRadius * 4) * K + b)), mGlobalConfig.GameWidth.toFloat(), mGlobalConfig.GameHeight.toFloat())
         }
     }
 

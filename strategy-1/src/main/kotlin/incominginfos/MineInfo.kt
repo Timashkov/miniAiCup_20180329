@@ -455,6 +455,9 @@ class MineInfo(stateJson: JSONArray, val globalConfig: WorldConfig, val mLogger:
 
     fun getMovementPointForTarget(fragment: MineFragmentInfo, target: Vertex): Vertex {
 
+        if (fragment.mCompass.isVertexOnTheRoad(target, MovementVector(fragment.mSX, fragment.mSY)))
+            return GameEngine.vectorEdgeCrossPoint(fragment.mVertex, MovementVector(fragment.mSX, fragment.mSY), globalConfig.GameWidth.toFloat(), globalConfig.GameHeight.toFloat())
+
         mLogger.writeLog("${GameEngine.DEBUG_TAG} $fragment")
         val sVector = MovementVector(fragment.mSX, fragment.mSY)
 
@@ -469,7 +472,11 @@ class MineInfo(stateJson: JSONArray, val globalConfig: WorldConfig, val mLogger:
         mLogger.writeLog("${GameEngine.DEBUG_TAG} maxSpeed = $maxSpeed")
         val distance = fragment.mVertex.distance(target)
 
-        val vectorTarget = fragment.mVertex.getMovementVector(target, 8f / distance).minus(sVector)
+//        var scale = if (fragment.mSX != 0f || fragment.mSY != 0f ) sqrt(fragment.mSX.pow(2) + fragment.mSY.pow(2)) / distance else 1f
+//        if (scale > 1f)
+//            scale = 1f
+
+        val vectorTarget = fragment.mVertex.getMovementVector(target).minus(sVector)
         mLogger.writeLog("${GameEngine.DEBUG_TAG} vector target = $vectorTarget")
         if (vectorTarget == MovementVector(0f, 0f)) {
             //no move
@@ -489,7 +496,7 @@ class MineInfo(stateJson: JSONArray, val globalConfig: WorldConfig, val mLogger:
 
         mLogger.writeLog("${GameEngine.DEBUG_TAG} NX=$NX NY=$NY")
 
-        val factor = 1 / sqrt(NX.pow(2) + NY.pow(2)) * fragment.mVertex.distance(target)
+        val factor = 1 / sqrt(NX.pow(2) + NY.pow(2)) * distance
         mLogger.writeLog("${GameEngine.DEBUG_TAG} factor $factor")
         mLogger.writeLog("${GameEngine.DEBUG_TAG} Ktarget = ${vectorTarget.K} KN = ${MovementVector(NX, NY).K}")
 

@@ -3,58 +3,8 @@ package utils
 import data.ParseResult
 import WorldConfig
 import data.MovementVector
-import kotlin.math.pow
-import kotlin.math.sqrt
 
 class GameEngine(private val globalConfig: WorldConfig, val worldParseResult: ParseResult, val currentTick: Int, val mLogger: Logger) {
-
-    fun getMovementPointForTarget(fragmentId: String, target: Vertex): Vertex {
-        val fragment = worldParseResult.mineInfo.getFragmentById(fragmentId)
-
-        mLogger.writeLog("$DEBUG_TAG $fragment")
-        val sVector = MovementVector(fragment.mSX, fragment.mSY)
-
-        //for one fragment
-
-        mLogger.writeLog("$DEBUG_TAG $sVector ${fragment.mVertex} $target")
-
-        val inertionK = globalConfig.InertionFactor / fragment.mMass
-        mLogger.writeLog("$DEBUG_TAG inertion = $inertionK")
-        val maxSpeed = globalConfig.SpeedFactor / sqrt(fragment.mMass)
-
-        mLogger.writeLog("$DEBUG_TAG maxSpeed = $maxSpeed")
-        val distance = fragment.mVertex.distance(target)
-
-        val vectorTarget = fragment.mVertex.getMovementVector(target, 8f/distance).minus(sVector)
-
-        mLogger.writeLog("$DEBUG_TAG vector target = $vectorTarget")
-        if (vectorTarget == MovementVector(0f, 0f)) {
-            //no move
-            return target
-        }
-
-        var NX = ((vectorTarget.SX - sVector.SX) / inertionK + sVector.SX) / maxSpeed
-        var NY = ((vectorTarget.SY - sVector.SY) / inertionK + sVector.SY) / maxSpeed
-
-        //FIX: border
-        if (fragment.mRadius + 0.2f >= fragment.mVertex.Y && NY < 0
-                || fragment.mRadius + 0.2f >= globalConfig.GameHeight - fragment.mVertex.Y && NY > 0)
-            NY = 0f
-        if (fragment.mRadius + 0.2f >= fragment.mVertex.X && NX < 0
-                || fragment.mRadius + 0.2f >= globalConfig.GameWidth - fragment.mVertex.X && NX > 0)
-            NX = 0f
-
-        mLogger.writeLog("$DEBUG_TAG NX=$NX NY=$NY")
-
-        val factor = 1 / sqrt(NX.pow(2) + NY.pow(2)) * fragment.mVertex.distance(target)
-        mLogger.writeLog("$DEBUG_TAG factor $factor")
-        mLogger.writeLog("$DEBUG_TAG Ktarget = ${vectorTarget.K} KN = ${MovementVector(NX, NY).K}")
-
-        NX *= factor //
-        NY *= factor
-
-        return vectorEdgeCrossPoint(fragment.mVertex, MovementVector(NX, NY), globalConfig.GameWidth.toFloat(), globalConfig.GameHeight.toFloat())
-    }
 
     companion object {
         val DEBUG_TAG = "GameEngine"

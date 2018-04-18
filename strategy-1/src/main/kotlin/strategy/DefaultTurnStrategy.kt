@@ -27,7 +27,7 @@ class DefaultTurnStrategy(val mGlobalConfig: WorldConfig, val mLogger: Logger) :
         if (mPhantomFood.size > 10) {
             mLogger.writeLog("PhantomFood: ${Arrays.toString(mPhantomFood.toTypedArray())}")
             val target = mPhantomFood.sortedBy { it -> it.distance(me.getCoordinates()) }[0]
-            val fixed = gameEngine.getMovementPointForTarget(me.getMainFragment().mId, target)
+            val fixed = me.getMovementPointForTarget(me.getMainFragment(), target)
             return StrategyResult(0, fixed, debugMessage = "DEFAULT: Go TO phantom food $target")
         }
 
@@ -41,7 +41,7 @@ class DefaultTurnStrategy(val mGlobalConfig: WorldConfig, val mLogger: Logger) :
                 abs(corner.Y - me.getCoordinates().Y) < me.getFragmentConfig(0).mRadius)
             corner = getNextCorner()
 
-        val fixedVertex = gameEngine.getMovementPointForTarget(me.getMainFragment().mId, corner)
+        val fixedVertex = me.getMovementPointForTarget(me.getMainFragment(), corner)
         mLogger.writeLog("DEFAULT_TURN $fixedVertex \n")
         return StrategyResult(0, fixedVertex, debugMessage = "DEFAULT: Go TO $corner")
     }

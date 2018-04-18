@@ -89,7 +89,7 @@ class EatEnemyStrategy(val mGlobalConfig: WorldConfig, val mLogger: Logger) : IS
 
             var movementPoint = targetVertex
             if (me.mFragmentsState.filter { fr -> fr.canEatEnemyByMass(chosenEnemy.mMass) }.size > 1)
-                movementPoint = gameEngine.getMovementPointForTarget(me.getMainFragment().mId, targetVertex)
+                movementPoint = me.getMovementPointForTarget(me.getMainFragment(), targetVertex)
 
             val res = StrategyResult(10, movementPoint, debugMessage = "Try to eat ${chosenEnemy.mId}")
             mLogger.writeLog("Enemy strat: $res")
@@ -157,7 +157,7 @@ class EatEnemyStrategy(val mGlobalConfig: WorldConfig, val mLogger: Logger) : IS
                     }
                 }
 
-                val movementPoint = gameEngine.getMovementPointForTarget(me.getMainFragment().mId, targetVertex)
+                val movementPoint = me.getMovementPointForTarget(me.getMainFragment(), targetVertex)
                 val res = StrategyResult(10, movementPoint, split = split, debugMessage = "Try to eat ${chosenEnemy.mId}")
                 mLastKnowTargetVetex = movementPoint
                 mLogger.writeLog("Enemy 2 strat: $res")
