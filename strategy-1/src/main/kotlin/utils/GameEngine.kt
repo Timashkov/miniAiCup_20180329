@@ -23,7 +23,10 @@ class GameEngine(private val globalConfig: WorldConfig, val worldParseResult: Pa
         val maxSpeed = globalConfig.SpeedFactor / sqrt(fragment.mMass)
 
         mLogger.writeLog("$DEBUG_TAG maxSpeed = $maxSpeed")
-        val vectorTarget = fragment.mVertex.getMovementVector(target).minus(sVector)
+        val distance = fragment.mVertex.distance(target)
+
+        val vectorTarget = fragment.mVertex.getMovementVector(target, 8f/distance).minus(sVector)
+
         mLogger.writeLog("$DEBUG_TAG vector target = $vectorTarget")
         if (vectorTarget == MovementVector(0f, 0f)) {
             //no move

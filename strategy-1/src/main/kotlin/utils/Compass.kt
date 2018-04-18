@@ -85,10 +85,10 @@ class Compass(private val mFragment: MineFragmentInfo, private val mGlobalConfig
                 mRumbBorders[getShiftedIndex(directMovementIndex, i)].enemies.add(enemy)
             }
 
-        } else if (me.canEatEnemyByMass(enemy.mMass)) {
+        } else /*if (me.canEatEnemyByMass(enemy.mMass))*/ {
 
             if (distance < enemy.mRadius) {
-                setWholeCompassPoints(PREFERRED_SECTOR_SCORE, enemy.mVertex.getMovementVector(me.mVertex))
+                setWholeCompassPoints(CORNER_SECTOR_SCORE, enemy.mVertex.getMovementVector(me.mVertex))
                 mRumbBorders.forEach { it.enemies.add(enemy) }
                 return
             }
@@ -108,7 +108,7 @@ class Compass(private val mFragment: MineFragmentInfo, private val mGlobalConfig
             for (i in -indexDelta..indexDelta) {
                 if (mRumbBorders[getShiftedIndex(directMovementIndex, i)].areaScore != BLACK_SECTOR_SCORE) {
 //                    if ((me.mRadius + enemy.mRadius * 5f > me.mVertex.distance(enemy.mVertex)))// мой радиус больше!!!
-                    mRumbBorders[getShiftedIndex(directMovementIndex, i)].areaScore = PREFERRED_SECTOR_SCORE
+                    mRumbBorders[getShiftedIndex(directMovementIndex, i)].areaScore = CORNER_SECTOR_SCORE
                     mRumbBorders[getShiftedIndex(directMovementIndex, i)].enemies.add(enemy)
                 }
             }
@@ -333,57 +333,6 @@ class Compass(private val mFragment: MineFragmentInfo, private val mGlobalConfig
                 }
             }
         }
-
-//        val sortedByX = filtered.sortedBy { it.X }
-//        val sortedByR = filtered.sortedBy { mCenterVertex.distance(it) }
-
-
-//        sortedByR.forEach { it ->
-//            val verts: ArrayList<Vertex> = ArrayList()
-//            verts.add(it)
-//            val xIndex = sortedByX.indexOf(it)
-//
-//            if (xIndex > 0) {
-//                for (i in xIndex - 1 downTo 0) {
-//                    if (abs(sortedByX[i].X - it.X) < mFragment.mRadius) {
-//                        if (it.distance(sortedByX[i]) < mFragment.mRadius * 0.95f)
-//                            verts.add(sortedByX[i])
-//                    } else
-//                        break
-//                }
-//            }
-//            if (xIndex < filtered.size - 1) {
-//                for (i in xIndex + 1 until filtered.size)
-//                    if (abs(sortedByX[i].X - it.X) < mFragment.mRadius) {
-//                        if (it.distance(sortedByX[i]) < mFragment.mRadius * 0.95f)
-//                            verts.add(sortedByX[i])
-//                    } else
-//                        break
-//            }
-//
-//            val vec = mCenterVertex.getMovementVector(it)
-//            val directAngle = (atan2(vec.SY, vec.SX) * 180f / PI).toFloat()
-//            val directMovementIndex = getRumbIndexByAngle(directAngle)
-//
-//            val shiftedAngle = (asin((mFragment.mRadius * 2f / 3f) / mFragment.mVertex.distance(it)) * 180f / PI).toFloat()
-//
-//            var searchingAngle = shiftedAngle + directAngle
-//            var aign = 1
-//            if (searchingAngle > 180f) {
-//                aign = -1
-//                searchingAngle = directAngle - shiftedAngle
-//            }
-//
-//            val shiftedRumbIndex = getRumbIndexByAngle(searchingAngle)
-//            val indexDelta = aign * (shiftedRumbIndex - directMovementIndex)
-//
-//            for (i in indexDelta * -1..indexDelta) {
-//                if (mRumbBorders[getShiftedIndex(directMovementIndex, i)].areaScore != BLACK_SECTOR_SCORE) {
-//                    mRumbBorders[getShiftedIndex(directMovementIndex, i)].canEat.add(StepPoint(it, it, verts, mFragment.mId))
-//                    mRumbBorders[getShiftedIndex(directMovementIndex, i)].areaScore += verts.size
-//                }
-//            }
-//        }
     }
 
 
@@ -419,7 +368,10 @@ class Compass(private val mFragment: MineFragmentInfo, private val mGlobalConfig
                 sectorsSet[first] = count
         }
 
-        val powerMax = getDangerSectorsCount()
+        var powerMax = getDangerSectorsCount()
+        if ( powerMax == 0){
+            powerMax = mRumbBorders.filter { it.areaScore <= -1 }.size
+        }
 
         var maxScore = 0
         sectorsSet.forEach { startIndex, count ->

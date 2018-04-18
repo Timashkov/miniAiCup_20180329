@@ -7,6 +7,7 @@ import data.ParseResult
 import utils.*
 import java.util.*
 import kotlin.math.abs
+import kotlin.math.sign
 
 class DefaultTurnStrategyV2(val mGlobalConfig: WorldConfig, val mLogger: Logger) : IStrategy {
 
@@ -38,13 +39,18 @@ class DefaultTurnStrategyV2(val mGlobalConfig: WorldConfig, val mLogger: Logger)
 
         if (xVecFactor == -1f || yVecFactor == -1f) {
             val mv = MovementVector(xVecFactor * me.getMainFragment().mSX, yVecFactor * me.getMainFragment().mSY)
+            if (abs(mv.SX) < 0.05)
+                mv.SX = 1f * mv.SX.sign
+            if (abs(mv.SY) < 0.05)
+                mv.SY = 1f * mv.SY.sign
+
             if (abs(mv.SX / mv.SY) > 4f) {
-                mv.SX /= 2f
-                mv.SY *= 2f
+                mv.SX /= 4f
+                mv.SY *= 4f
             }
             if (abs(mv.SX / mv.SY) < 0.25f) {
-                mv.SX *= 2f
-                mv.SY /= 2f
+                mv.SX *= 4f
+                mv.SY /= 4f
             }
             mKnownVertex = GameEngine.vectorEdgeCrossPoint(me.getMainFragment().mVertex, mv, mGlobalConfig.GameWidth.toFloat(), mGlobalConfig.GameHeight.toFloat())
             return StrategyResult(0, mKnownVertex, debugMessage = "DEFAULT: mirrored $mKnownVertex")
