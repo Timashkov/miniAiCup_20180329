@@ -328,7 +328,7 @@ class Compass(private val mFragment: MineFragmentInfo, private val mGlobalConfig
 
             for (i in indexDelta * -1..indexDelta) {
                 if (mRumbBorders[getShiftedIndex(directMovementIndex, i)].areaScore != BLACK_SECTOR_SCORE) {
-                    mRumbBorders[getShiftedIndex(directMovementIndex, i)].canEat.add(StepPoint(it, it, listOf(it), mFragment.mId))
+                    mRumbBorders[getShiftedIndex(directMovementIndex, i)].canEat.add(StepPoint(it, it, listOf(it), mFragment.mId, 1f))
                     mRumbBorders[getShiftedIndex(directMovementIndex, i)].areaScore += 1
                 }
             }
@@ -458,7 +458,7 @@ class Compass(private val mFragment: MineFragmentInfo, private val mGlobalConfig
             return canEat.maxBy { it.target.distance(mCenterVertex) }!!
 
         val target = getVertexBySector(sector.majorBorder)
-        return StepPoint(target, target, listOf(target), mFragment.mId)
+        return StepPoint(target, target, listOf(target), mFragment.mId, sector.areaScore.toFloat())
     }
 
     fun getVertexBySector(rumbBorder: Float): Vertex {
