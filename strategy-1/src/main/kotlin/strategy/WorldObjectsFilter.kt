@@ -103,7 +103,13 @@ class WorldObjectsFilter(private val mGlobalConfig: WorldConfig, val mLogger: Lo
             pr.phantomFood.removeAt(0)
         }
 
-        val ejections = pr.worldObjectsInfo.mEjection.filter { it.pId != 1 }
+        var myId = pr.mineInfo.getMainFragment().mId
+        if (myId.contains(".")) {
+            myId = myId.split(".")[0]
+        }
+        val intId = myId.toIntOrNull()
+
+        val ejections = pr.worldObjectsInfo.mEjection.filter { intId != null && it.pId != intId }
         if (ejections.isNotEmpty()) {
             mLogger.writeLog("Ejections total : ${ejections.size}")
             pr.worldObjectsInfo.mEjection = pr.worldObjectsInfo.mEjection.filter { e ->

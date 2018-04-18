@@ -5,6 +5,9 @@ import org.json.JSONObject
 import utils.Compass
 import utils.Vertex
 import WorldConfig
+import data.MovementVector
+import strategy.StrategyResult
+import utils.GameEngine
 
 class MineFragmentInfo(val fragmentJson: JSONObject, val mGlobalConfig: WorldConfig) {
     val mVertex = Vertex(fragmentJson.getFloat("X"), fragmentJson.getFloat("Y"))
@@ -43,6 +46,28 @@ class MineFragmentInfo(val fragmentJson: JSONObject, val mGlobalConfig: WorldCon
 
     fun reconfigureCompass(foodPoints: ArrayList<Vertex>) {
         mCompass.reconfigure(foodPoints)
+    }
+
+    fun flippedVectorByEdge(target: Vertex): MovementVector{
+        var xVecFactor = 1f
+        var yVecFactor = 1f
+
+        if (mSX > 0 && mVertex.distance(Vertex(mGlobalConfig.GameWidth.toFloat(), mVertex.Y)) < mRadius * 5f && target.X >= mGlobalConfig.GameWidth.toFloat()) {
+            xVecFactor = -1f
+        }
+
+        if (mSY > 0 && mVertex.distance(Vertex(mVertex.X, mGlobalConfig.GameHeight.toFloat())) < mRadius * 5f && target.Y >= mGlobalConfig.GameHeight.toFloat()) {
+            yVecFactor = -1f
+        }
+
+        if (mSX < 0 && mVertex.distance(Vertex(0f, mVertex.Y)) < mRadius * 5f && target.X <= 0 ) {
+            xVecFactor = -1f
+        }
+
+        if (mSY < 0 && mVertex.distance(Vertex(mVertex.X, 0f)) < mRadius * 5f && target.Y <= 0) {
+            yVecFactor = -1f
+        }
+        return MovementVector(xVecFactor * mSX, yVecFactor * mSY)
     }
 }
 

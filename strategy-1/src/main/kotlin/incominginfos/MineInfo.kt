@@ -8,8 +8,7 @@ import data.StepPoint
 import utils.Compass
 import utils.GameEngine
 import utils.Logger
-import kotlin.math.pow
-import kotlin.math.sqrt
+import kotlin.math.*
 
 class MineInfo(stateJson: JSONArray, val globalConfig: WorldConfig, val mLogger: Logger) {
     val mFragmentsState: Array<MineFragmentInfo>
@@ -140,17 +139,26 @@ class MineInfo(stateJson: JSONArray, val globalConfig: WorldConfig, val mLogger:
             knownFragment?.let { targetFragment ->
 
                 mLogger.writeLog("Known vertex is not null")
-                if (cachedState != null) {
-                    val cachedFragment = cachedState.mFragmentsState.firstOrNull { it.mId == fp.fragmentId }
-                    if (cachedFragment != null && cachedFragment.mVertex.distance(fp.target) > knownFragment.mVertex.distance(fp.target) * 2f && knownFragment.mCompass.hasBlackAreas()) {
-                        mLogger.writeLog("distance is less than x2")
-                        return@let
-                    }
+//                if (cachedState != null) {
+//                    val cachedFragment = cachedState.mFragmentsState.firstOrNull { it.mId == fp.fragmentId }
+//                    if (cachedFragment != null && cachedFragment.mVertex.distance(fp.target) > knownFragment.mVertex.distance(fp.target) * 2f && knownFragment.mCompass.hasBlackAreas()) {
+//                        mLogger.writeLog("distance is less than x2")
+//                        return@let
+//                    }
+//                }
+                if (mFragmentsState.any { it.mVertex.X <= it.mRadius + 1f || it.mVertex.Y <= it.mRadius + 1f || it.mVertex.X >= globalConfig.GameWidth - it.mRadius - 1f || it.mVertex.Y >= globalConfig.GameHeight - it.mRadius - 1f }) {
+                    return@let
                 }
 
                 if (fp.foodPoints.size == 1 && globalConfig.outOfMap(fp.foodPoints[0])) {
                     mLogger.writeLog("food point out of map")
                     return@let
+                }
+
+                if (mFragmentsState.size == 1) {
+                    val score = getMainFragment().mCompass.getAreaScore(fp.target)
+                    if (getMainFragment().mCompass.mRumbBorders.any { rumb -> rumb.areaScore / 2f > score })
+                        return@let
                 }
 
                 if (mFragmentsState.none { it.mCompass.isVertexInBlackArea(fp.target) } && mFragmentsState.none { it.mVertex == fp.target }) {
@@ -166,11 +174,36 @@ class MineInfo(stateJson: JSONArray, val globalConfig: WorldConfig, val mLogger:
         // 1st stage - one fragment
         if (mFragmentsState.size == 1) {
             val fr = mFragmentsState[0]
-            fr.mCompass.mRumbBorders.filter { rumb ->
+            var areas = fr.mCompass.mRumbBorders.filter { rumb ->
                 rumb.areaScore > Compass.DEFAULT_AREA_SCORE ||
                         rumb.lastEscapePoint ||
                         (rumb.areaScore == Compass.DEFAULT_AREA_SCORE && fr.mCompass.hasBlackAreas())
-            }.sortedByDescending { it.areaScore }.forEach { rumb ->
+            }.sortedByDescending { it.areaScore }
+            if(areas.isEmpty())
+                return StepPoint.DEFAULT
+
+            val maxscore = areas[0].areaScore
+
+            areas = areas.filter { it.areaScore == maxscore }
+
+            if ( areas.size > 1 ) {
+                var minAngle = 360f
+                var index = -1
+                val mv = getMainFragment().flippedVectorByEdge(GameEngine.vectorEdgeCrossPoint(getMainFragment().mVertex, MovementVector(getMainFragment().mSX, getMainFragment().mSY), globalConfig.GameWidth.toFloat(), globalConfig.GameHeight.toFloat()))
+                val currentAngle = (atan2(mv.SY, mv.SX) * 180f / PI).toFloat()
+                areas.forEach { it ->
+
+                    val vectorAngle = it.majorBorder
+                    if (abs(vectorAngle - currentAngle) < minAngle) {
+                        minAngle = abs(vectorAngle - currentAngle)
+                        index = areas.indexOf(it)
+                    }
+                }
+                areas[index].areaScore = maxscore + 10
+                areas = areas.sortedByDescending { it.areaScore }
+            }
+
+            areas.forEach { rumb ->
                 val fp = fr.mCompass.getSectorFoodPoint(rumb)
                 if (fp != StepPoint.DEFAULT) {
 
@@ -212,26 +245,68 @@ class MineInfo(stateJson: JSONArray, val globalConfig: WorldConfig, val mLogger:
 
         } else {
 
-            val borderVertexes: HashMap<Vertex, Int> = HashMap()
-            for (i in 0..98) {
-                borderVertexes[Vertex((i * 10 + 5).toFloat(), 0f)] = 0
-                borderVertexes[Vertex(0f, (i * 10 + 5).toFloat())] = 0
-                borderVertexes[Vertex((i * 10 + 5).toFloat(), globalConfig.GameHeight.toFloat())] = 0
-                borderVertexes[Vertex(globalConfig.GameWidth.toFloat(), (i * 10 + 5).toFloat())] = 0
+            if (mFragmentsState.any { it.mTTF < 2 } && mFragmentsState.any { it.mCompass.hasBlackAreas() }) {
+
+                var x = 0.0f
+                var y = 0.0f
+                mFragmentsState.forEach {
+                    x += it.mVertex.X
+                    y += it.mVertex.Y
+                }
+                x /= mFragmentsState.size
+                y /= mFragmentsState.size
+                val center = Vertex(x, y)
+                if (mFragmentsState.none { it.mCompass.isVertexInDangerArea(center) }) {
+                    return StepPoint(center, center, listOf(center), getMainFragment().mId)
+                }
             }
 
-            var score = 0
+            val borderVertexes: HashMap<Vertex, Int> = HashMap()
+            for (i in 0..98) {
+                if (mFragmentsState.none { it.mVertex.Y > it.mRadius * 2 })
+                    borderVertexes[Vertex((i * 10 + 5).toFloat(), 0f)] = 0
+                if (mFragmentsState.none { it.mVertex.X > it.mRadius * 2 })
+                    borderVertexes[Vertex(0f, (i * 10 + 5).toFloat())] = 0
+                if (mFragmentsState.none { it.mVertex.Y < globalConfig.GameHeight.toFloat() - it.mRadius * 2 })
+                    borderVertexes[Vertex((i * 10 + 5).toFloat(), globalConfig.GameHeight.toFloat())] = 0
+                if (mFragmentsState.none { it.mVertex.X < globalConfig.GameWidth.toFloat() - it.mRadius * 2 })
+                    borderVertexes[Vertex(globalConfig.GameWidth.toFloat(), (i * 10 + 5).toFloat())] = 0
+            }
+
+            var maxScore = 0
             var target = Vertex.DEFAULT
 
             borderVertexes.keys.forEach { keyVertex ->
                 mFragmentsState.forEach { frag ->
-                    borderVertexes[keyVertex] = borderVertexes[keyVertex]!! + frag.mCompass.getAreaScore(keyVertex)
+                    val areaScoreFactor = if (mFragmentsState.indexOf(frag) == mMainFragmentIndex) 2 else 1
+                    borderVertexes[keyVertex] = borderVertexes[keyVertex]!! + frag.mCompass.getAreaScore(keyVertex) * areaScoreFactor
                 }
-                if (borderVertexes[keyVertex]!! > score) {
-                    score = borderVertexes[keyVertex]!!
-                    target = keyVertex
+                if (borderVertexes[keyVertex]!! > maxScore) {
+                    maxScore = borderVertexes[keyVertex]!!
+                    borderVertexes.clear()
+                    borderVertexes[keyVertex] = maxScore
                 }
             }
+
+            if (maxScore > 4 && borderVertexes.size > 1) {
+                var minAngle = 360f
+                var indexVertes = Vertex.DEFAULT
+                val mv = getMainFragment().flippedVectorByEdge(GameEngine.vectorEdgeCrossPoint(getMainFragment().mVertex, MovementVector(getMainFragment().mSX, getMainFragment().mSY), globalConfig.GameWidth.toFloat(), globalConfig.GameHeight.toFloat()))
+                val currentAngle = (atan2(mv.SY, mv.SX) * 180f / PI).toFloat()
+                borderVertexes.forEach {
+                    val vectToPoint = getMainFragment().mVertex.getMovementVector(it.key)
+                    val vectorAngle = (atan2(vectToPoint.SY, vectToPoint.SX) * 180f / PI).toFloat()
+                    if (abs(vectorAngle - currentAngle) < minAngle) {
+                        minAngle = abs(vectorAngle - currentAngle)
+                        indexVertes = it.key
+                    }
+                }
+                borderVertexes[indexVertes] = borderVertexes[indexVertes]!! + 10
+                target = indexVertes
+            } else {
+                target = borderVertexes.keys.first()
+            }
+
             if (target != Vertex.DEFAULT) {
 
                 val canEatVertexes: ArrayList<StepPoint> = ArrayList()

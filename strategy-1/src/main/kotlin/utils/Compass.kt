@@ -308,40 +308,82 @@ class Compass(private val mFragment: MineFragmentInfo, private val mGlobalConfig
     private fun setFoodToSectors(foodPoints: ArrayList<Vertex>) {
 //        mRumbBorders.forEach { it.canEat.clear() }
         val filtered = foodPoints.filter { !isVertexInDangerArea(it) }
-
-        val sortedByX = filtered.sortedBy { it.X }
-        val sortedByR = filtered.sortedBy { mCenterVertex.distance(it) }
-
-
-        sortedByR.forEach { it ->
-            val verts: ArrayList<Vertex> = ArrayList()
-            verts.add(it)
-            val xIndex = sortedByX.indexOf(it)
-
-            if (xIndex > 0) {
-                for (i in xIndex - 1 downTo 0) {
-                    if (abs(sortedByX[i].X - it.X) < mFragment.mRadius) {
-                        if (it.distance(sortedByX[i]) < mFragment.mRadius * 0.95f)
-                            verts.add(sortedByX[i])
-                    } else
-                        break
-                }
-            }
-            if (xIndex < filtered.size - 1) {
-                for (i in xIndex + 1 until filtered.size)
-                    if (abs(sortedByX[i].X - it.X) < mFragment.mRadius) {
-                        if (it.distance(sortedByX[i]) < mFragment.mRadius * 0.95f)
-                            verts.add(sortedByX[i])
-                    } else
-                        break
-            }
+        filtered.forEach { it ->
 
             val vec = mCenterVertex.getMovementVector(it)
             val directAngle = (atan2(vec.SY, vec.SX) * 180f / PI).toFloat()
             val directMovementIndex = getRumbIndexByAngle(directAngle)
-            mRumbBorders[directMovementIndex].canEat.add(StepPoint(it, it, verts, mFragment.mId))
-            mRumbBorders[directMovementIndex].areaScore += verts.size
+
+            val shiftedAngle = (asin((mFragment.mRadius * 2f / 3f) / mFragment.mVertex.distance(it)) * 180f / PI).toFloat()
+
+            var searchingAngle = shiftedAngle + directAngle
+            var aign = 1
+            if (searchingAngle > 180f) {
+                aign = -1
+                searchingAngle = directAngle - shiftedAngle
+            }
+
+            val shiftedRumbIndex = getRumbIndexByAngle(searchingAngle)
+            val indexDelta = aign * (shiftedRumbIndex - directMovementIndex)
+
+            for (i in indexDelta * -1..indexDelta) {
+                if (mRumbBorders[getShiftedIndex(directMovementIndex, i)].areaScore != BLACK_SECTOR_SCORE) {
+                    mRumbBorders[getShiftedIndex(directMovementIndex, i)].canEat.add(StepPoint(it, it, listOf(it), mFragment.mId))
+                    mRumbBorders[getShiftedIndex(directMovementIndex, i)].areaScore += 1
+                }
+            }
         }
+
+//        val sortedByX = filtered.sortedBy { it.X }
+//        val sortedByR = filtered.sortedBy { mCenterVertex.distance(it) }
+
+
+//        sortedByR.forEach { it ->
+//            val verts: ArrayList<Vertex> = ArrayList()
+//            verts.add(it)
+//            val xIndex = sortedByX.indexOf(it)
+//
+//            if (xIndex > 0) {
+//                for (i in xIndex - 1 downTo 0) {
+//                    if (abs(sortedByX[i].X - it.X) < mFragment.mRadius) {
+//                        if (it.distance(sortedByX[i]) < mFragment.mRadius * 0.95f)
+//                            verts.add(sortedByX[i])
+//                    } else
+//                        break
+//                }
+//            }
+//            if (xIndex < filtered.size - 1) {
+//                for (i in xIndex + 1 until filtered.size)
+//                    if (abs(sortedByX[i].X - it.X) < mFragment.mRadius) {
+//                        if (it.distance(sortedByX[i]) < mFragment.mRadius * 0.95f)
+//                            verts.add(sortedByX[i])
+//                    } else
+//                        break
+//            }
+//
+//            val vec = mCenterVertex.getMovementVector(it)
+//            val directAngle = (atan2(vec.SY, vec.SX) * 180f / PI).toFloat()
+//            val directMovementIndex = getRumbIndexByAngle(directAngle)
+//
+//            val shiftedAngle = (asin((mFragment.mRadius * 2f / 3f) / mFragment.mVertex.distance(it)) * 180f / PI).toFloat()
+//
+//            var searchingAngle = shiftedAngle + directAngle
+//            var aign = 1
+//            if (searchingAngle > 180f) {
+//                aign = -1
+//                searchingAngle = directAngle - shiftedAngle
+//            }
+//
+//            val shiftedRumbIndex = getRumbIndexByAngle(searchingAngle)
+//            val indexDelta = aign * (shiftedRumbIndex - directMovementIndex)
+//
+//            for (i in indexDelta * -1..indexDelta) {
+//                if (mRumbBorders[getShiftedIndex(directMovementIndex, i)].areaScore != BLACK_SECTOR_SCORE) {
+//                    mRumbBorders[getShiftedIndex(directMovementIndex, i)].canEat.add(StepPoint(it, it, verts, mFragment.mId))
+//                    mRumbBorders[getShiftedIndex(directMovementIndex, i)].areaScore += verts.size
+//                }
+//            }
+//        }
     }
 
 
@@ -405,22 +447,6 @@ class Compass(private val mFragment: MineFragmentInfo, private val mGlobalConfig
                 }
                 if (power < powerMax)
                     power++
-            }
-        }
-
-        if (maxScore > 4) {
-            val maxSectors = mRumbBorders.filter { it.areaScore == maxScore }
-            if (maxSectors.size > 1) {
-                var minAngle = 360f
-                var index = -1
-                val currentAngle = (atan2(mFragment.mSY, mFragment.mSX) * 180f / PI).toFloat()
-                maxSectors.forEach {
-                    if (abs(it.majorBorder - currentAngle) < minAngle) {
-                        minAngle = abs(it.majorBorder - currentAngle)
-                        index = maxSectors.indexOf(it)
-                    }
-                }
-                maxSectors[index].areaScore += 10
             }
         }
 

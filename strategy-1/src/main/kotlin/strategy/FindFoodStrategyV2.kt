@@ -53,16 +53,12 @@ class FindFoodStrategyV2(val mGlobalConfig: WorldConfig, val mLogger: Logger) : 
     }
 
     private fun isDestinationAchieved(worldInfo: WorldObjectsInfo, me: MineInfo): Boolean {
-        //если съели целевую точку, а ее соседки остались - то надо доесть
 
         mKnownWay?.let { targetWay ->
-            targetWay.foodPoints.forEach { fp ->
-                if (worldInfo.mFood.map { it.mVertex }.any { it.equals(fp) }) {
-                    mLogger.writeLog("FP: $fp")
-                    mKnownWay?.target = fp
-                    return false
-                }
-            }
+            val fr = me.getFragmentById(targetWay.fragmentId)
+            if (targetWay.target.distance(fr.mVertex) < fr.mRadius*1.5)
+                return true
+            return false
         }
         return true
     }
