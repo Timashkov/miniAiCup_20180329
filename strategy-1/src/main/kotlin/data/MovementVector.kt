@@ -1,6 +1,6 @@
 package data
 
-class MovementVector(var SX: Float, var SY: Float) {
+class MovementVector(val SX: Float, val SY: Float) {
     val K: Float = SY / SX
 
     fun plus(v: MovementVector): MovementVector = MovementVector(SX + v.SX, SY + v.SY)
@@ -10,3 +10,5 @@ class MovementVector(var SX: Float, var SY: Float) {
         return "($SX; $SY)"
     }
 }
+
+fun MovementVector.scaled(factor: Float) = MovementVector(this.SX * factor, this.SY * factor)
