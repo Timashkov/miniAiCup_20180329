@@ -11,4 +11,4 @@ class MovementVector(val SX: Float, val SY: Float) {
     }
 }
 
-fun MovementVector.scaled(factor: Float) = MovementVector(this.SX * factor, this.SY * factor)
+fun MovementVector.scaled(xFactor: Float, yFactor: Float) = MovementVector(this.SX * xFactor, this.SY * yFactor)
