@@ -88,7 +88,7 @@ class Compass(private val mFragment: MineFragmentInfo, private val mGlobalConfig
         } else if (me.canEatEnemyByMass(enemy.mMass)) {
 
             if (distance < enemy.mRadius) {
-                setWholeCompassPoints(CORNER_SECTOR_SCORE, enemy.mVertex.getMovementVector(me.mVertex))
+                setWholeCompassPoints(PREFERRED_SECTOR_SCORE, enemy.mVertex.getMovementVector(me.mVertex))
                 mRumbBorders.forEach { it.enemies.add(enemy) }
                 return
             }
@@ -154,14 +154,6 @@ class Compass(private val mFragment: MineFragmentInfo, private val mGlobalConfig
         }
     }
 
-    fun isVertexOnTheRoad(target: Vertex, mv: MovementVector): Boolean {
-        val vecToTarget = mCenterVertex.getMovementVector(target)
-        val directAngle = (atan2(vecToTarget.SY, vecToTarget.SX) * 180f / PI).toFloat()
-        val shiftedAngle = (asin((mFragment.mRadius * 2f / 3f) / mFragment.mVertex.distance(target)) * 180f / PI).toFloat()
-        val currentMovementVectorAngle = (atan2(mv.SY, mv.SX) * 180f / PI).toFloat()
-        return (abs(currentMovementVectorAngle - directAngle) < abs(shiftedAngle))
-    }
-
     fun isVertexInBlackArea(target: Vertex): Boolean {
         val vec = mCenterVertex.getMovementVector(target)
         val directAngle = (atan2(vec.SY, vec.SX) * 180f / PI).toFloat()
@@ -196,6 +188,14 @@ class Compass(private val mFragment: MineFragmentInfo, private val mGlobalConfig
         val directAngle = (atan2(vec.SY, vec.SX) * 180f / PI).toFloat()
         val directMovementIndex = getRumbIndexByAngle(directAngle)
         return mRumbBorders[directMovementIndex].enemies.isNotEmpty()
+    }
+
+    fun isVertexOnTheRoad(target: Vertex, mv: MovementVector): Boolean {
+        val vecToTarget = mCenterVertex.getMovementVector(target)
+        val directAngle = (atan2(vecToTarget.SY, vecToTarget.SX) * 180f / PI).toFloat()
+        val shiftedAngle = (asin((mFragment.mRadius * 2f / 3f) / mFragment.mVertex.distance(target)) * 180f / PI).toFloat()
+        val currentMovementVectorAngle = (atan2(mv.SY, mv.SX) * 180f / PI).toFloat()
+        return (abs(currentMovementVectorAngle - directAngle) < abs(shiftedAngle))
     }
 
     fun getAreaScore(target: Vertex): Int {

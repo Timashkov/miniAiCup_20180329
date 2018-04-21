@@ -83,8 +83,8 @@ class WorldObjectsFilter(private val mGlobalConfig: WorldConfig, val mLogger: Lo
         if (food.isNotEmpty()) {
             mLogger.writeLog("Food total : ${food.size}")
 
-            if (pr.worldObjectsInfo.mFood.isNotEmpty()) {
-                // memorize in case of area contains at least 3 food objects
+            if (pr.worldObjectsInfo.mFood.size > 1) {
+                // memorize in case of area contains at least 2 food objects
                 pr.worldObjectsInfo.mFood.forEach {
                     val tempV = it.mVertex.minus(mGlobalConfig.getCenter())
                     pr.phantomFood.add(Vertex(tempV.X + mGlobalConfig.getCenter().X, -tempV.Y + mGlobalConfig.getCenter().Y))
@@ -109,7 +109,7 @@ class WorldObjectsFilter(private val mGlobalConfig: WorldConfig, val mLogger: Lo
         }
         val intId = myId.toIntOrNull()
 
-        val ejections = pr.worldObjectsInfo.mEjection.filter { intId != null && it.pId != intId }
+        val ejections = pr.worldObjectsInfo.mEjection.filter { intId != null && it.pId != intId && enemies.isNotEmpty()}
         if (ejections.isNotEmpty()) {
             mLogger.writeLog("Ejections total : ${ejections.size}")
             pr.worldObjectsInfo.mEjection = pr.worldObjectsInfo.mEjection.filter { e ->
@@ -147,7 +147,7 @@ class WorldObjectsFilter(private val mGlobalConfig: WorldConfig, val mLogger: Lo
             pr.mineInfo.mFragmentsState.forEach { frag ->
                 val points: Array<Vertex> = arrayOf(Vertex(0f, frag.mVertex.Y), Vertex(mGlobalConfig.GameWidth.toFloat(), frag.mVertex.Y), Vertex(frag.mVertex.X, 0f), Vertex(frag.mVertex.X, mGlobalConfig.GameHeight.toFloat()))
                 val nearest = points.sortedBy { it.distance(frag.mVertex) }[0]
-                val square = Square(mGlobalConfig.getCenter(), mGlobalConfig.GameWidth / 2f - pr.mineInfo.getMainFragment().mRadius * 6f)
+                val square = Square(mGlobalConfig.getCenter(), mGlobalConfig.GameWidth / 4f)
                 if (!square.isInSquare(frag.mVertex))
                     frag.mCompass.setColorByVertex(nearest, Compass.CORNER_SECTOR_SCORE)
             }
